@@ -406,7 +406,9 @@ function Sidebar({ filters, active, onChange, C, isMobile, open, onClose }) {
 }
 
 // ── Question Card ─────────────────────────────────────────────────────────────
-function QuestionCard({ q, index, C, isMobile }) {
+// FIX: accepts `apiBase` prop so it uses the correct production API URL
+// instead of the module-level `API` constant (which defaulted to localhost).
+function QuestionCard({ q, index, C, isMobile, apiBase }) {
   const [revealed, setRevealed] = useState(false);
   const [answer,   setAnswer]   = useState(null);
   const [loading,  setLoading]  = useState(false);
@@ -416,7 +418,11 @@ function QuestionCard({ q, index, C, isMobile }) {
     if (revealed) { setRevealed(false); setSelected(null); return; }
     setLoading(true);
     try {
-      const res = await fetch(`${API}/api/questions/${q.slug}/answer`);
+      // FIX: use apiBase prop (passed from parent which has the correct API_URL)
+      // fall back to module-level API constant for safety
+      const base = apiBase || API;
+      const res = await fetch(`${base}/api/questions/${q.slug}/answer`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setAnswer(await res.json());
       setRevealed(true);
     } catch(e) { console.error(e); }
@@ -1009,7 +1015,9 @@ export default function QuestionBrowser({ apiBase, onBack, isDark: isDarkProp, o
                 <div style={{display:"flex",flexDirection:"column",gap:isMobile?10:12}}>
                   {questions.map((q,i)=>(
                     <QuestionCard key={q.slug||q.id} q={q}
-                      index={(page-1)*PAGE_SIZE+i} C={C} isMobile={isMobile}/>
+                      index={(page-1)*PAGE_SIZE+i} C={C} isMobile={isMobile}
+                      apiBase={API_URL}
+                    />
                   ))}
                 </div>
 

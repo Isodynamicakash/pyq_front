@@ -10,6 +10,8 @@
  *   - Edit / Images tabs start CLOSED; click to open, click again to close
  *   - Missing Q-number badges scroll to the nearest card instantly
  *   - Ctrl+V paste only activates after clicking the upload zone; + button opens folder
+ *   - [NEW] Crash Recovery: auto-saves to localStorage every 1s, restore banner on reload/crash
+ *   - [NEW] Batch saving in groups of 5 with 300ms delay to prevent Railway OOM crash
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -1467,26 +1469,14 @@ function ImageUploadScreen({ apiBase, adminKey, onBack }) {
 // Processing screen
 // ─────────────────────────────────────────────────────────────────────────────
 
-/*
-  PATCH: Replace the ProcessingScreen component in AdminReview.jsx
-  
-  Changes from dev version:
-    - Poll interval: 4s → 5s  (reduces Railway request load)
-    - Max retries:   90 → 120  (10 min total — PDF via MathPix can be slow)
-    - Exponential backoff on network errors (don't hammer a cold-starting Railway container)
-    - Shows elapsed time so admin knows it's working
-    - Clearer error message with retry hint
-*/
-
 function ProcessingScreen({ jobId, apiBase, adminKey, onReady }) {
   const [status,   setStatus]   = useState({ step: "Waiting…", pct: 0 });
   const [error,    setError]    = useState("");
   const [elapsed,  setElapsed]  = useState(0);
   const retriesRef    = useRef(0);
-  const netErrRef     = useRef(0);   // consecutive network errors
+  const netErrRef     = useRef(0);
   const startTimeRef  = useRef(Date.now());
 
-  // Elapsed timer — updates every second for UX feedback
   useEffect(() => {
     const iv = setInterval(() => {
       setElapsed(Math.floor((Date.now() - startTimeRef.current) / 1000));
@@ -1499,8 +1489,8 @@ function ProcessingScreen({ jobId, apiBase, adminKey, onReady }) {
     netErrRef.current   = 0;
     startTimeRef.current = Date.now();
 
-    const MAX_RETRIES    = 120;   // 120 × 5s = 10 min
-    const POLL_INTERVAL  = 5000;  // 5 seconds
+    const MAX_RETRIES    = 120;
+    const POLL_INTERVAL  = 5000;
 
     const poll = async () => {
       retriesRef.current++;
@@ -1519,16 +1509,15 @@ function ProcessingScreen({ jobId, apiBase, adminKey, onReady }) {
           { headers: { "x-admin-key": adminKey } });
 
         if (!res.ok) {
-          // 404 can happen briefly after upload on Railway cold start
           netErrRef.current++;
           if (netErrRef.current < 4) {
-            setTimeout(poll, POLL_INTERVAL * netErrRef.current); // backoff
+            setTimeout(poll, POLL_INTERVAL * netErrRef.current);
             return;
           }
           throw new Error(`HTTP ${res.status}`);
         }
 
-        netErrRef.current = 0; // reset on success
+        netErrRef.current = 0;
         const data = await res.json();
         setStatus({ step: data.status, pct: data.progress || 0 });
 
@@ -1565,9 +1554,7 @@ function ProcessingScreen({ jobId, apiBase, adminKey, onReady }) {
 
   const mins = Math.floor(elapsed / 60);
   const secs = elapsed % 60;
-  const elapsedStr = mins > 0
-    ? `${mins}m ${secs}s`
-    : `${secs}s`;
+  const elapsedStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -1575,21 +1562,13 @@ function ProcessingScreen({ jobId, apiBase, adminKey, onReady }) {
         <div style={{ fontSize: 40, marginBottom: 16 }}>⚙️</div>
         <h2 style={{ color: C.text, marginBottom: 8 }}>Processing…</h2>
         <p style={{ color: C.textMuted, marginBottom: 8, fontSize: 14 }}>{stepLabel}</p>
-        <p style={{ color: C.textDim, marginBottom: 24, fontSize: 12 }}>
-          Elapsed: {elapsedStr}
-        </p>
+        <p style={{ color: C.textDim, marginBottom: 24, fontSize: 12 }}>Elapsed: {elapsedStr}</p>
         <div style={{ background: C.surface, borderRadius: 8, height: 8, overflow: "hidden", marginBottom: 24 }}>
-          <div style={{
-            width: `${status.pct}%`, height: "100%",
-            background: C.blue, transition: "width .5s",
-          }} />
+          <div style={{ width: `${status.pct}%`, height: "100%", background: C.blue, transition: "width .5s" }} />
         </div>
         {error && (
-          <div style={{
-            background: C.redBg, border: `1px solid ${C.red}`,
-            borderRadius: 8, padding: "14px 16px",
-            color: C.red, fontSize: 13, textAlign: "left",
-          }}>
+          <div style={{ background: C.redBg, border: `1px solid ${C.red}`, borderRadius: 8, padding: "14px 16px",
+                        color: C.red, fontSize: 13, textAlign: "left" }}>
             <strong>Error:</strong>
             <pre style={{ margin: "8px 0 0", whiteSpace: "pre-wrap", fontSize: 11 }}>{error}</pre>
           </div>
@@ -1657,20 +1636,76 @@ function AddQuestionButton({ onClick }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Crash Recovery Helpers
+// NEW: auto-save to localStorage, restore on reload/crash
+// ─────────────────────────────────────────────────────────────────────────────
+
+const RECOVERY_KEY = (jobId) => `examside_recovery_${jobId}`;
+
+function saveRecovery(jobId, questions) {
+  try {
+    localStorage.setItem(RECOVERY_KEY(jobId), JSON.stringify({
+      questions,
+      savedAt: Date.now(),
+    }));
+  } catch(e) { /* localStorage full — ignore */ }
+}
+
+function loadRecovery(jobId) {
+  try {
+    const raw = localStorage.getItem(RECOVERY_KEY(jobId));
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    // Discard if older than 24 hours
+    if (Date.now() - data.savedAt > 86400000) {
+      localStorage.removeItem(RECOVERY_KEY(jobId));
+      return null;
+    }
+    return data.questions;
+  } catch(e) { return null; }
+}
+
+function clearRecovery(jobId) {
+  try { localStorage.removeItem(RECOVERY_KEY(jobId)); } catch(e) {}
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Review screen
 // NEW: failed saves float to top; successful ones are removed from list
+// NEW: crash recovery (auto-save to localStorage + restore banner)
+// NEW: batched saving in groups of 5 to prevent Railway OOM crash
 // ─────────────────────────────────────────────────────────────────────────────
 
 function ReviewScreen({ jobId, apiBase, adminKey, onBack, initialQuestions }) {
-  const [questions,  setQuestions]  = useState(initialQuestions || []);
-  const [loading,    setLoading]    = useState(!initialQuestions);
-  const [chapters,   setChapters]   = useState([]);
-  const [topics,     setTopics]     = useState([]);
-  const [papers,     setPapers]     = useState([]);
-  const [saving,     setSaving]     = useState(false);
-  const [saveResult, setSaveResult] = useState(null);
+  const [questions,      setQuestions]      = useState(initialQuestions || []);
+  const [loading,        setLoading]        = useState(!initialQuestions);
+  const [chapters,       setChapters]       = useState([]);
+  const [topics,         setTopics]         = useState([]);
+  const [papers,         setPapers]         = useState([]);
+  const [saving,         setSaving]         = useState(false);
+  const [saveResult,     setSaveResult]     = useState(null);
   // Map from question key → error string (for failed saves)
-  const [saveErrors, setSaveErrors] = useState({});
+  const [saveErrors,     setSaveErrors]     = useState({});
+  // Crash recovery state
+  const [recoveryBanner, setRecoveryBanner] = useState(false);
+  const autoSaveRef = useRef(null);
+
+  // ── Check for crash recovery on mount ────────────────────────────────────
+  useEffect(() => {
+    if (initialQuestions) return; // LaTeX mode — no recovery needed
+    const saved = loadRecovery(jobId);
+    if (saved && saved.length > 0) setRecoveryBanner(true);
+  }, [jobId]);
+
+  // ── Auto-save to localStorage on every questions change (debounced 1s) ───
+  useEffect(() => {
+    if (questions.length === 0) return;
+    if (autoSaveRef.current) clearTimeout(autoSaveRef.current);
+    autoSaveRef.current = setTimeout(() => {
+      saveRecovery(jobId, questions);
+    }, 1000);
+    return () => clearTimeout(autoSaveRef.current);
+  }, [questions, jobId]);
 
   useEffect(() => {
     const h = { "x-admin-key": adminKey };
@@ -1749,38 +1784,55 @@ function ReviewScreen({ jobId, apiBase, adminKey, onBack, initialQuestions }) {
     }
   }, [questions]);
 
-  // ── UPDATED: save flow — remove successes, float failures to top ──────────
+  // ── UPDATED: batched save (groups of 5, 300ms pause) + remove successes, float failures to top ──
   const saveQuestions = async (subset) => {
     setSaving(true); setSaveResult(null);
     const newErrors = {};
-
-    // Save one by one so we can track per-question failures
     const savedKeys = new Set();
-    for (const q of subset) {
-      const qKey = q._manualId || String(q.number);
-      try {
-        const res = await fetch(`${apiBase}/api/admin/save-questions`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
-          body: JSON.stringify({
-            job_id: jobId,
-            questions: [{
-              ...q,
-              verified:  true,
-              exam_date: q.exam_date || null,
-              year:      q.exam_date ? parseInt(q.exam_date.slice(0, 4)) : (q.year ? parseInt(q.year) : null),
-            }],
-          }),
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          newErrors[qKey] = data.detail || `HTTP ${res.status}`;
-        } else {
-          savedKeys.add(qKey);
+
+    // ── Batch in groups of 5 to avoid Railway OOM crash ──────────────────────
+    const BATCH_SIZE = 5;
+    for (let batchStart = 0; batchStart < subset.length; batchStart += BATCH_SIZE) {
+      const batch = subset.slice(batchStart, batchStart + BATCH_SIZE);
+
+      for (const q of batch) {
+        const qKey = q._manualId || String(q.number);
+        try {
+          const res = await fetch(`${apiBase}/api/admin/save-questions`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
+            body: JSON.stringify({
+              job_id: jobId,
+              questions: [{
+                ...q,
+                verified:  true,
+                exam_date: q.exam_date || null,
+                year:      q.exam_date ? parseInt(q.exam_date.slice(0, 4)) : (q.year ? parseInt(q.year) : null),
+              }],
+            }),
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            newErrors[qKey] = data.detail || `HTTP ${res.status}`;
+          } else {
+            savedKeys.add(qKey);
+          }
+        } catch (e) {
+          newErrors[qKey] = String(e);
         }
-      } catch (e) {
-        newErrors[qKey] = String(e);
       }
+
+      // Small pause between batches — lets Railway breathe
+      if (batchStart + BATCH_SIZE < subset.length) {
+        await new Promise(r => setTimeout(r, 300));
+      }
+
+      // Update UI after each batch so user sees live progress
+      setSaveResult({
+        saved_count:  savedKeys.size,
+        failed_count: Object.keys(newErrors).length,
+        in_progress:  true,
+      });
     }
 
     setSaveErrors(prev => ({ ...prev, ...newErrors }));
@@ -1792,14 +1844,16 @@ function ReviewScreen({ jobId, apiBase, adminKey, onBack, initialQuestions }) {
         const k = q._manualId || String(q.number);
         return !savedKeys.has(k);
       });
-      // Sort: failed (with errors) first, then others
       const failed  = remaining.filter(q => newErrors[q._manualId || String(q.number)]);
       const others  = remaining.filter(q => !newErrors[q._manualId || String(q.number)]);
       return [...failed, ...others];
     });
 
-    const savedCount   = savedKeys.size;
-    const failedCount  = Object.keys(newErrors).length;
+    // Clear localStorage recovery if everything saved successfully
+    if (Object.keys(newErrors).length === 0) clearRecovery(jobId);
+
+    const savedCount  = savedKeys.size;
+    const failedCount = Object.keys(newErrors).length;
     setSaveResult({ saved_count: savedCount, failed_count: failedCount });
     setSaving(false);
   };
@@ -1812,6 +1866,42 @@ function ReviewScreen({ jobId, apiBase, adminKey, onBack, initialQuestions }) {
 
   return (
     <div style={{ background: C.bg, minHeight: "100vh" }}>
+
+      {/* ── Crash Recovery Banner ── */}
+      {recoveryBanner && (
+        <div style={{
+          background: "#1e3a5f",
+          border: `1px solid ${C.blue}`,
+          padding: "12px 24px",
+          display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap",
+        }}>
+          <span style={{ fontSize: 20 }}>🔄</span>
+          <span style={{ color: C.text, fontSize: 13, flex: 1 }}>
+            <strong style={{ color: C.blueLight }}>Unsaved session found!</strong>{" "}
+            Browser crash ya page reload se data bach gaya hai. Restore karein?
+          </span>
+          <button
+            onClick={() => {
+              const saved = loadRecovery(jobId);
+              if (saved) setQuestions(saved);
+              setRecoveryBanner(false);
+            }}
+            style={{
+              background: C.blue, color: "#fff", border: "none",
+              borderRadius: 6, padding: "7px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer",
+            }}>
+            ✓ Restore Data
+          </button>
+          <button
+            onClick={() => { clearRecovery(jobId); setRecoveryBanner(false); }}
+            style={{
+              background: "transparent", color: C.textMuted, border: `1px solid ${C.border}`,
+              borderRadius: 6, padding: "7px 14px", fontSize: 12, cursor: "pointer",
+            }}>
+            ✕ Discard
+          </button>
+        </div>
+      )}
 
       {/* Sticky top bar */}
       <div style={{ position: "sticky", top: 0, zIndex: 100, background: C.surface, borderBottom: `1px solid ${C.border}` }}>
@@ -1854,10 +1944,11 @@ function ReviewScreen({ jobId, apiBase, adminKey, onBack, initialQuestions }) {
           <span style={{ flex: 1 }} />
           {saveResult && (
             <span style={{ fontSize: 12, padding: "4px 12px", borderRadius: 6,
-                           color: saveResult.failed_count > 0 ? C.amber : C.green,
-                           background: saveResult.failed_count > 0 ? C.amberBg : C.greenBg }}>
-              {saveResult.saved_count > 0 && `✓ Saved ${saveResult.saved_count}`}
-              {saveResult.failed_count > 0 && ` · ❌ ${saveResult.failed_count} failed (shown at top)`}
+                           color: saveResult.in_progress ? C.blue : saveResult.failed_count > 0 ? C.amber : C.green,
+                           background: saveResult.in_progress ? C.blue + "22" : saveResult.failed_count > 0 ? C.amberBg : C.greenBg }}>
+              {saveResult.in_progress && `⏳ Saving… ${saveResult.saved_count} done`}
+              {!saveResult.in_progress && saveResult.saved_count > 0 && `✓ Saved ${saveResult.saved_count}`}
+              {!saveResult.in_progress && saveResult.failed_count > 0 && ` · ❌ ${saveResult.failed_count} failed (shown at top)`}
             </span>
           )}
           <Btn color={C.green} disabled={saving || readyCount === 0}
@@ -1950,7 +2041,7 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
   // ── Filters ──
   const [search,       setSearch]       = useState("");
   const [filterSubj,   setFilterSubj]   = useState("");
-  const [filterDate,   setFilterDate]   = useState("");   // exam_date YYYY-MM-DD
+  const [filterDate,   setFilterDate]   = useState("");
   const [filterShift,  setFilterShift]  = useState("");
   const [filterExam,   setFilterExam]   = useState("");
   const [filterChap,   setFilterChap]   = useState("");
@@ -2044,7 +2135,6 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
   const uniqueDiffs   = ["easy", "medium", "hard"].filter(d => questions.some(q => q.difficulty === d));
   const uniqueTypes   = ["MCQ", "MSQ", "NUMERICAL"].filter(t => questions.some(q => q.q_type === t));
 
-  // Format date nicely for display
   const fmtDate = (d) => d
     ? new Date(d + "T00:00:00").toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
     : d;
@@ -2075,12 +2165,6 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated  = filtered.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE);
 
-  // pill helper with clear on second click
-  const pill = (val, setVal, label, color) => (
-    <FilterPill key={label} label={label} active={val !== ""} color={color}
-      onClick={() => { setVal(v => v === label ? "" : label); resetPage(); }} />
-  );
-
   return (
     <div style={{ background: C.bg, minHeight: "100vh" }}>
 
@@ -2097,7 +2181,6 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
               : <>{questions.length} total</>}
           </span>
 
-          {/* Active filter count badge */}
           {activeFilterCount > 0 && (
             <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 10,
                            background: C.blue + "33", color: C.blueLight, fontWeight: 700 }}>
@@ -2121,7 +2204,6 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
             </span>
           )}
 
-          {/* Toggle filter panel */}
           <button onClick={() => setFiltersOpen(o => !o)} style={{
             padding: "6px 14px", borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer",
             border: `1px solid ${filtersOpen || activeFilterCount > 0 ? C.blue : C.border}`,
@@ -2176,7 +2258,6 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
                       onClick={() => { setFilterDate(v => v === d ? "" : d); resetPage(); }} />
                   ))}
                 </div>
-                {/* Also allow typing a custom date */}
                 <input type="date" value={filterDate}
                   onChange={e => { setFilterDate(e.target.value); resetPage(); }}
                   style={{ background: C.surface, color: C.text, border: `1px solid ${filterDate ? C.blueLight : C.border}`,

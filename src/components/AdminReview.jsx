@@ -946,13 +946,20 @@ function QuestionCard({ q, index, total, jobId, apiBase, adminKey,
         {!q.chapter_name && <Badge label="CHAPTER MISSING" color={C.amber} />}
         {!q.answer      && <Badge label="ANSWER MISSING"  color={C.red} />}
         <span style={{ flex: 1 }} />
-        {(q._isManual || saveError) && (
-          <button onClick={onRemove}
-            style={{ background: C.redBg, border: `1px solid ${C.red}44`, color: C.red,
-                     borderRadius: 5, padding: "3px 8px", fontSize: 11, cursor: "pointer", fontWeight: 600 }}>
-            ✕ Remove
-          </button>
-        )}
+        <button
+          onClick={() => {
+            if (window.confirm(`Drop Q${q._isManual ? "+" : q.number}? Yeh sirf is list se hatega — database mein save nahi hua toh permanently discard ho jaayega.`)) {
+              onRemove();
+            }
+          }}
+          title="Drop this question (won't be saved to DB)"
+          style={{
+            background: C.redBg, border: `1px solid ${C.red}44`, color: C.red,
+            borderRadius: 5, padding: "3px 10px", fontSize: 11, cursor: "pointer", fontWeight: 600,
+            display: "flex", alignItems: "center", gap: 4,
+          }}>
+          🗑 Drop
+        </button>
         <span style={{ fontSize: 11, color: C.textDim }}>{index + 1}/{total}</span>
       </div>
 
@@ -2119,9 +2126,17 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
     finally { setSaving(false); setTimeout(() => setSaveMsg(null), 3000); }
   };
 
+  // filteredRef keeps the latest filtered list so applyBelow can limit changes
+  // to only the currently-visible (filtered) questions below the triggering card.
+  const filteredRef = useRef([]);
+
   const applyBelow = useCallback((fromIndex, field, value) => {
-    setQuestions(prev => prev.map((q, i) => {
-      if (i <= fromIndex) return q;
+    // fromIndex = globalIdx within the FILTERED list (page-aware)
+    const belowIds = new Set(
+      filteredRef.current.slice(fromIndex + 1).map(q => q._dbId ?? q.id)
+    );
+    setQuestions(prev => prev.map(q => {
+      if (!belowIds.has(q._dbId ?? q.id)) return q; // outside filter → untouched
       if (field === "exam_date") return { ...q, exam_date: value, year: value.slice(0, 4) };
       return { ...q, [field]: value };
     }));
@@ -2164,6 +2179,9 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
   });
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated  = filtered.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE);
+
+  // Keep ref in sync so applyBelow always sees the current filtered list
+  filteredRef.current = filtered;
 
   return (
     <div style={{ background: C.bg, minHeight: "100vh" }}>
@@ -2343,12 +2361,15 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
           <>
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               {paginated.map((q, i) => {
+                // globalIdx = position within the FILTERED list (not the full questions array)
                 const globalIdx = (page-1)*PAGE_SIZE + i;
+                // updateQ must still use the real index in questions[] for mutation
+                const realIdx = questions.indexOf(q);
                 return (
                   <QuestionCard key={q._dbId || q.number}
-                    q={q} index={globalIdx} total={questions.length}
+                    q={q} index={globalIdx} total={filtered.length}
                     jobId={null} apiBase={apiBase} adminKey={adminKey}
-                    onChange={(u) => updateQ(globalIdx, u)}
+                    onChange={(u) => updateQ(realIdx, u)}
                     onSaveOne={saveOne}
                     onApplyBelow={applyBelow}
                     onRemove={() => {}}
@@ -2383,11 +2404,27 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function AdminReview({ apiBase = "http://localhost:8000", adminKey = "" }) {
-  const [screen,    setScreen]    = useState("edit");
-  const [jobId,     setJobId]     = useState(null);
+  const [screen,    setScreen]    = useState(() => {
+    // Restore screen on refresh — but only "review" is worth restoring
+    const saved = localStorage.getItem("examside_screen");
+    return saved === "review" ? "review" : "edit";
+  });
+  const [jobId,     setJobId]     = useState(() => localStorage.getItem("examside_jobid") || null);
   const [openaiKey, setOpenaiKey] = useState(() => localStorage.getItem("examside_openai_key") || "");
   // For LaTeX mode: start ReviewScreen with a single blank question, no job
   const [latexJobId] = useState(() => `latex_${Date.now()}`);
+
+  // Persist screen + jobId so refresh returns to review
+  const goScreen = (s, jid) => {
+    setScreen(s);
+    if (jid !== undefined) {
+      setJobId(jid);
+      if (jid) localStorage.setItem("examside_jobid", jid);
+      else     localStorage.removeItem("examside_jobid");
+    }
+    if (s === "review") localStorage.setItem("examside_screen", "review");
+    else                localStorage.removeItem("examside_screen");
+  };
 
   const saveOpenaiKey = (k) => {
     setOpenaiKey(k);
@@ -2399,29 +2436,30 @@ export default function AdminReview({ apiBase = "http://localhost:8000", adminKe
   const handleLatexMode = () => {
     setJobId(latexJobId);
     setScreen("latex");
+    localStorage.removeItem("examside_screen"); // latex mode not persisted
   };
 
   return (
     <MathJaxContext config={MATHJAX_CONFIG}>
       <div style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
         {screen === "edit"       && <EditExistingScreen apiBase={apiBase} adminKey={adminKey}
-                                      onUploadNew={() => setScreen("upload")} />}
+                                      onUploadNew={() => goScreen("upload")} />}
         {screen === "upload"     && <UploadScreen       apiBase={apiBase} adminKey={adminKey}
                                       openaiKey={openaiKey} onOpenaiKeyChange={saveOpenaiKey}
-                                      onJobCreated={(id) => { setJobId(id); setScreen("processing"); }}
+                                      onJobCreated={(id) => goScreen("processing", id)}
                                       onLatexMode={handleLatexMode}
-                                      onOpenImageManager={() => setScreen("images")}
-                                      onBack={() => setScreen("edit")} />}
+                                      onOpenImageManager={() => goScreen("images")}
+                                      onBack={() => goScreen("edit")} />}
         {screen === "processing" && <ProcessingScreen   jobId={jobId} apiBase={apiBase} adminKey={adminKey}
-                                      onReady={() => setScreen("review")} />}
+                                      onReady={() => goScreen("review")} />}
         {screen === "review"     && <ReviewScreen       jobId={jobId} apiBase={apiBase} adminKey={adminKey}
-                                      onBack={() => setScreen("edit")} />}
+                                      onBack={() => goScreen("edit")} />}
         {/* LaTeX mode: ReviewScreen pre-seeded with one blank question, no job polling */}
         {screen === "latex"      && <ReviewScreen       jobId={latexJobId} apiBase={apiBase} adminKey={adminKey}
-                                      onBack={() => setScreen("upload")}
+                                      onBack={() => goScreen("upload")}
                                       initialQuestions={[createBlankQuestion(0, [])]} />}
         {screen === "images"     && <ImageUploadScreen  apiBase={apiBase} adminKey={adminKey}
-                                      onBack={() => setScreen("upload")} />}
+                                      onBack={() => goScreen("upload")} />}
       </div>
     </MathJaxContext>
   );

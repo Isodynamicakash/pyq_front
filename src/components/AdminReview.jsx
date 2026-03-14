@@ -520,9 +520,21 @@ function QuestionEditor({ q, onChange, onApplyBelow, chapters, topics, papers })
                      border: `1px solid ${!q.exam_date ? C.amber : C.border}`,
                      borderRadius: 6, padding: "8px 10px", fontSize: 13, boxSizing: "border-box" }} />
         </div>
-        <ComboBox label="Shift" warn={!q.shift} value={q.shift || ""} placeholder="Morning / Evening…"
-          onChange={val => setInstant("shift")(val)}
-          options={[{ value: "Morning", label: "Morning" }, { value: "Evening", label: "Evening" }]} />
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 11, color: !q.shift ? C.amber : C.textMuted, marginBottom: 4, fontWeight: 600 }}>
+            Shift {!q.shift && "⚠ MISSING"}
+          </div>
+          <div style={{ display: "flex", gap: 6 }}>
+            {["Morning", "Evening"].map(s => (
+              <button key={s} onClick={() => setInstant("shift")(s)} style={{
+                flex: 1, padding: "8px 0", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer",
+                border: `1px solid ${q.shift === s ? C.blue : C.border}`,
+                background: q.shift === s ? C.blue + "22" : C.surface,
+                color: q.shift === s ? C.blueLight : C.textMuted,
+              }}>{s === "Morning" ? "☀️ Morning" : "🌙 Evening"}</button>
+            ))}
+          </div>
+        </div>
         <div style={{ marginBottom: 12 }}>
           <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 4, fontWeight: 600 }}>Year</div>
           <div style={{ background: C.surfaceHigh, border: `1px solid ${C.border}`,
@@ -1698,12 +1710,6 @@ function ReviewScreen({ jobId, apiBase, adminKey, onBack, initialQuestions }) {
   const autoSaveRef = useRef(null);
 
   // ── Check for crash recovery on mount ────────────────────────────────────
-  useEffect(() => {
-    if (initialQuestions) return; // LaTeX mode — no recovery needed
-    const saved = loadRecovery(jobId);
-    if (saved && saved.length > 0) setRecoveryBanner(true);
-  }, [jobId]);
-
   // ── Auto-save to localStorage on every questions change (debounced 1s) ───
   useEffect(() => {
     if (questions.length === 0) return;
@@ -1730,7 +1736,14 @@ function ReviewScreen({ jobId, apiBase, adminKey, onBack, initialQuestions }) {
       let idx = 0;
       if (!initialQuestions) {
         const qData = results[idx++];
-        setQuestions(qData.questions || []);
+        const serverQs = qData.questions || [];
+        const recovered = loadRecovery(jobId);
+        if (recovered && recovered.length > 0) {
+          setQuestions(recovered);
+          setRecoveryBanner(true);
+        } else {
+          setQuestions(serverQs);
+        }
       }
       setChapters(Array.isArray(results[idx])   ? results[idx]   : []); idx++;
       setTopics(Array.isArray(results[idx])     ? results[idx]   : []); idx++;
@@ -1797,12 +1810,16 @@ function ReviewScreen({ jobId, apiBase, adminKey, onBack, initialQuestions }) {
     const newErrors = {};
     const savedKeys = new Set();
 
-    // ── Batch in groups of 5 to avoid Railway OOM crash ──────────────────────
-    const BATCH_SIZE = 5;
+    // ── Parallel batches of 8 — fast but won't OOM Railway ───────────────────
+    // Each request sends only 1 question, so parallel is safe.
+    // OOM was caused by sending ALL 149 at once in one request body — not by
+    // concurrent requests. Batching to 8 concurrent keeps DB connections low.
+    const BATCH_SIZE = 8;
     for (let batchStart = 0; batchStart < subset.length; batchStart += BATCH_SIZE) {
       const batch = subset.slice(batchStart, batchStart + BATCH_SIZE);
 
-      for (const q of batch) {
+      // Save all questions in this batch in parallel
+      await Promise.all(batch.map(async (q) => {
         const qKey = q._manualId || String(q.number);
         try {
           const res = await fetch(`${apiBase}/api/admin/save-questions`, {
@@ -1827,12 +1844,7 @@ function ReviewScreen({ jobId, apiBase, adminKey, onBack, initialQuestions }) {
         } catch (e) {
           newErrors[qKey] = String(e);
         }
-      }
-
-      // Small pause between batches — lets Railway breathe
-      if (batchStart + BATCH_SIZE < subset.length) {
-        await new Promise(r => setTimeout(r, 300));
-      }
+      }));
 
       // Update UI after each batch so user sees live progress
       setSaveResult({
@@ -2065,7 +2077,7 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
     const h = { "x-admin-key": adminKey };
     try {
       const [qRes, cRes, tRes, pRes] = await Promise.all([
-        fetch(`${apiBase}/api/admin/questions?limit=500&offset=0`, { headers: h }).then(r => r.json()),
+        fetch(`${apiBase}/api/admin/questions?limit=2000&offset=0`, { headers: h }).then(r => r.json()),
         fetch(`${apiBase}/api/admin/chapters`, { headers: h }).then(r => r.json()).catch(() => []),
         fetch(`${apiBase}/api/admin/topics`,   { headers: h }).then(r => r.json()).catch(() => []),
         fetch(`${apiBase}/api/admin/papers`,   { headers: h }).then(r => r.json()).catch(() => []),

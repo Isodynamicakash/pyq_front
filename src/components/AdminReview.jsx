@@ -16,8 +16,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo, memo } from "react";
 import { MathJaxContext, MathJax } from "better-react-mathjax";
-import { VariableSizeList as VList } from "react-window";
-import AutoSizer from "react-virtualized-auto-sizer";
+// react-window removed — using simple pagination instead
 
 const MATHJAX_CONFIG = {
   loader: { load: ["input/tex", "output/chtml"] },
@@ -396,6 +395,29 @@ function buildPaperOptions(papers) {
     });
 }
 
+// ─── DebouncedInput ───────────────────────────────────────────────────────────
+// PERF: Typing stays local. onCommit fires only on blur or Enter — never on each
+//       keystroke — so parent state and MathJax are not touched while the user types.
+function DebouncedInput({ value: externalValue, onCommit, placeholder = "", style = {} }) {
+  const [local, setLocal] = useState(externalValue);
+  // Sync inward when parent changes the value from outside
+  useEffect(() => { setLocal(externalValue); }, [externalValue]);
+  return (
+    <input
+      value={local}
+      placeholder={placeholder}
+      onChange={e => setLocal(e.target.value)}
+      onBlur={() => { if (local !== externalValue) onCommit(local); }}
+      onKeyDown={e => { if (e.key === "Enter") { e.target.blur(); } }}
+      style={{
+        width: "100%", boxSizing: "border-box", background: C.bg, color: C.text,
+        border: `1px solid ${C.border}`, borderRadius: 6,
+        padding: "8px 10px", fontSize: 13, outline: "none", ...style,
+      }}
+    />
+  );
+}
+
 // ─── QuestionEditor ───────────────────────────────────────────────────────────
 // PERF: draft state is purely local; preview only updates when user clicks Apply
 function QuestionEditor({ q, onChange, onApplyBelow, chapters, topics, papers }) {
@@ -541,11 +563,12 @@ function QuestionEditor({ q, onChange, onApplyBelow, chapters, topics, papers })
             }}>{s[0]+s.slice(1).toLowerCase()}</button>
           ))}
         </div>
-        <input value={q.subject||""} placeholder="or type custom…"
-          onChange={e=>setInstant("subject")(e.target.value)}
-          style={{width:"100%",boxSizing:"border-box",background:C.bg,color:C.text,
-                 border:`1px solid ${C.border}`,borderRadius:6,
-                 padding:"8px 10px",fontSize:13,outline:"none"}}/>
+        {/* PERF: fires setInstant only on blur, not on every keystroke */}
+        <DebouncedInput
+          value={q.subject||""}
+          placeholder="or type custom…"
+          onCommit={val=>setInstant("subject")(val)}
+        />
       </div>
 
       {/* Chapter · Topic */}
@@ -565,10 +588,15 @@ function QuestionEditor({ q, onChange, onApplyBelow, chapters, topics, papers })
         <Select label="Difficulty" value={q.difficulty||"medium"} onChange={setInstant("difficulty")} options={[
           {value:"easy",label:"Easy"},{value:"medium",label:"Medium"},{value:"hard",label:"Hard"},
         ]}/>
-        <Input label="Marks (+)" value={String(q.marks_correct??4)}
-               onChange={v=>setInstant("marks_correct")(Number(v))}/>
-        <Input label="Marks (−)" value={String(q.marks_wrong??-1)}
-               onChange={v=>setInstant("marks_wrong")(Number(v))}/>
+        {/* PERF: Marks fields use DebouncedInput — fire only on blur, not every keystroke */}
+        <div style={{marginBottom:12}}>
+          <div style={{fontSize:11,color:C.textMuted,marginBottom:4,fontWeight:600}}>Marks (+)</div>
+          <DebouncedInput value={String(q.marks_correct??4)} onCommit={v=>setInstant("marks_correct")(Number(v))}/>
+        </div>
+        <div style={{marginBottom:12}}>
+          <div style={{fontSize:11,color:C.textMuted,marginBottom:4,fontWeight:600}}>Marks (−)</div>
+          <DebouncedInput value={String(q.marks_wrong??-1)} onCommit={v=>setInstant("marks_wrong")(Number(v))}/>
+        </div>
       </div>
 
       {/* Question text — PERF: typing only updates draft, NOT the shared q object */}
@@ -873,6 +901,63 @@ const MathPreview = memo(function MathPreview({ content, style }) {
   );
 });
 
+// ─── SolutionDraftTextarea ────────────────────────────────────────────────────
+// PERF: Isolated draft so typing in Solution does NOT call parent onChange
+//       (which would re-render all cards + re-typeset MathJax).
+//       Only fires upward on blur or when Apply is clicked.
+function SolutionDraftTextarea({ q, onChange }) {
+  const [local, setLocal]  = useState(q.solution || "");
+  const [dirty, setDirty]  = useState(false);
+  const prevSolRef = useRef(q.solution);
+
+  // Sync inward when parent changes solution from outside (e.g. image insert)
+  useEffect(() => {
+    if (q.solution !== prevSolRef.current) {
+      prevSolRef.current = q.solution;
+      setLocal(q.solution || "");
+      setDirty(false);
+    }
+  }, [q.solution]);
+
+  const apply = useCallback(() => {
+    prevSolRef.current = local;
+    onChange({ ...q, solution: local });
+    setDirty(false);
+  }, [q, local, onChange]);
+
+  return (
+    <div>
+      <textarea
+        value={local}
+        rows={4}
+        onChange={e => { setLocal(e.target.value); setDirty(true); }}
+        onBlur={apply}   // silently apply on blur so preview updates when user clicks away
+        style={{
+          width: "100%", boxSizing: "border-box", background: C.bg, color: C.text,
+          border: `1px solid ${dirty ? C.amber + "99" : C.border}`, borderRadius: 6,
+          padding: "8px 10px", fontSize: 13,
+          fontFamily: "'Fira Code', monospace", resize: "vertical", outline: "none",
+        }}
+      />
+      {dirty && (
+        <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+          <button onClick={apply} style={{
+            padding: "5px 16px", borderRadius: 6, fontSize: 12, fontWeight: 700,
+            background: C.amber, border: "none", color: "#000", cursor: "pointer",
+          }}>✓ Apply Solution</button>
+          <button onClick={() => { setLocal(q.solution || ""); setDirty(false); }} style={{
+            padding: "5px 12px", borderRadius: 6, fontSize: 12,
+            background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, cursor: "pointer",
+          }}>Discard</button>
+          <span style={{ fontSize: 11, color: C.amber, alignSelf: "center" }}>
+            ● preview updates on Apply or when you click away
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── QuestionCard ─────────────────────────────────────────────────────────────
 // PERF: wrapped in React.memo with field-level equality check
 //       → only the card whose `q` object actually changed re-renders
@@ -1072,12 +1157,11 @@ const QuestionCard = memo(function QuestionCard({
             <>
               <div style={{marginBottom:14}}>
                 <div style={{fontSize:11,color:C.textMuted,marginBottom:4,fontWeight:600}}>
-                  Solution (LaTeX) — preview appears above ↑
+                  Solution (LaTeX) — preview appears above ↑ (apply to update preview)
                 </div>
-                <textarea value={q.solution||""} onChange={e=>onChange({...q,solution:e.target.value})} rows={4}
-                  style={{width:"100%",boxSizing:"border-box",background:C.bg,color:C.text,
-                    border:`1px solid ${C.border}`,borderRadius:6,padding:"8px 10px",fontSize:13,
-                    fontFamily:"'Fira Code', monospace",resize:"vertical",outline:"none"}}/>
+                {/* PERF: solution textarea now uses localSolution draft — does NOT fire
+                    onChange on every keystroke. The QuestionEditor's applyDraft picks it up. */}
+                <SolutionDraftTextarea q={q} onChange={onChange} />
               </div>
               <QuestionEditor q={q} onChange={onChange}
                 onApplyBelow={(field,val)=>setPending({field,value:val})}
@@ -1628,7 +1712,8 @@ function clearRecovery(jobId){
 }
 
 // ─── ReviewScreen ─────────────────────────────────────────────────────────────
-// PERF: react-window VariableSizeList → only ~4 cards rendered at any time
+// Simple paginated ReviewScreen — 10 questions per page, no virtualization
+const REVIEW_PAGE_SIZE = 10;
 function ReviewScreen({ jobId, apiBase, adminKey, onBack, initialQuestions }) {
   const [questions,      setQuestions]      = useState(initialQuestions||[]);
   const [loading,        setLoading]        = useState(!initialQuestions);
@@ -1639,12 +1724,9 @@ function ReviewScreen({ jobId, apiBase, adminKey, onBack, initialQuestions }) {
   const [saveResult,     setSaveResult]     = useState(null);
   const [saveErrors,     setSaveErrors]     = useState({});
   const [recoveryBanner, setRecoveryBanner] = useState(false);
+  const [page,           setPage]           = useState(1);
   const autoSaveRef = useRef(null);
-  // Ref to the VList so we can call scrollToItem for gap navigation
-  const listRef = useRef(null);
-  // Track expanded heights per index for VariableSizeList
-  const itemHeights = useRef({});
-  const listOuterRef = useRef(null);
+  const topRef = useRef(null);
 
   // PERF: auto-save debounced to 2s with ref-equality guard
   const prevQsRef = useRef(questions);
@@ -1684,68 +1766,58 @@ function ReviewScreen({ jobId, apiBase, adminKey, onBack, initialQuestions }) {
     }).finally(()=>setLoading(false));
   },[jobId]);
 
-  const updateQ = useCallback((i,u)=>{
-    setQuestions(p=>{const n=[...p];n[i]=u;return n;});
-    // Reset cached height for this item so VList remeasures
-    delete itemHeights.current[i];
-    if(listRef.current) listRef.current.resetAfterIndex(i,false);
-  },[]);
+  const updateQ = useCallback((globalIdx, u) => {
+    setQuestions(p => { const n=[...p]; n[globalIdx]=u; return n; });
+  }, []);
 
-  const insertQuestion = useCallback((afterIndex)=>{
-    setQuestions(prev=>{
-      const afterQ=afterIndex>=0?prev[afterIndex]:null;
-      const refNum=afterQ?afterQ.number-0.5:(prev[0]?prev[0].number-0.5:0);
-      const blank=createBlankQuestion(refNum,prev);
-      const next=[...prev];
-      next.splice(afterIndex+1,0,blank);
+  const insertQuestion = useCallback((afterGlobalIdx) => {
+    setQuestions(prev => {
+      const afterQ = afterGlobalIdx >= 0 ? prev[afterGlobalIdx] : null;
+      const refNum = afterQ ? afterQ.number - 0.5 : (prev[0] ? prev[0].number - 0.5 : 0);
+      const blank  = createBlankQuestion(refNum, prev);
+      const next   = [...prev];
+      next.splice(afterGlobalIdx + 1, 0, blank);
       return next;
     });
-    // Invalidate heights from insertion point onward
-    const clearFrom=afterIndex+1;
-    Object.keys(itemHeights.current).forEach(k=>{
-      if(Number(k)>=clearFrom) delete itemHeights.current[k];
-    });
-    if(listRef.current) listRef.current.resetAfterIndex(Math.max(0,clearFrom),false);
-  },[]);
+  }, []);
 
-  const removeQuestion = useCallback((index)=>{
-    setQuestions(prev=>prev.filter((_,i)=>i!==index));
-    delete itemHeights.current[index];
-    if(listRef.current) listRef.current.resetAfterIndex(Math.max(0,index-1),false);
-  },[]);
+  const removeQuestion = useCallback((index) => {
+    setQuestions(prev => prev.filter((_, i) => i !== index));
+  }, []);
 
-  const applyBelow = useCallback((fromIndex,field,value)=>{
-    setQuestions(prev=>prev.map((q,i)=>{
-      if(i<=fromIndex) return q;
-      if(field==="exam_date") return{...q,exam_date:value,year:value.slice(0,4)};
-      if(field==="q_type")    return{...q,q_type:value};
-      return{...q,[field]:value};
+  const applyBelow = useCallback((fromIndex, field, value) => {
+    setQuestions(prev => prev.map((q, i) => {
+      if(i <= fromIndex) return q;
+      if(field === "exam_date") return {...q, exam_date:value, year:value.slice(0,4)};
+      if(field === "q_type")    return {...q, q_type:value};
+      return {...q, [field]:value};
     }));
-    // Heights unchanged — metadata fields don't alter card size
-  },[]);
+  }, []);
 
-  const isReady=(q)=>!!(q.answer&&q.chapter_name&&q.exam_date&&q.shift);
+  const isReady = (q) => !!(q.answer && q.chapter_name && q.exam_date && q.shift);
+  const readyCount = useMemo(() => questions.filter(isReady).length, [questions]);
 
-  // PERF: memoize derived values
-  const readyCount = useMemo(()=>questions.filter(isReady).length,[questions]);
-
-  const missingGaps = useMemo(()=>{
-    const nums=questions
-      .map(q=>q.number).filter(n=>typeof n==="number"&&!isNaN(n)&&Number.isInteger(n))
-      .sort((a,b)=>a-b);
-    const gaps=[];
-    for(let i=1;i<nums.length;i++){
-      const diff=nums[i]-nums[i-1];
-      if(diff>1){for(let m=nums[i-1]+1;m<nums[i];m++) gaps.push(m);}
+  const missingGaps = useMemo(() => {
+    const nums = questions
+      .map(q => q.number).filter(n => typeof n==="number" && !isNaN(n) && Number.isInteger(n))
+      .sort((a,b) => a-b);
+    const gaps = [];
+    for(let i=1; i<nums.length; i++){
+      const diff = nums[i]-nums[i-1];
+      if(diff > 1){ for(let m=nums[i-1]+1; m<nums[i]; m++) gaps.push(m); }
     }
     return gaps;
-  },[questions]);
+  }, [questions]);
 
-  const scrollToGap = useCallback((gapNum)=>{
-    const nextIdx=questions.findIndex(q=>q.number>gapNum);
-    const targetIdx=nextIdx>=0?nextIdx:questions.length-1;
-    if(targetIdx>=0&&listRef.current) listRef.current.scrollToItem(targetIdx,"start");
-  },[questions]);
+  const scrollToGap = useCallback((gapNum) => {
+    const nextIdx = questions.findIndex(q => q.number > gapNum);
+    const targetIdx = nextIdx >= 0 ? nextIdx : questions.length - 1;
+    if(targetIdx >= 0){
+      const targetPage = Math.floor(targetIdx / REVIEW_PAGE_SIZE) + 1;
+      setPage(targetPage);
+      setTimeout(() => topRef.current?.scrollIntoView({behavior:"smooth", block:"start"}), 50);
+    }
+  }, [questions]);
 
   // ── Batched save ─────────────────────────────────────────────────────────────
   const saveQuestions=async(subset)=>{
@@ -1786,66 +1858,14 @@ function ReviewScreen({ jobId, apiBase, adminKey, onBack, initialQuestions }) {
     if(Object.keys(newErrors).length===0) clearRecovery(jobId);
     setSaveResult({saved_count:savedKeys.size,failed_count:Object.keys(newErrors).length});
     setSaving(false);
-    // Reset all heights after save reorder
-    itemHeights.current={};
-    if(listRef.current) listRef.current.resetAfterIndex(0,true);
+    setPage(1); // reset to page 1 after save reorders the list
   };
 
-  // ── VList item renderer ───────────────────────────────────────────────────────
-  // Each "row" in the VList renders: AddQuestionButton + QuestionCard + AddQuestionButton
-  // We use a ResizeObserver per row to track real height changes (tab open/close)
-  const getItemSize = useCallback((index)=>{
-    // Default collapsed card height ≈ 420px; open edit tab ≈ 900px
-    return itemHeights.current[index] || 460;
-  },[]);
-
-  const VListRow = useCallback(({index, style})=>{
-    const q = questions[index];
-    if(!q) return null;
-    const qKey   = q._manualId||String(q.number);
-    const errMsg = saveErrors[qKey];
-    const rowRef = useRef(null);
-
-    // ResizeObserver: when the card's actual height changes (tab toggled),
-    // update our height map and tell VList to re-measure
-    useEffect(()=>{
-      if(!rowRef.current) return;
-      const ro = new ResizeObserver(entries=>{
-        for(const entry of entries){
-          const h = entry.borderBoxSize?.[0]?.blockSize ?? entry.contentRect.height;
-          if(h && Math.abs((itemHeights.current[index]||0)-h) > 4){
-            itemHeights.current[index] = h + 16; // +16 for gap
-            if(listRef.current) listRef.current.resetAfterIndex(index, false);
-          }
-        }
-      });
-      ro.observe(rowRef.current);
-      return()=>ro.disconnect();
-    },[index]);
-
-    return(
-      <div style={{...style, paddingBottom:16}}>
-        <div ref={rowRef}>
-          {index===0&&<AddQuestionButton onClick={()=>insertQuestion(-1)}/>}
-          <QuestionCard
-            q={q} index={index} total={questions.length}
-            jobId={jobId} apiBase={apiBase} adminKey={adminKey}
-            saveError={errMsg}
-            onChange={(u)=>updateQ(index,u)}
-            onSaveOne={(q)=>saveQuestions([q])}
-            onApplyBelow={applyBelow}
-            onRemove={()=>{
-              removeQuestion(index);
-              setSaveErrors(prev=>{const n={...prev};delete n[qKey];return n;});
-            }}
-            chapters={chapters} topics={topics} papers={papers}
-          />
-          <AddQuestionButton onClick={()=>insertQuestion(index)}/>
-        </div>
-      </div>
-    );
-  },[questions, saveErrors, jobId, apiBase, adminKey, chapters, topics, papers,
-     updateQ, applyBelow, removeQuestion, insertQuestion, saveQuestions]);
+  // ── Pagination ───────────────────────────────────────────────────────────────
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(questions.length / REVIEW_PAGE_SIZE)), [questions]);
+  const paginated  = useMemo(() => questions.slice((page-1)*REVIEW_PAGE_SIZE, page*REVIEW_PAGE_SIZE), [questions, page]);
+  // Global index of first item on current page (for applyBelow + insertQuestion)
+  const pageOffset = (page-1) * REVIEW_PAGE_SIZE;
 
   if(loading) return(
     <div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center"}}>
@@ -1913,6 +1933,7 @@ function ReviewScreen({ jobId, apiBase, adminKey, onBack, initialQuestions }) {
           </span>
           <span style={{color:C.textMuted,fontSize:13}}>{questions.length} question{questions.length!==1?"s":""}</span>
           <span style={{color:C.green,fontSize:13}}>{readyCount} ready</span>
+          {totalPages>1&&<span style={{fontSize:12,color:C.textDim}}>pg {page}/{totalPages}</span>}
           <span style={{fontSize:11,color:C.textDim}}>📚 {chapters.length} ch · 📄 {papers.length} papers</span>
           <span style={{flex:1}}/>
           {saveResult&&(
@@ -1931,33 +1952,95 @@ function ReviewScreen({ jobId, apiBase, adminKey, onBack, initialQuestions }) {
         </div>
       </div>
 
-      {/* PERF: VariableSizeList — only renders visible cards */}
-      <div style={{flex:1}}>
-        <AutoSizer>
-          {({height,width})=>(
-            <VList
-              ref={listRef}
-              outerRef={listOuterRef}
-              height={height}
-              width={width}
-              itemCount={questions.length}
-              itemSize={getItemSize}
-              overscanCount={2}
-            >
-              {VListRow}
-            </VList>
-          )}
-        </AutoSizer>
-      </div>
-
-      {questions.length>3&&(
-        <div style={{textAlign:"center",padding:"16px 0",borderTop:`1px solid ${C.border}`,background:C.bg,flexShrink:0}}>
-          <Btn color={C.green} disabled={saving||readyCount===0}
-               onClick={()=>saveQuestions(questions.filter(isReady))}>
-            {saving?"Saving…":`Bulk Save All Ready (${readyCount})`}
-          </Btn>
+      {/* Paginated cards — 10 per page, no virtualization, no ResizeObserver */}
+      <div ref={topRef} style={{maxWidth:900, margin:"0 auto", padding:"24px 16px"}}>
+        <div style={{display:"flex", flexDirection:"column"}}>
+          <AddQuestionButton onClick={()=>insertQuestion(pageOffset - 1)}/>
+          {paginated.map((q, i) => {
+            const globalIdx = pageOffset + i;
+            const qKey      = q._manualId || String(q.number);
+            const errMsg    = saveErrors[qKey];
+            return (
+              <div key={q._manualId || q.number}>
+                <QuestionCard
+                  q={q} index={globalIdx} total={questions.length}
+                  jobId={jobId} apiBase={apiBase} adminKey={adminKey}
+                  saveError={errMsg}
+                  onChange={(u) => updateQ(globalIdx, u)}
+                  onSaveOne={(q) => saveQuestions([q])}
+                  onApplyBelow={applyBelow}
+                  onRemove={() => {
+                    removeQuestion(globalIdx);
+                    setSaveErrors(prev => { const n={...prev}; delete n[qKey]; return n; });
+                  }}
+                  chapters={chapters} topics={topics} papers={papers}
+                />
+                <AddQuestionButton onClick={() => insertQuestion(globalIdx)}/>
+              </div>
+            );
+          })}
         </div>
-      )}
+
+        {/* Pagination controls */}
+        {totalPages > 1 && (
+          <div style={{display:"flex", justifyContent:"center", alignItems:"center", gap:8, marginTop:28, flexWrap:"wrap"}}>
+            <button onClick={() => { setPage(1); topRef.current?.scrollIntoView({behavior:"smooth"}); }}
+              disabled={page===1}
+              style={{padding:"7px 12px", borderRadius:6, background:C.surface,
+                     border:`1px solid ${C.border}`, color:page===1?C.textDim:C.text,
+                     cursor:page===1?"not-allowed":"pointer", fontSize:12}}>⟨⟨ First</button>
+            <button onClick={() => { setPage(p=>Math.max(1,p-1)); topRef.current?.scrollIntoView({behavior:"smooth"}); }}
+              disabled={page===1}
+              style={{padding:"7px 16px", borderRadius:6, background:C.surface,
+                     border:`1px solid ${C.border}`, color:page===1?C.textDim:C.text,
+                     cursor:page===1?"not-allowed":"pointer", fontSize:13}}>← Prev</button>
+
+            {/* Page number pills */}
+            {Array.from({length:totalPages}, (_,i)=>i+1)
+              .filter(p => p===1 || p===totalPages || Math.abs(p-page)<=2)
+              .reduce((acc, p, idx, arr) => {
+                if(idx>0 && p-arr[idx-1]>1) acc.push('...');
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((p, idx) => p==='...'
+                ? <span key={`ellipsis-${idx}`} style={{color:C.textDim, padding:"0 4px"}}>…</span>
+                : <button key={p} onClick={() => { setPage(p); topRef.current?.scrollIntoView({behavior:"smooth"}); }}
+                    style={{
+                      padding:"7px 13px", borderRadius:6, fontSize:13, fontWeight:p===page?700:400,
+                      background:p===page?C.blue:C.surface,
+                      border:`1px solid ${p===page?C.blue:C.border}`,
+                      color:p===page?"#fff":C.text, cursor:"pointer",
+                    }}>{p}</button>
+              )}
+
+            <button onClick={() => { setPage(p=>Math.min(totalPages,p+1)); topRef.current?.scrollIntoView({behavior:"smooth"}); }}
+              disabled={page===totalPages}
+              style={{padding:"7px 16px", borderRadius:6, background:C.surface,
+                     border:`1px solid ${C.border}`, color:page===totalPages?C.textDim:C.text,
+                     cursor:page===totalPages?"not-allowed":"pointer", fontSize:13}}>Next →</button>
+            <button onClick={() => { setPage(totalPages); topRef.current?.scrollIntoView({behavior:"smooth"}); }}
+              disabled={page===totalPages}
+              style={{padding:"7px 12px", borderRadius:6, background:C.surface,
+                     border:`1px solid ${C.border}`, color:page===totalPages?C.textDim:C.text,
+                     cursor:page===totalPages?"not-allowed":"pointer", fontSize:12}}>Last ⟩⟩</button>
+
+            <span style={{fontSize:12, color:C.textMuted, marginLeft:8}}>
+              Page {page}/{totalPages} · Q{pageOffset+1}–{Math.min(pageOffset+REVIEW_PAGE_SIZE, questions.length)} of {questions.length}
+            </span>
+          </div>
+        )}
+
+        {/* Bottom bulk save */}
+        {questions.length > 3 && (
+          <div style={{textAlign:"center", marginTop:24}}>
+            <Btn color={C.green} disabled={saving||readyCount===0}
+                 onClick={()=>saveQuestions(questions.filter(isReady))}>
+              {saving?"Saving…":`Bulk Save All Ready (${readyCount})`}
+            </Btn>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
+import { Analytics } from "@vercel/analytics/react";
 import AdminReview from "./components/AdminReview";
 import QuestionBrowser from "./components/QuestionBrowser";
 import LandingPage from "./components/LandingPage";
@@ -74,9 +75,24 @@ function App() {
     return () => window.removeEventListener("hashchange", fn);
   }, []);
 
-  if (page === "admin") return <AdminGate />;
-  if (page === "pyq")   return <QuestionBrowser apiBase={API_BASE} onBack={() => goTo("landing")} isDark={isDark} onToggleTheme={toggleTheme} />;
-  return <LandingPage onJeeMains={() => goTo("pyq")} isDark={isDark} onToggleTheme={toggleTheme} />;
+  if (page === "admin") return (
+    <>
+      <AdminGate />
+      <Analytics />
+    </>
+  );
+  if (page === "pyq") return (
+    <>
+      <QuestionBrowser apiBase={API_BASE} onBack={() => goTo("landing")} isDark={isDark} onToggleTheme={toggleTheme} />
+      <Analytics />
+    </>
+  );
+  return (
+    <>
+      <LandingPage onJeeMains={() => goTo("pyq")} isDark={isDark} onToggleTheme={toggleTheme} />
+      <Analytics />
+    </>
+  );
 }
 
 createRoot(document.getElementById("root")).render(<App />);

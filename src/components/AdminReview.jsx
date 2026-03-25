@@ -978,6 +978,7 @@ function questionCardPropsEqual(prev, next) {
 // renderContent is pure — same text → same output; we use the global cache
 function buildHtml(text, imgUrlFn) {
   if (!text) return "";
+  const cleaned = text.replace(/\\n/g, "\n");
   const fixed = fixLatexCached(text);
   // Split on [IMAGE:...] tokens, build an HTML string
   // MathJax will parse the $...$ inside this HTML when typesetPromise runs

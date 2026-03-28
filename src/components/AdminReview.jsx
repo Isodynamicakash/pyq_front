@@ -96,17 +96,20 @@ function fixTabular(text) {
 }
 
 const MULTIROW_ENVS = ["aligned", "align", "gather", "gathered", "eqnarray", "cases", "split"];
+// REPLACE your existing fixAligned with this:
 function fixAligned(text) {
   if (!text) return text;
   const envPattern = MULTIROW_ENVS.join("|");
   const re = new RegExp(`\\\\begin\\{(${envPattern})\\}([\\s\\S]*?)\\\\end\\{\\1\\}`, "g");
   return text.replace(re, (full, env, body) => {
     const lines = body.split("\n").map(l => l.trimEnd()).filter(l => l.trim() !== "");
-    const needsFix = lines.slice(0, -1).some(l => !l.trimEnd().endsWith("\\\\"));
-    if (!needsFix) return full;
+    
     const fixed = lines.map((line, idx) => {
       const isLast = idx === lines.length - 1;
-      if (!isLast && !line.trimEnd().endsWith("\\\\")) return line + " \\\\";
+      // ONLY add \\ if it's NOT the last line AND it doesn't already have \\
+      if (!isLast && !line.trimEnd().endsWith("\\\\")) {
+        return line + " \\\\";
+      }
       return line;
     });
     return `\\begin{${env}}\n${fixed.join("\n")}\n\\end{${env}}`;

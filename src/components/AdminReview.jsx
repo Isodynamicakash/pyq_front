@@ -144,10 +144,14 @@ function fixCrammedEquations(text) {
     return parts.map(p => `$${p}$`).join("\n\n");
   });
 }
-function fixLatex(text) {
-  if (!text) return text;
-  return fixCrammedEquations(fixLineBreaks(fixInlineEnvs(fixAligned(fixTabular(text)))));
-}
+// AdminReview.jsx
+const fixLatex = (text) => {
+  if (!text) return "";
+  
+  // REMOVE: fixLineBreaks, fixAligned, etc. 
+  // Your LaTeX is already correct, so we return it as-is.
+  return text; 
+};
 
 // ─── Global fixLatex cache — same string → instant return ────────────────────
 const fixLatexCache = new Map();

@@ -619,59 +619,60 @@ function QuestionEditor({ q, onChange, onApplyBelow, chapters, topics, papers })
       </div>
 
       {/* Options */}
-      {q.q_type!=="NUMERICAL"&&(
-        <div style={{marginBottom:12}}>
-          <div style={{fontSize:11,color:C.textMuted,marginBottom:6,fontWeight:600}}>Options</div>
-          {[0,1,2,3].map(i=>(
-            <div key={i} style={{display:"flex",gap:8,alignItems:"flex-start",marginBottom:8}}>
-              <button onClick={()=>onChange({...q,answer:String(i+1),question:draft.question,solution:draft.solution,options:draft.options})} style={{
-                width:28,height:28,borderRadius:"50%",flexShrink:0,marginTop:4,
-                border:`2px solid ${q.answer===String(i+1)?C.green:C.border}`,
-                background:q.answer===String(i+1)?C.green:"transparent",
-                cursor:"pointer",color:C.text,fontWeight:700,fontSize:12,
-              }}>{i+1}</button>
-              <input value={draft.options[i]||""} onChange={e=>setOption(i)(e.target.value)}
-                     placeholder={`Option ${i+1} (LaTeX)`} style={{
-                flex:1,background:C.bg,color:C.text,
-                border:`1px solid ${q.answer===String(i+1)?C.green:C.border}`,
-                borderRadius:6,padding:"7px 10px",fontSize:13,
-                fontFamily:"'Fira Code', monospace",outline:"none",
-              }}/>
-            </div>
-          ))}
-          {!q.answer&&<div style={{fontSize:11,color:C.amber}}>⚠ Click a circle to mark correct answer</div>}
-        </div>
-      )}
-      {q.q_type==="NUMERICAL"&&(
-        <Input label="Answer (numerical)" value={q.answer||""}
-               onChange={v=>onChange({...q,answer:v,question:draft.question,solution:draft.solution,options:draft.options})}/>
-      )}
+{q.q_type !== "NUMERICAL" && (
+  <div style={{ marginBottom: 12 }}>
+    <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 6, fontWeight: 600 }}>Options</div>
+    {[0, 1, 2, 3].map(i => {
+      const optionVal = String(i + 1);
+      // Check if this option is selected (handles "1, 2" or just "1")
+      const isSelected = q.answer ? q.answer.split(',').map(s => s.trim()).includes(optionVal) : false;
 
-      {dirty&&(
-        <div style={{
-          marginTop:4,padding:"12px 16px",borderRadius:8,
-          background:C.amberBg,border:`1px solid ${C.amber}55`,
-          display:"flex",alignItems:"center",gap:14,
-        }}>
-          <div style={{flex:1,fontSize:12,color:C.amber}}>
-            <span style={{fontWeight:700}}>Unsaved changes</span> — preview above won't update until you apply
-          </div>
-          <button onClick={applyDraft} style={{
-            padding:"8px 20px",borderRadius:7,fontSize:13,fontWeight:700,
-            background:C.amber,border:"none",color:"#000",cursor:"pointer",
-          }}>✓ Apply Changes</button>
-          <button onClick={()=>{
-            setDraft({question:q.question||"",solution:q.solution||"",options:q.options||["","","",""]});
-            setDirty(false);
-          }} style={{
-            padding:"8px 14px",borderRadius:7,fontSize:12,fontWeight:600,
-            background:"transparent",border:`1px solid ${C.border}`,color:C.textMuted,cursor:"pointer",
-          }}>Discard</button>
+      return (
+        <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 8 }}>
+          <button
+            onClick={() => {
+              let newAnswer;
+              if (q.q_type === "MSQ") {
+                // MSQ Toggle Logic
+                let current = q.answer ? q.answer.split(',').map(s => s.trim()).filter(Boolean) : [];
+                if (isSelected) {
+                  current = current.filter(val => val !== optionVal);
+                } else {
+                  current.push(optionVal);
+                }
+                newAnswer = current.sort().join(', ');
+              } else {
+                // Standard MCQ Logic
+                newAnswer = optionVal;
+              }
+              onChange({ ...q, answer: newAnswer, question: draft.question, solution: draft.solution, options: draft.options });
+            }}
+            style={{
+              width: 28, height: 28, borderRadius: "50%", flexShrink: 0, marginTop: 4,
+              border: `2px solid ${isSelected ? C.green : C.border}`,
+              background: isSelected ? C.green : "transparent",
+              cursor: "pointer", color: isSelected ? "#fff" : C.text, fontWeight: 700, fontSize: 12,
+            }}
+          >
+            {i + 1}
+          </button>
+          <input
+            value={draft.options[i] || ""}
+            onChange={e => setOption(i)(e.target.value)}
+            placeholder={`Option ${i + 1} (LaTeX)`}
+            style={{
+              flex: 1, background: C.bg, color: C.text,
+              border: `1px solid ${isSelected ? C.green : C.border}`,
+              borderRadius: 6, padding: "7px 10px", fontSize: 13,
+              fontFamily: "'Fira Code', monospace", outline: "none",
+            }}
+          />
         </div>
-      )}
-    </div>
-  );
-}
+      );
+    })}
+    {!q.answer && <div style={{ fontSize: 11, color: C.amber }}>⚠ Click a circle to mark correct answer(s)</div>}
+  </div>
+)}
 
 // ─── ImagesTab (unchanged logic, refs stable) ─────────────────────────────────
 function ImagesTab({ q, onChange, jobId, apiBase, adminKey }) {

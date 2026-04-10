@@ -749,8 +749,10 @@ function EmptyState({ hasFilters, C }) {
   );
 }
 
+const EXAM_ID_MAP = { "jee-mains": 1, "neet": 3 };
+
 // ── Main ──────────────────────────────────────────────────────────────────────
-export default function QuestionBrowser({ apiBase, onBack, isDark: isDarkProp, onToggleTheme }) {
+export default function QuestionBrowser({ apiBase, onBack, isDark: isDarkProp, onToggleTheme, examId }) {
   const API_URL = apiBase || API;
 
   const [isDark, setIsDark] = useState(isDarkProp !== undefined ? isDarkProp : true);
@@ -780,12 +782,14 @@ export default function QuestionBrowser({ apiBase, onBack, isDark: isDarkProp, o
   },[]);
 
   useEffect(()=>{
-    fetch(`${API_URL}/api/questions/filters`)
+    const examParam = examId && EXAM_ID_MAP[examId] ? `?exam_id=${EXAM_ID_MAP[examId]}` : "";
+    fetch(`${API_URL}/api/questions/filters${examParam}`)
       .then(r=>r.json()).then(setFilters).catch(console.error);
-  },[]);
+  },[examId]);
 
   const buildQuery = useCallback((p)=>{
     const qs = new URLSearchParams();
+    if (examId && EXAM_ID_MAP[examId]) qs.set("exam_id", EXAM_ID_MAP[examId]);
     (active.subject||[]).forEach(v=>qs.append("subject",v));
     (active.chapter||[]).forEach(v=>qs.append("chapter",v));
     (active.topic||[]).forEach(v=>qs.append("topic",v));
@@ -797,7 +801,7 @@ export default function QuestionBrowser({ apiBase, onBack, isDark: isDarkProp, o
     qs.set("limit",  PAGE_SIZE);
     qs.set("offset", (p-1)*PAGE_SIZE);
     return qs.toString();
-  },[active]);
+  },[active, examId]);
 
   // Fetch when active filters change → reset to page 1
   useEffect(()=>{
@@ -878,7 +882,10 @@ export default function QuestionBrowser({ apiBase, onBack, isDark: isDarkProp, o
               display:"flex",alignItems:"center",justifyContent:"center",
               fontSize:11,fontWeight:900,color:"#fff",letterSpacing:-.5,
             }}>EC</div>
-            <span style={{fontSize:isMobile?13:15,fontWeight:800,color:C.text,letterSpacing:-.3}}>ExamsCalendar.PYQ</span>
+            <span style={{fontSize:isMobile?13:15,fontWeight:800,color:C.text,letterSpacing:-.3}}>
+              ExamsCalendar.PYQ
+              {examId && <span style={{fontWeight:600,color:C.textMuted}}> · {examId === "neet" ? "NEET" : "JEE Mains"}</span>}
+            </span>
             
           </div>
 

@@ -782,7 +782,13 @@ export default function QuestionBrowser({ apiBase, onBack, isDark: isDarkProp, o
   },[]);
 
   useEffect(()=>{
-    const examParam = examId && EXAM_ID_MAP[examId] ? `?exam_id=${EXAM_ID_MAP[examId]}` : "";
+    const numericId = examId ? EXAM_ID_MAP[examId] : null;
+    const examParam = numericId ? `?exam_id=${numericId}` : "";
+    // Reset sidebar filters when switching exams so JEE filters don't bleed into NEET
+    setActive({subject:[],chapter:[],topic:[],year:[],shift:[],difficulty:[],question_type:[],exam_date:[]});
+    setQuestions([]);
+    setTotal(0);
+    setPage(1);
     fetch(`${API_URL}/api/questions/filters${examParam}`)
       .then(r=>r.json()).then(setFilters).catch(console.error);
   },[examId]);
@@ -803,13 +809,16 @@ export default function QuestionBrowser({ apiBase, onBack, isDark: isDarkProp, o
     return qs.toString();
   },[active, examId]);
 
-  // Fetch when active filters change → reset to page 1
+  // Fetch when active filters OR examId change → reset to page 1
+  // exam_id is always the top-level filter — fetch even with no sidebar filters active
   useEffect(()=>{
-    const hasAny = Object.values(active).some(a=>Array.isArray(a)?a.length>0:Boolean(a));
-    if (!hasAny) { setQuestions([]); setTotal(0); setPage(1); return; }
+    const hasAny = !!examId || Object.values(active).some(a=>Array.isArray(a)?a.length>0:Boolean(a));
+    const numericExamId = examId ? EXAM_ID_MAP[examId] : null;
+    // If no exam selected and no sidebar filters, show nothing
+    if (!numericExamId && !hasAny) { setQuestions([]); setTotal(0); setPage(1); return; }
     setLoading(true);
     setPage(1);
-    setQuestions([]);   // clear immediately so old results never show
+    setQuestions([]);
     fetch(`${API_URL}/api/questions?${buildQuery(1)}`)
       .then(r=>r.json())
       .then(data=>{
@@ -818,7 +827,7 @@ export default function QuestionBrowser({ apiBase, onBack, isDark: isDarkProp, o
       })
       .catch(console.error)
       .finally(()=>setLoading(false));
-  },[active]);
+  },[active, examId]);
 
   // Fetch when page changes (but filters haven't changed)
   const goToPage = useCallback((p)=>{
@@ -833,7 +842,7 @@ export default function QuestionBrowser({ apiBase, onBack, isDark: isDarkProp, o
       .finally(()=>setLoading(false));
   },[buildQuery, totalPages]);
 
-  const hasAny = Object.values(active).some(a=>Array.isArray(a)?a.length>0:Boolean(a));
+  const hasAny = !!examId || Object.values(active).some(a=>Array.isArray(a)?a.length>0:Boolean(a));
   const activeCount = Object.values(active).reduce((n,a)=>n+(Array.isArray(a)?a.length:(a?1:0)),0);
 
   const handleFilterChange = (newActive) => {

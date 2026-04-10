@@ -619,60 +619,63 @@ function QuestionEditor({ q, onChange, onApplyBelow, chapters, topics, papers })
       </div>
 
       {/* Options */}
-{q.q_type !== "NUMERICAL" && (
-  <div style={{ marginBottom: 12 }}>
-    <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 6, fontWeight: 600 }}>Options</div>
-    {[0, 1, 2, 3].map(i => {
-      const optionVal = String(i + 1);
-      // Check if this option is selected (handles "1, 2" or just "1")
-      const isSelected = q.answer ? q.answer.split(',').map(s => s.trim()).includes(optionVal) : false;
+      {q.q_type !== "NUMERICAL" && (
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 6, fontWeight: 600 }}>Options</div>
+          {[0, 1, 2, 3].map(i => {
+            const optionVal = String(i + 1);
+            // Check if this option is selected (handles "1, 2" or just "1")
+            const isSelected = q.answer ? q.answer.split(',').map(s => s.trim()).includes(optionVal) : false;
 
-      return (
-        <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 8 }}>
-          <button
-            onClick={() => {
-              let newAnswer;
-              if (q.q_type === "MSQ") {
-                // MSQ Toggle Logic
-                let current = q.answer ? q.answer.split(',').map(s => s.trim()).filter(Boolean) : [];
-                if (isSelected) {
-                  current = current.filter(val => val !== optionVal);
-                } else {
-                  current.push(optionVal);
-                }
-                newAnswer = current.sort().join(', ');
-              } else {
-                // Standard MCQ Logic
-                newAnswer = optionVal;
-              }
-              onChange({ ...q, answer: newAnswer, question: draft.question, solution: draft.solution, options: draft.options });
-            }}
-            style={{
-              width: 28, height: 28, borderRadius: "50%", flexShrink: 0, marginTop: 4,
-              border: `2px solid ${isSelected ? C.green : C.border}`,
-              background: isSelected ? C.green : "transparent",
-              cursor: "pointer", color: isSelected ? "#fff" : C.text, fontWeight: 700, fontSize: 12,
-            }}
-          >
-            {i + 1}
-          </button>
-          <input
-            value={draft.options[i] || ""}
-            onChange={e => setOption(i)(e.target.value)}
-            placeholder={`Option ${i + 1} (LaTeX)`}
-            style={{
-              flex: 1, background: C.bg, color: C.text,
-              border: `1px solid ${isSelected ? C.green : C.border}`,
-              borderRadius: 6, padding: "7px 10px", fontSize: 13,
-              fontFamily: "'Fira Code', monospace", outline: "none",
-            }}
-          />
+            return (
+              <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 8 }}>
+                <button
+                  onClick={() => {
+                    let newAnswer;
+                    if (q.q_type === "MSQ") {
+                      // MSQ Toggle Logic
+                      let current = q.answer ? q.answer.split(',').map(s => s.trim()).filter(Boolean) : [];
+                      if (isSelected) {
+                        current = current.filter(val => val !== optionVal);
+                      } else {
+                        current.push(optionVal);
+                      }
+                      newAnswer = current.sort().join(', ');
+                    } else {
+                      // Standard MCQ Logic
+                      newAnswer = optionVal;
+                    }
+                    onChange({ ...q, answer: newAnswer, question: draft.question, solution: draft.solution, options: draft.options });
+                  }}
+                  style={{
+                    width: 28, height: 28, borderRadius: "50%", flexShrink: 0, marginTop: 4,
+                    border: `2px solid ${isSelected ? C.green : C.border}`,
+                    background: isSelected ? C.green : "transparent",
+                    cursor: "pointer", color: isSelected ? "#fff" : C.text, fontWeight: 700, fontSize: 12,
+                  }}
+                >
+                  {i + 1}
+                </button>
+                <input
+                  value={draft.options[i] || ""}
+                  onChange={e => setOption(i)(e.target.value)}
+                  placeholder={`Option ${i + 1} (LaTeX)`}
+                  style={{
+                    flex: 1, background: C.bg, color: C.text,
+                    border: `1px solid ${isSelected ? C.green : C.border}`,
+                    borderRadius: 6, padding: "7px 10px", fontSize: 13,
+                    fontFamily: "'Fira Code', monospace", outline: "none",
+                  }}
+                />
+              </div>
+            );
+          })}
+          {!q.answer && <div style={{ fontSize: 11, color: C.amber }}>⚠ Click a circle to mark correct answer(s)</div>}
         </div>
-      );
-    })}
-    {!q.answer && <div style={{ fontSize: 11, color: C.amber }}>⚠ Click a circle to mark correct answer(s)</div>}
-  </div>
-)}
+      )}
+    </div>
+  );
+}
 
 // ─── ImagesTab (unchanged logic, refs stable) ─────────────────────────────────
 function ImagesTab({ q, onChange, jobId, apiBase, adminKey }) {

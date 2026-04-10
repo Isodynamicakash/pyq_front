@@ -71,6 +71,7 @@ const NAV_ITEMS = [
     sub: [
       { group: "JEE", items: [
         { label: "JEE Mains",    id: "jee-mains", live: true,  icon: "🎯" },
+        { label: "NEET",         id: "neet",       live: true,  icon: "🩺" },
         { label: "JEE Advanced", id: "jee-adv",   live: false, icon: "🏆" },
         { label: "BITSAT",       id: "bitsat",    live: false, icon: "💻" },
         { label: "WBJEE",        id: "wbjee",     live: false, icon: "📐" },
@@ -216,7 +217,7 @@ function Dropdown({ item, onJeeMains, onClose, T, isDark }) {
                 }}>{group.group}</div>
                 {group.items.map(s => (
                   <button key={s.id}
-                    onClick={() => { if (s.live) { onJeeMains(); onClose(); } }}
+                    onClick={() => { if (s.live) { onJeeMains(s.id); onClose(); } }}
                     style={{
                       display: "flex", alignItems: "center", gap: 7,
                       width: "100%", padding: "7px 8px",
@@ -305,7 +306,7 @@ function Hero({ onJeeMains, T, isDark }) {
         letterSpacing: .5,
       }}>
         <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#22c55e", animation: "pulse 2s ease infinite", flexShrink: 0 }} />
-        JEE Mains PYQ — Live Now
+        JEE Mains &amp; NEET PYQs — Live Now
         <style>{`@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.5)}}`}</style>
       </div>
 
@@ -349,9 +350,9 @@ function Hero({ onJeeMains, T, isDark }) {
 
       {/* CTA row */}
       <div style={{ ...anim(.3), display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
-        <button onClick={onJeeMains} style={{
+        <button onClick={() => onJeeMains("jee-mains")} style={{
           padding: "13px 36px", borderRadius: 10, fontSize: 15, fontWeight: 700,
-          background: isDark ? "#2563eb" : "#2563eb",
+          background: "#2563eb",
           border: "none", color: "#ffffff", cursor: "pointer",
           boxShadow: "0 4px 20px rgba(37,99,235,.35)",
           letterSpacing: .2, transition: "background .15s, box-shadow .15s, transform .15s",
@@ -361,12 +362,17 @@ function Hero({ onJeeMains, T, isDark }) {
         >
           Start with JEE Mains →
         </button>
-        <button style={{
-          padding: "13px 32px", borderRadius: 10, fontSize: 15, fontWeight: 600,
-          background: "transparent", border: `1px solid ${T.border}`,
-          color: T.textMuted, cursor: "default", letterSpacing: .2,
-        }}>
-          More Exams Coming Soon
+        <button onClick={() => onJeeMains("neet")} style={{
+          padding: "13px 36px", borderRadius: 10, fontSize: 15, fontWeight: 700,
+          background: isDark ? "#16a34a" : "#16a34a",
+          border: "none", color: "#ffffff", cursor: "pointer",
+          boxShadow: "0 4px 20px rgba(22,163,74,.35)",
+          letterSpacing: .2, transition: "background .15s, box-shadow .15s, transform .15s",
+        }}
+          onMouseEnter={e => { e.currentTarget.style.background = "#15803d"; e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 8px 28px rgba(22,163,74,.45)"; }}
+          onMouseLeave={e => { e.currentTarget.style.background = "#16a34a"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(22,163,74,.35)"; }}
+        >
+          Start with NEET →
         </button>
       </div>
 
@@ -433,7 +439,8 @@ function SectionHeader({ eyebrow, title, sub, T }) {
 // ─── Features ─────────────────────────────────────────────────────────────────
 function Features({ onJeeMains, T, isDark }) {
   const cards = [
-    { icon: "🎯", title: "JEE Mains PYQs",   desc: "10+ years of questions with complete solutions. Filter by chapter, topic, difficulty and question type.", live: true,  onClick: onJeeMains },
+    { icon: "🎯", title: "JEE Mains PYQs",   desc: "10+ years of questions with complete solutions. Filter by chapter, topic, difficulty and question type.", live: true,  onClick: () => onJeeMains("jee-mains") },
+    { icon: "🩺", title: "NEET PYQs",         desc: "Complete NEET previous year papers with detailed solutions. Filter by subject, chapter, topic and year.", live: true,  onClick: () => onJeeMains("neet") },
     { icon: "⚡", title: "Flash Cards",        desc: "High-retention revision cards for rapid recall of key concepts before exam day.",                          live: false },
     { icon: "🧠", title: "Quiz & Mock Tests",  desc: "Timed chapter quizzes and full-length mock tests that simulate the real exam environment.",               live: false },
     { icon: "📒", title: "Notes & Formulas",   desc: "Concise, exam-focused notes and complete formula sheets organised by topic and chapter.",                 live: false },

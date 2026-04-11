@@ -670,40 +670,67 @@ function QuestionEditor({ q, onChange, onApplyBelow, chapters, topics, papers })
   );
 }
 
-// ─── ImagesTab (unchanged logic, refs stable) ─────────────────────────────────
+// ─── ImagesTab ────────────────────────────────────────────────────────────────
+// jobId=null  → editing existing question → uses /api/admin/upload-question-image
+// jobId=<id>  → new upload review        → uses /api/admin/upload-image (temp job storage)
 function ImagesTab({ q, onChange, jobId, apiBase, adminKey }) {
-  const imgUrl = (id) =>
-    id&&id.startsWith("http") ? id
-    : `${apiBase}/api/admin/temp-image/${jobId}/${encodeURIComponent(id)}`;
+  // Resolve image URL: permanent storage (edit mode) vs temp job storage (review mode)
+  const imgUrl = (id) => {
+    if (!id) return "";
+    if (id.startsWith("http")) return id;
+    // Permanent images uploaded in edit mode have a question_id prefix
+    if (!jobId && q._dbId) return `${apiBase}/api/admin/question-image/${q._dbId}/${encodeURIComponent(id)}`;
+    if (jobId) return `${apiBase}/api/admin/temp-image/${jobId}/${encodeURIComponent(id)}`;
+    return id;
+  };
+
   const uploadRef = useRef();
   const [uploading,    setUploading]    = useState(false);
   const [uploadingFor, setUploadingFor] = useState(null);
   const [dragOver,     setDragOver]     = useState(null);
 
-  const uploadFile = async (file,section)=>{
-    setUploading(true);setUploadingFor(section);
-    try{
-      const form=new FormData();form.append("file",file);
-      const res=await fetch(
-        `${apiBase}/api/admin/upload-image?job_id=${encodeURIComponent(jobId)}&section=${section}`,
-        {method:"POST",headers:{"x-admin-key":adminKey},body:form}
-      );
-      if(!res.ok) throw new Error(await res.text());
-      const {image_id}=await res.json();
-      let updated={...q};
-      if(section==="question"){
-        updated.q_images=[...(q.q_images||[]),image_id];
-        updated.question=(q.question||"").trimEnd()+` [IMAGE:${image_id}]`;
-      }else if(section==="solution"){
-        updated.sol_images=[...(q.sol_images||[]),image_id];
-        updated.solution=(q.solution||"").trimEnd()+` [IMAGE:${image_id}]`;
-      }else{
-        const opt=section.replace("opt_","");
-        updated.opt_images={...(q.opt_images||{}),[opt]:image_id};
+  const uploadFile = async (file, section) => {
+    setUploading(true); setUploadingFor(section);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+
+      let res, image_id;
+
+      if (!jobId && q._dbId) {
+        // ── Edit existing mode: upload permanently, no job_id needed ──────────
+        res = await fetch(
+          `${apiBase}/api/admin/upload-question-image?question_id=${q._dbId}&section=${section}`,
+          { method: "POST", headers: { "x-admin-key": adminKey }, body: form }
+        );
+        if (!res.ok) throw new Error(await res.text());
+        ({ image_id } = await res.json());
+      } else if (jobId) {
+        // ── New paper review mode: upload into job temp storage ───────────────
+        res = await fetch(
+          `${apiBase}/api/admin/upload-image?job_id=${encodeURIComponent(jobId)}&section=${section}`,
+          { method: "POST", headers: { "x-admin-key": adminKey }, body: form }
+        );
+        if (!res.ok) throw new Error(await res.text());
+        ({ image_id } = await res.json());
+      } else {
+        throw new Error("Cannot upload image: no job_id or question_id available.");
+      }
+
+      let updated = { ...q };
+      if (section === "question") {
+        updated.q_images = [...(q.q_images || []), image_id];
+        updated.question = (q.question || "").trimEnd() + ` [IMAGE:${image_id}]`;
+      } else if (section === "solution") {
+        updated.sol_images = [...(q.sol_images || []), image_id];
+        updated.solution = (q.solution || "").trimEnd() + ` [IMAGE:${image_id}]`;
+      } else {
+        const opt = section.replace("opt_", "");
+        updated.opt_images = { ...(q.opt_images || {}), [opt]: image_id };
       }
       onChange(updated);
-    }catch(e){alert("Upload failed: "+e.message);}
-    finally{setUploading(false);setUploadingFor(null);}
+    } catch(e) { alert("Upload failed: " + e.message); }
+    finally { setUploading(false); setUploadingFor(null); }
   };
 
   const removeImage=(section,imageId)=>{
@@ -738,7 +765,7 @@ function ImagesTab({ q, onChange, jobId, apiBase, adminKey }) {
         <div style={{flex:1,minWidth:0}}>
           <div style={{fontSize:10,color:broken?C.red:C.textMuted,marginBottom:4,
                       fontFamily:"monospace",wordBreak:"break-all"}}>{imageId}</div>
-          {broken&&<div style={{fontSize:10,color:C.red}}>File not found in ZIP</div>}
+          {broken&&<div style={{fontSize:10,color:C.red}}>{jobId?"File not found in ZIP":"Image not found — may have been deleted"}</div>}
           {!broken&&<div style={{fontSize:10,color:C.green}}>✓ Auto-inserted into text</div>}
           <button onClick={()=>removeImage(section,imageId)} style={{
             marginTop:4,padding:"3px 10px",fontSize:11,borderRadius:5,cursor:"pointer",

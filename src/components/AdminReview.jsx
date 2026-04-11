@@ -1024,10 +1024,15 @@ const QuestionCard = memo(function QuestionCard({
   const [pendingApply, setPending] = useState(null);
   const canSave = !!(q.answer && q.chapter_name && q.exam_date && q.shift);
 
-  const imgUrl = useCallback((id) =>
-    id && id.startsWith("http") ? id
-    : `${apiBase}/api/admin/temp-image/${jobId}/${encodeURIComponent(id)}`,
-  [apiBase, jobId]);
+  const imgUrl = useCallback((id) => {
+    if (!id) return "";
+    if (id.startsWith("http")) return id;
+    // Edit-existing mode: no jobId → use permanent question-image endpoint
+    if (!jobId && q._dbId) return `${apiBase}/api/admin/question-image/${q._dbId}/${encodeURIComponent(id)}`;
+    // New upload review mode: use temp job storage
+    if (jobId) return `${apiBase}/api/admin/temp-image/${jobId}/${encodeURIComponent(id)}`;
+    return id;
+  }, [apiBase, jobId, q._dbId]);
 
   const doApply = useCallback(()=>{
     if(pendingApply){ onApplyBelow(index, pendingApply.field, pendingApply.value); setPending(null); }
@@ -2192,23 +2197,64 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
 
   const updateQ = useCallback((i, u) => setQuestions(p => { const n=[...p]; n[i]=u; return n; }), []);
 
+  // ── Manually added questions (no server fetch needed, lives in local state) ──
+  const [manualQuestions, setManualQuestions] = useState([]);
+
+  const insertManualQuestion = useCallback(() => {
+    const blank = createBlankQuestion(0, manualQuestions);
+    setManualQuestions(prev => [blank, ...prev]);
+  }, [manualQuestions]);
+
+  const removeManualQuestion = useCallback((manualId) => {
+    setManualQuestions(prev => prev.filter(q => q._manualId !== manualId));
+  }, []);
+
+  const updateManualQ = useCallback((manualId, u) => {
+    setManualQuestions(prev => prev.map(q => q._manualId === manualId ? u : q));
+  }, []);
+
   const saveOne = async (q) => {
     setSaving(true); setSaveMsg(null);
     try {
       const payload = {
-        question_number: q.number, q_type: q.q_type, subject: q.subject, exam_name: q.exam_name,
+        question_number: q.number, q_type: q.q_type,
+        subject: q.subject, subject_name: q.subject,
+        exam_name: q.exam_name,
         exam_date: q.exam_date || null,
         year: q.exam_date ? parseInt(q.exam_date.slice(0,4)) : (q.year ? parseInt(q.year) : null),
         shift: q.shift, chapter_name: q.chapter_name, topic_name: q.topic_name,
         difficulty: q.difficulty, marks_correct: q.marks_correct, marks_wrong: q.marks_wrong,
         question: q.question, options: q.options, answer: q.answer, solution: q.solution,
       };
-      const res = await fetch(`${apiBase}/api/admin/update-question/${q._dbId}`, {
-        method: "PUT", headers: {"Content-Type":"application/json","x-admin-key":adminKey},
-        body: JSON.stringify(payload),
-      });
+
+      let res;
+      if (q._dbId) {
+        // ── Existing question: update in place ─────────────────────────────
+        res = await fetch(`${apiBase}/api/admin/update-question/${q._dbId}`, {
+          method: "PUT",
+          headers: {"Content-Type":"application/json","x-admin-key":adminKey},
+          body: JSON.stringify(payload),
+        });
+      } else {
+        // ── New manually added question: create in DB (no job_id needed) ───
+        res = await fetch(`${apiBase}/api/admin/create-question`, {
+          method: "POST",
+          headers: {"Content-Type":"application/json","x-admin-key":adminKey},
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          // Stamp the new DB id so subsequent saves use update-question
+          setQuestions(prev => prev.map(pq =>
+            (pq._isManual && pq.number === q.number && !pq._dbId)
+              ? { ...pq, _dbId: data.id }
+              : pq
+          ));
+        }
+      }
+
       if (!res.ok) { const b = await res.json().catch(()=>({})); throw new Error(b.detail||res.statusText); }
-      setSaveMsg({ok:true, msg:`Q${q.number} saved ✓`});
+      setSaveMsg({ok:true, msg:`Q${q.number||"+"} saved ✓`});
     } catch(e) { setSaveMsg({ok:false, msg:String(e)}); }
     finally { setSaving(false); setTimeout(()=>setSaveMsg(null), 3000); }
   };
@@ -2364,43 +2410,83 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
       <div style={{maxWidth:1100,margin:"0 auto",padding:"24px 16px"}}>
         {loading ? (
           <div style={{textAlign:"center",color:C.textMuted,padding:60}}>Loading questions…</div>
-        ) : questions.length === 0 ? (
-          <div style={{textAlign:"center",color:C.textMuted,padding:60}}>
-            {activeFilterCount > 0 || search
-              ? <><span>No questions match the current filters. </span><button onClick={clearAll} style={{color:C.blue,background:"none",border:"none",cursor:"pointer",fontSize:14,fontWeight:600}}>Clear filters →</button></>
-              : <><span>No questions found. </span><button onClick={onUploadNew} style={{color:C.blue,background:"none",border:"none",cursor:"pointer",fontSize:14,fontWeight:600}}>Upload a paper →</button></>}
-          </div>
         ) : (
           <>
-            <div style={{display:"flex",flexDirection:"column",gap:16}}>
-              {questions.map((q, i) => {
-                const globalIdx = (page - 1) * PAGE_SIZE + i;
-                return (
-                  <QuestionCard key={q._dbId || q.number}
-                    q={q} index={globalIdx} total={total}
-                    jobId={null} apiBase={apiBase} adminKey={adminKey}
-                    onChange={(u) => updateQ(i, u)}
-                    onSaveOne={saveOne}
-                    onApplyBelow={(field, value) => applyBelow(i, field, value)}
-                    onRemove={()=>{}}
-                    chapters={chapters} topics={topics} papers={papers}/>
-                );
-              })}
-            </div>
-            {totalPages > 1 && (
-              <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:8,marginTop:28}}>
-                <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1}
-                  style={{padding:"7px 16px",borderRadius:6,background:C.surface,
-                         border:`1px solid ${C.border}`,color:page===1?C.textDim:C.text,
-                         cursor:page===1?"not-allowed":"pointer",fontSize:13}}>← Prev</button>
-                <span style={{padding:"7px 14px",color:C.textMuted,fontSize:13}}>
-                  Page <strong style={{color:C.text}}>{page}</strong> / <strong style={{color:C.text}}>{totalPages}</strong>
-                </span>
-                <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages}
-                  style={{padding:"7px 16px",borderRadius:6,background:C.surface,
-                         border:`1px solid ${C.border}`,color:page===totalPages?C.textDim:C.text,
-                         cursor:page===totalPages?"not-allowed":"pointer",fontSize:13}}>Next →</button>
+            {/* ── Manually added questions (always shown at top, no pagination) ── */}
+            {manualQuestions.length > 0 && (
+              <div style={{marginBottom:24}}>
+                <div style={{fontSize:11,fontWeight:700,color:C.purple,letterSpacing:1,
+                            textTransform:"uppercase",marginBottom:10,padding:"6px 12px",
+                            background:C.purpleBg,borderRadius:6,display:"inline-block"}}>
+                  ＋ New Questions (unsaved)
+                </div>
+                <div style={{display:"flex",flexDirection:"column",gap:16}}>
+                  {manualQuestions.map((q, i) => (
+                    <QuestionCard key={q._manualId}
+                      q={q} index={i} total={manualQuestions.length}
+                      jobId={null} apiBase={apiBase} adminKey={adminKey}
+                      onChange={(u) => updateManualQ(q._manualId, u)}
+                      onSaveOne={saveOne}
+                      onApplyBelow={(field, value) => {
+                        // Apply to all manual questions below this one
+                        setManualQuestions(prev => prev.map((pq, pi) => {
+                          if (pi <= i) return pq;
+                          if (field === "exam_date") return {...pq, exam_date:value, year:value.slice(0,4)};
+                          return {...pq, [field]:value};
+                        }));
+                      }}
+                      onRemove={() => removeManualQuestion(q._manualId)}
+                      chapters={chapters} topics={topics} papers={papers}/>
+                  ))}
+                </div>
               </div>
+            )}
+
+            {/* ── Add Question button ── */}
+            <div style={{marginBottom:20}}>
+              <AddQuestionButton onClick={insertManualQuestion}/>
+            </div>
+
+            {/* ── Server-fetched questions ── */}
+            {questions.length === 0 ? (
+              <div style={{textAlign:"center",color:C.textMuted,padding:60}}>
+                {activeFilterCount > 0 || search
+                  ? <><span>No questions match the current filters. </span><button onClick={clearAll} style={{color:C.blue,background:"none",border:"none",cursor:"pointer",fontSize:14,fontWeight:600}}>Clear filters →</button></>
+                  : <><span>No questions found. </span><button onClick={onUploadNew} style={{color:C.blue,background:"none",border:"none",cursor:"pointer",fontSize:14,fontWeight:600}}>Upload a paper →</button></>}
+              </div>
+            ) : (
+            <>
+              <div style={{display:"flex",flexDirection:"column",gap:16}}>
+                {questions.map((q, i) => {
+                  const globalIdx = (page - 1) * PAGE_SIZE + i;
+                  return (
+                    <QuestionCard key={q._dbId || q.number}
+                      q={q} index={globalIdx} total={total}
+                      jobId={null} apiBase={apiBase} adminKey={adminKey}
+                      onChange={(u) => updateQ(i, u)}
+                      onSaveOne={saveOne}
+                      onApplyBelow={(field, value) => applyBelow(i, field, value)}
+                      onRemove={()=>{}}
+                      chapters={chapters} topics={topics} papers={papers}/>
+                  );
+                })}
+              </div>
+              {totalPages > 1 && (
+                <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:8,marginTop:28}}>
+                  <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1}
+                    style={{padding:"7px 16px",borderRadius:6,background:C.surface,
+                           border:`1px solid ${C.border}`,color:page===1?C.textDim:C.text,
+                           cursor:page===1?"not-allowed":"pointer",fontSize:13}}>← Prev</button>
+                  <span style={{padding:"7px 14px",color:C.textMuted,fontSize:13}}>
+                    Page <strong style={{color:C.text}}>{page}</strong> / <strong style={{color:C.text}}>{totalPages}</strong>
+                  </span>
+                  <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages}
+                    style={{padding:"7px 16px",borderRadius:6,background:C.surface,
+                           border:`1px solid ${C.border}`,color:page===totalPages?C.textDim:C.text,
+                           cursor:page===totalPages?"not-allowed":"pointer",fontSize:13}}>Next →</button>
+                </div>
+              )}
+            </>
             )}
           </>
         )}

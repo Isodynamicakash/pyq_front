@@ -624,25 +624,18 @@ function QuestionEditor({ q, onChange, onApplyBelow, chapters, topics, papers })
           <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 6, fontWeight: 600 }}>Options</div>
           {[0, 1, 2, 3].map(i => {
             const optionVal = String(i + 1);
-            // Check if this option is selected (handles "1, 2" or just "1")
             const isSelected = q.answer ? q.answer.split(',').map(s => s.trim()).includes(optionVal) : false;
-
             return (
               <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 8 }}>
                 <button
                   onClick={() => {
                     let newAnswer;
                     if (q.q_type === "MSQ") {
-                      // MSQ Toggle Logic
                       let current = q.answer ? q.answer.split(',').map(s => s.trim()).filter(Boolean) : [];
-                      if (isSelected) {
-                        current = current.filter(val => val !== optionVal);
-                      } else {
-                        current.push(optionVal);
-                      }
+                      if (isSelected) { current = current.filter(val => val !== optionVal); }
+                      else { current.push(optionVal); }
                       newAnswer = current.sort().join(', ');
                     } else {
-                      // Standard MCQ Logic
                       newAnswer = optionVal;
                     }
                     onChange({ ...q, answer: newAnswer, question: draft.question, solution: draft.solution, options: draft.options });
@@ -2079,15 +2072,9 @@ function ActiveChip({label,onClear}){
 }
 
 function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
-  const [questions,  setQuestions]  = useState([]);
-  const [loading,    setLoading]    = useState(true);
-  const [chapters,   setChapters]   = useState([]);
-  const [topics,     setTopics]     = useState([]);
-  const [papers,     setPapers]     = useState([]);
-  const [saving,     setSaving]     = useState(false);
-  const [saveMsg,    setSaveMsg]    = useState(null);
+  const PAGE_SIZE = 10;
 
-  const [search,      setSearch]      = useState("");
+  // ── Server-side filter state ────────────────────────────────────────────────
   const [filterSubj,  setFilterSubj]  = useState("");
   const [filterDate,  setFilterDate]  = useState("");
   const [filterShift, setFilterShift] = useState("");
@@ -2095,116 +2082,135 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
   const [filterChap,  setFilterChap]  = useState("");
   const [filterDiff,  setFilterDiff]  = useState("");
   const [filterType,  setFilterType]  = useState("");
+  const [search,      setSearch]      = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [page,        setPage]        = useState(1);
-  const PAGE_SIZE=10;
-  const resetPage=()=>setPage(1);
 
-  const load=useCallback(async()=>{
-    setLoading(true);
-    const h={"x-admin-key":adminKey};
-    try{
-      const [qRes,cRes,tRes,pRes]=await Promise.all([
-        fetch(`${apiBase}/api/admin/questions?limit=2000&offset=0`,{headers:h}).then(r=>r.json()),
-        fetch(`${apiBase}/api/admin/chapters`,{headers:h}).then(r=>r.json()).catch(()=>[]),
-        fetch(`${apiBase}/api/admin/topics`,  {headers:h}).then(r=>r.json()).catch(()=>[]),
-        fetch(`${apiBase}/api/admin/papers`,  {headers:h}).then(r=>r.json()).catch(()=>[]),
-      ]);
-      const qs=Array.isArray(qRes)?qRes:(qRes.questions||qRes.items||[]);
-      setQuestions(qs.map(q=>({
-        ...q,_dbId:q.id,number:q.question_number??q.number??0,
-        q_images:q.q_images||[],sol_images:q.sol_images||[],opt_images:q.opt_images||{},
-        options:q.options||[q.option_1??"",q.option_2??"",q.option_3??"",q.option_4??""],
-      })));
-      setChapters(Array.isArray(cRes)?cRes:[]);
-      setTopics(Array.isArray(tRes)?tRes:[]);
-      setPapers(Array.isArray(pRes)?pRes:[]);
-    }catch(e){console.error("Load error",e);}
-    finally{setLoading(false);}
-  },[apiBase,adminKey]);
+  // ── Data from server ────────────────────────────────────────────────────────
+  const [questions,   setQuestions]   = useState([]);
+  const [total,       setTotal]       = useState(0);
+  const [loading,     setLoading]     = useState(false);
+  const [chapters,    setChapters]    = useState([]);
+  const [topics,      setTopics]      = useState([]);
+  const [papers,      setPapers]      = useState([]);
+  const [saving,      setSaving]      = useState(false);
+  const [saveMsg,     setSaveMsg]     = useState(null);
 
-  useEffect(()=>{load();},[load]);
-
-  const updateQ=useCallback((i,u)=>setQuestions(p=>{const n=[...p];n[i]=u;return n;}),[]);
-
-  const saveOne=async(q)=>{
-    setSaving(true);setSaveMsg(null);
-    try{
-      const payload={
-        question_number:q.number,q_type:q.q_type,subject:q.subject,exam_name:q.exam_name,
-        exam_date:q.exam_date||null,
-        year:q.exam_date?parseInt(q.exam_date.slice(0,4)):(q.year?parseInt(q.year):null),
-        shift:q.shift,chapter_name:q.chapter_name,topic_name:q.topic_name,
-        difficulty:q.difficulty,marks_correct:q.marks_correct,marks_wrong:q.marks_wrong,
-        question:q.question,options:q.options,answer:q.answer,solution:q.solution,
-      };
-      const res=await fetch(`${apiBase}/api/admin/update-question/${q._dbId}`,{
-        method:"PUT",headers:{"Content-Type":"application/json","x-admin-key":adminKey},
-        body:JSON.stringify(payload),
-      });
-      if(!res.ok){const b=await res.json().catch(()=>({}));throw new Error(b.detail||res.statusText);}
-      setSaveMsg({ok:true,msg:`Q${q.number} saved ✓`});
-    }catch(e){setSaveMsg({ok:false,msg:String(e)});}
-    finally{setSaving(false);setTimeout(()=>setSaveMsg(null),3000);}
-  };
-
-  const filteredRef=useRef([]);
-
-  const applyBelow=useCallback((fromIndex,field,value)=>{
-    const belowIds=new Set(filteredRef.current.slice(fromIndex+1).map(q=>q._dbId??q.id));
-    setQuestions(prev=>prev.map(q=>{
-      if(!belowIds.has(q._dbId??q.id)) return q;
-      if(field==="exam_date") return{...q,exam_date:value,year:value.slice(0,4)};
-      return{...q,[field]:value};
-    }));
-  },[]);
-
-  // PERF: memoize unique filter option lists
-  const uniqueDates  = useMemo(()=>[...new Set(questions.map(q=>q.exam_date).filter(Boolean))].sort((a,b)=>b.localeCompare(a)),[questions]);
-  const uniqueShifts = useMemo(()=>[...new Set(questions.map(q=>q.shift).filter(Boolean))].sort(),[questions]);
-  const uniqueExams  = useMemo(()=>[...new Set(questions.map(q=>q.exam_name).filter(Boolean))].sort(),[questions]);
-  const uniqueChaps  = useMemo(()=>[...new Set(questions.map(q=>q.chapter_name).filter(Boolean))].sort(),[questions]);
-  const uniqueDiffs  = useMemo(()=>["easy","medium","hard"].filter(d=>questions.some(q=>q.difficulty===d)),[questions]);
-  const uniqueTypes  = useMemo(()=>["MCQ","MSQ","NUMERICAL"].filter(t=>questions.some(q=>q.q_type===t)),[questions]);
+  // Filter options derived from papers/chapters (not from loaded questions)
+  const uniqueExams  = useMemo(()=>[...new Set(papers.map(p=>p.exam_name).filter(Boolean))].sort(),[papers]);
+  const uniqueDates  = useMemo(()=>[...new Set(papers.map(p=>p.exam_date_str||p.exam_date).filter(Boolean))].sort((a,b)=>b.localeCompare(a)),[papers]);
+  const uniqueShifts = useMemo(()=>[...new Set(papers.map(p=>p.shift).filter(Boolean))].sort(),[papers]);
+  const uniqueChaps  = useMemo(()=>[...new Set(chapters.map(c=>c.name).filter(Boolean))].sort(),[chapters]);
 
   const fmtDate=(d)=>d?new Date(d+"T00:00:00").toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}):d;
   const activeFilterCount=[filterDate,filterShift,filterExam,filterChap,filterDiff,filterType,filterSubj].filter(Boolean).length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const resetPage  = () => setPage(1);
 
-  const clearAll=()=>{
-    setFilterSubj("");setFilterDate("");setFilterShift("");
-    setFilterExam("");setFilterChap("");setFilterDiff("");
-    setFilterType("");setSearch("");resetPage();
+  // ── Build query string from current filters ─────────────────────────────────
+  const buildQS = useCallback((p) => {
+    const qs = new URLSearchParams();
+    qs.set("limit",  PAGE_SIZE);
+    qs.set("offset", (p - 1) * PAGE_SIZE);
+    if (filterSubj)  qs.set("subject",       filterSubj);
+    if (filterDate)  qs.set("exam_date",      filterDate);
+    if (filterShift) qs.set("shift",          filterShift);
+    if (filterExam)  qs.set("exam_name",      filterExam);
+    if (filterChap)  qs.set("chapter",        filterChap);
+    if (filterDiff)  qs.set("difficulty",     filterDiff);
+    if (filterType)  qs.set("question_type",  filterType);
+    if (search)      qs.set("search",         search);
+    return qs.toString();
+  }, [filterSubj, filterDate, filterShift, filterExam, filterChap, filterDiff, filterType, search]);
+
+  // ── Fetch questions from backend (server-side filter + pagination) ──────────
+  const fetchQuestions = useCallback(async (p) => {
+    setLoading(true);
+    const h = {"x-admin-key": adminKey};
+    try {
+      const res = await fetch(`${apiBase}/api/admin/questions?${buildQS(p)}`, {headers: h});
+      const data = await res.json();
+      const qs = Array.isArray(data) ? data : (data.questions || data.items || []);
+      setTotal(data.total || qs.length);
+      setQuestions(qs.map(q => ({
+        ...q, _dbId: q.id, number: q.question_number ?? q.number ?? 0,
+        q_images: q.q_images || [], sol_images: q.sol_images || [], opt_images: q.opt_images || {},
+        options: q.options || [q.option_1 ?? "", q.option_2 ?? "", q.option_3 ?? "", q.option_4 ?? ""],
+      })));
+    } catch(e) { console.error("Load error", e); }
+    finally { setLoading(false); }
+  }, [apiBase, adminKey, buildQS]);
+
+  // ── Load filter option lists once on mount ──────────────────────────────────
+  const loadMeta = useCallback(async () => {
+    const h = {"x-admin-key": adminKey};
+    const [cRes, tRes, pRes] = await Promise.all([
+      fetch(`${apiBase}/api/admin/chapters`, {headers: h}).then(r=>r.json()).catch(()=>[]),
+      fetch(`${apiBase}/api/admin/topics`,   {headers: h}).then(r=>r.json()).catch(()=>[]),
+      fetch(`${apiBase}/api/admin/papers`,   {headers: h}).then(r=>r.json()).catch(()=>[]),
+    ]);
+    setChapters(Array.isArray(cRes) ? cRes : []);
+    setTopics(Array.isArray(tRes) ? tRes : []);
+    setPapers(Array.isArray(pRes) ? pRes : []);
+  }, [apiBase, adminKey]);
+
+  useEffect(() => { loadMeta(); }, [loadMeta]);
+
+  // Re-fetch when filters change (reset to page 1)
+  useEffect(() => { setPage(1); fetchQuestions(1); },
+    [filterSubj, filterDate, filterShift, filterExam, filterChap, filterDiff, filterType, search]);
+
+  // Re-fetch when page changes
+  useEffect(() => { fetchQuestions(page); }, [page]);
+
+  const updateQ = useCallback((i, u) => setQuestions(p => { const n=[...p]; n[i]=u; return n; }), []);
+
+  const saveOne = async (q) => {
+    setSaving(true); setSaveMsg(null);
+    try {
+      const payload = {
+        question_number: q.number, q_type: q.q_type, subject: q.subject, exam_name: q.exam_name,
+        exam_date: q.exam_date || null,
+        year: q.exam_date ? parseInt(q.exam_date.slice(0,4)) : (q.year ? parseInt(q.year) : null),
+        shift: q.shift, chapter_name: q.chapter_name, topic_name: q.topic_name,
+        difficulty: q.difficulty, marks_correct: q.marks_correct, marks_wrong: q.marks_wrong,
+        question: q.question, options: q.options, answer: q.answer, solution: q.solution,
+      };
+      const res = await fetch(`${apiBase}/api/admin/update-question/${q._dbId}`, {
+        method: "PUT", headers: {"Content-Type":"application/json","x-admin-key":adminKey},
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) { const b = await res.json().catch(()=>({})); throw new Error(b.detail||res.statusText); }
+      setSaveMsg({ok:true, msg:`Q${q.number} saved ✓`});
+    } catch(e) { setSaveMsg({ok:false, msg:String(e)}); }
+    finally { setSaving(false); setTimeout(()=>setSaveMsg(null), 3000); }
   };
 
-  // PERF: memoize filtered list
-  const filtered = useMemo(()=>questions.filter(q=>{
-    if(filterSubj  &&(q.subject     ||"").toUpperCase()!==filterSubj)              return false;
-    if(filterDate  &&(q.exam_date   ||"")!==filterDate)                            return false;
-    if(filterShift &&(q.shift       ||"").toLowerCase()!==filterShift.toLowerCase()) return false;
-    if(filterExam  &&(q.exam_name   ||"").toLowerCase()!==filterExam.toLowerCase()) return false;
-    if(filterChap  &&(q.chapter_name||"").toLowerCase()!==filterChap.toLowerCase()) return false;
-    if(filterDiff  &&(q.difficulty  ||"").toLowerCase()!==filterDiff.toLowerCase()) return false;
-    if(filterType  &&(q.q_type      ||"").toUpperCase()!==filterType.toUpperCase()) return false;
-    if(search){const s=search.toLowerCase();if(!(q.question||"").toLowerCase().includes(s)&&!String(q.number).includes(s)) return false;}
-    return true;
-  }),[questions,filterSubj,filterDate,filterShift,filterExam,filterChap,filterDiff,filterType,search]);
+  const applyBelow = useCallback((fromIndex, field, value) => {
+    setQuestions(prev => prev.map((q, i) => {
+      if (i <= fromIndex) return q;
+      if (field === "exam_date") return {...q, exam_date:value, year:value.slice(0,4)};
+      return {...q, [field]:value};
+    }));
+  }, []);
 
-  const totalPages=useMemo(()=>Math.max(1,Math.ceil(filtered.length/PAGE_SIZE)),[filtered]);
-  const paginated =useMemo(()=>filtered.slice((page-1)*PAGE_SIZE,page*PAGE_SIZE),[filtered,page]);
-  filteredRef.current=filtered;
+  const clearAll = () => {
+    setFilterSubj(""); setFilterDate(""); setFilterShift("");
+    setFilterExam(""); setFilterChap(""); setFilterDiff("");
+    setFilterType(""); setSearch(""); resetPage();
+  };
 
-  return(
-    <div style={{background:C.bg,minHeight:"100vh"}}>
+  return (
+    <div style={{background:C.bg, minHeight:"100vh"}}>
       {/* Sticky top bar */}
       <div style={{position:"sticky",top:0,zIndex:100,background:C.surface,borderBottom:`1px solid ${C.border}`}}>
         <div style={{padding:"10px 24px",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
           <span style={{color:C.text,fontWeight:700,fontSize:15}}>📚 Edit Existing Questions</span>
           <span style={{color:C.textMuted,fontSize:12}}>
-            {filtered.length!==questions.length
-              ?<><strong style={{color:C.blueLight}}>{filtered.length}</strong> / {questions.length}</>
-              :<>{questions.length} total</>}
+            <strong style={{color:C.blueLight}}>{total.toLocaleString()}</strong> total
+            {activeFilterCount > 0 && <span style={{color:C.textDim}}> (filtered)</span>}
           </span>
-          {activeFilterCount>0&&(
+          {activeFilterCount > 0 && (
             <span style={{fontSize:11,padding:"2px 8px",borderRadius:10,
                          background:C.blue+"33",color:C.blueLight,fontWeight:700}}>
               {activeFilterCount} filter{activeFilterCount>1?"s":""} active
@@ -2216,7 +2222,7 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
                    border:`1px solid ${C.border}`,borderRadius:6,padding:"6px 10px",
                    fontSize:13,outline:"none"}}/>
           <span style={{flex:1}}/>
-          {saveMsg&&(
+          {saveMsg && (
             <span style={{fontSize:12,padding:"4px 12px",borderRadius:6,
                          color:saveMsg.ok?C.green:C.red,
                          background:saveMsg.ok?C.greenBg:C.redBg}}>
@@ -2231,27 +2237,27 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
           }}>
             ⚙ Filters {activeFilterCount>0?`(${activeFilterCount})`:""} {filtersOpen?"▲":"▼"}
           </button>
-          {activeFilterCount>0&&(
+          {activeFilterCount > 0 && (
             <button onClick={clearAll} style={{
               padding:"6px 12px",borderRadius:6,fontSize:12,fontWeight:600,cursor:"pointer",
               border:`1px solid ${C.red}44`,background:C.redBg,color:C.red,
             }}>✕ Clear all</button>
           )}
-          <Btn color={C.blue} small onClick={load}>↺ Refresh</Btn>
+          <Btn color={C.blue} small onClick={()=>fetchQuestions(page)}>↺ Refresh</Btn>
           <Btn color={C.green} onClick={onUploadNew}>＋ Upload New Paper</Btn>
         </div>
 
-        {filtersOpen&&(
+        {filtersOpen && (
           <div style={{padding:"10px 24px 14px",borderTop:`1px solid ${C.border}`,
                       background:C.bg,display:"flex",flexDirection:"column",gap:10}}>
             <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
               <span style={{fontSize:11,color:C.textDim,fontWeight:700,width:64,flexShrink:0}}>SUBJECT</span>
-              {["PHYSICS","CHEMISTRY","MATHEMATICS"].map(s=>(
+              {["PHYSICS","CHEMISTRY","MATHEMATICS","BIOLOGY"].map(s=>(
                 <FilterPill key={s} label={s[0]+s.slice(1).toLowerCase()} active={filterSubj===s} color={C.blue}
                   onClick={()=>{setFilterSubj(v=>v===s?"":s);resetPage();}}/>
               ))}
             </div>
-            {uniqueExams.length>0&&(
+            {uniqueExams.length > 0 && (
               <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                 <span style={{fontSize:11,color:C.textDim,fontWeight:700,width:64,flexShrink:0}}>EXAM</span>
                 {uniqueExams.map(e=>(
@@ -2260,7 +2266,7 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
                 ))}
               </div>
             )}
-            {uniqueDates.length>0&&(
+            {uniqueDates.length > 0 && (
               <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                 <span style={{fontSize:11,color:C.textDim,fontWeight:700,width:64,flexShrink:0}}>DATE</span>
                 <div style={{display:"flex",gap:6,flexWrap:"wrap",flex:1}}>
@@ -2275,7 +2281,7 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
                          borderRadius:6,padding:"4px 8px",fontSize:12,outline:"none"}}/>
               </div>
             )}
-            {uniqueShifts.length>0&&(
+            {uniqueShifts.length > 0 && (
               <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                 <span style={{fontSize:11,color:C.textDim,fontWeight:700,width:64,flexShrink:0}}>SHIFT</span>
                 {uniqueShifts.map(s=>(
@@ -2284,7 +2290,7 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
                 ))}
               </div>
             )}
-            {uniqueChaps.length>0&&(
+            {uniqueChaps.length > 0 && (
               <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                 <span style={{fontSize:11,color:C.textDim,fontWeight:700,width:64,flexShrink:0}}>CHAPTER</span>
                 <div style={{display:"flex",gap:6,flexWrap:"wrap",flex:1}}>
@@ -2296,77 +2302,72 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
               </div>
             )}
             <div style={{display:"flex",gap:24,flexWrap:"wrap"}}>
-              {uniqueDiffs.length>0&&(
-                <div style={{display:"flex",alignItems:"center",gap:8}}>
-                  <span style={{fontSize:11,color:C.textDim,fontWeight:700,width:64,flexShrink:0}}>DIFF</span>
-                  {uniqueDiffs.map(d=>(
-                    <FilterPill key={d} label={d[0].toUpperCase()+d.slice(1)} active={filterDiff===d}
-                      color={d==="easy"?C.green:d==="hard"?C.red:C.amber}
-                      onClick={()=>{setFilterDiff(v=>v===d?"":d);resetPage();}}/>
-                  ))}
-                </div>
-              )}
-              {uniqueTypes.length>0&&(
-                <div style={{display:"flex",alignItems:"center",gap:8}}>
-                  <span style={{fontSize:11,color:C.textDim,fontWeight:700,width:64,flexShrink:0}}>TYPE</span>
-                  {uniqueTypes.map(t=>(
-                    <FilterPill key={t} label={t} active={filterType===t} color={C.blueLight}
-                      onClick={()=>{setFilterType(v=>v===t?"":t);resetPage();}}/>
-                  ))}
-                </div>
-              )}
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <span style={{fontSize:11,color:C.textDim,fontWeight:700,width:64,flexShrink:0}}>DIFF</span>
+                {["easy","medium","hard"].map(d=>(
+                  <FilterPill key={d} label={d[0].toUpperCase()+d.slice(1)} active={filterDiff===d}
+                    color={d==="easy"?C.green:d==="hard"?C.red:C.amber}
+                    onClick={()=>{setFilterDiff(v=>v===d?"":d);resetPage();}}/>
+                ))}
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <span style={{fontSize:11,color:C.textDim,fontWeight:700,width:64,flexShrink:0}}>TYPE</span>
+                {["MCQ","MSQ","NUMERICAL"].map(t=>(
+                  <FilterPill key={t} label={t} active={filterType===t} color={C.blueLight}
+                    onClick={()=>{setFilterType(v=>v===t?"":t);resetPage();}}/>
+                ))}
+              </div>
             </div>
           </div>
         )}
 
-        {!filtersOpen&&activeFilterCount>0&&(
+        {!filtersOpen && activeFilterCount > 0 && (
           <div style={{padding:"6px 24px 8px",display:"flex",gap:6,flexWrap:"wrap",borderTop:`1px solid ${C.border}`}}>
-            {filterSubj  &&<ActiveChip label={`Subject: ${filterSubj[0]+filterSubj.slice(1).toLowerCase()}`} onClear={()=>{setFilterSubj("");resetPage();}}/>}
-            {filterExam  &&<ActiveChip label={`Exam: ${filterExam}`}             onClear={()=>{setFilterExam("");resetPage();}}/>}
-            {filterDate  &&<ActiveChip label={`Date: ${fmtDate(filterDate)}`}    onClear={()=>{setFilterDate("");resetPage();}}/>}
-            {filterShift &&<ActiveChip label={`Shift: ${filterShift}`}           onClear={()=>{setFilterShift("");resetPage();}}/>}
-            {filterChap  &&<ActiveChip label={`Chapter: ${filterChap}`}          onClear={()=>{setFilterChap("");resetPage();}}/>}
-            {filterDiff  &&<ActiveChip label={`Diff: ${filterDiff}`}             onClear={()=>{setFilterDiff("");resetPage();}}/>}
-            {filterType  &&<ActiveChip label={`Type: ${filterType}`}             onClear={()=>{setFilterType("");resetPage();}}/>}
+            {filterSubj  && <ActiveChip label={`Subject: ${filterSubj[0]+filterSubj.slice(1).toLowerCase()}`} onClear={()=>{setFilterSubj("");resetPage();}}/>}
+            {filterExam  && <ActiveChip label={`Exam: ${filterExam}`}          onClear={()=>{setFilterExam("");resetPage();}}/>}
+            {filterDate  && <ActiveChip label={`Date: ${fmtDate(filterDate)}`} onClear={()=>{setFilterDate("");resetPage();}}/>}
+            {filterShift && <ActiveChip label={`Shift: ${filterShift}`}        onClear={()=>{setFilterShift("");resetPage();}}/>}
+            {filterChap  && <ActiveChip label={`Chapter: ${filterChap}`}       onClear={()=>{setFilterChap("");resetPage();}}/>}
+            {filterDiff  && <ActiveChip label={`Diff: ${filterDiff}`}          onClear={()=>{setFilterDiff("");resetPage();}}/>}
+            {filterType  && <ActiveChip label={`Type: ${filterType}`}          onClear={()=>{setFilterType("");resetPage();}}/>}
           </div>
         )}
       </div>
 
       <div style={{maxWidth:1100,margin:"0 auto",padding:"24px 16px"}}>
-        {loading?(
+        {loading ? (
           <div style={{textAlign:"center",color:C.textMuted,padding:60}}>Loading questions…</div>
-        ):filtered.length===0?(
+        ) : questions.length === 0 ? (
           <div style={{textAlign:"center",color:C.textMuted,padding:60}}>
-            {activeFilterCount>0||search
-              ?<>No questions match the current filters. <button onClick={clearAll} style={{color:C.blue,background:"none",border:"none",cursor:"pointer",fontSize:14,fontWeight:600}}>Clear filters →</button></>
-              :<>No questions found. <button onClick={onUploadNew} style={{color:C.blue,background:"none",border:"none",cursor:"pointer",fontSize:14,fontWeight:600}}>Upload a paper →</button></>}
+            {activeFilterCount > 0 || search
+              ? <><span>No questions match the current filters. </span><button onClick={clearAll} style={{color:C.blue,background:"none",border:"none",cursor:"pointer",fontSize:14,fontWeight:600}}>Clear filters →</button></>
+              : <><span>No questions found. </span><button onClick={onUploadNew} style={{color:C.blue,background:"none",border:"none",cursor:"pointer",fontSize:14,fontWeight:600}}>Upload a paper →</button></>}
           </div>
-        ):(
+        ) : (
           <>
             <div style={{display:"flex",flexDirection:"column",gap:16}}>
-              {paginated.map((q,i)=>{
-                const globalIdx=(page-1)*PAGE_SIZE+i;
-                const realIdx=questions.indexOf(q);
-                return(
-                  <QuestionCard key={q._dbId||q.number}
-                    q={q} index={globalIdx} total={filtered.length}
+              {questions.map((q, i) => {
+                const globalIdx = (page - 1) * PAGE_SIZE + i;
+                return (
+                  <QuestionCard key={q._dbId || q.number}
+                    q={q} index={globalIdx} total={total}
                     jobId={null} apiBase={apiBase} adminKey={adminKey}
-                    onChange={(u)=>updateQ(realIdx,u)}
+                    onChange={(u) => updateQ(i, u)}
                     onSaveOne={saveOne}
-                    onApplyBelow={applyBelow}
+                    onApplyBelow={(field, value) => applyBelow(i, field, value)}
                     onRemove={()=>{}}
                     chapters={chapters} topics={topics} papers={papers}/>
                 );
               })}
             </div>
-            {totalPages>1&&(
-              <div style={{display:"flex",justifyContent:"center",gap:8,marginTop:28}}>
+            {totalPages > 1 && (
+              <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:8,marginTop:28}}>
                 <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1}
                   style={{padding:"7px 16px",borderRadius:6,background:C.surface,
                          border:`1px solid ${C.border}`,color:page===1?C.textDim:C.text,
                          cursor:page===1?"not-allowed":"pointer",fontSize:13}}>← Prev</button>
                 <span style={{padding:"7px 14px",color:C.textMuted,fontSize:13}}>
-                  Page {page} / {totalPages}
+                  Page <strong style={{color:C.text}}>{page}</strong> / <strong style={{color:C.text}}>{totalPages}</strong>
                 </span>
                 <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages}
                   style={{padding:"7px 16px",borderRadius:6,background:C.surface,

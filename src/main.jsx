@@ -41,9 +41,16 @@ function AdminGate() {
 function App() {
   const [page, setPage] = useState(() => {
     const h = window.location.hash;
-    if (h === "#/admin") return "admin";
-    if (h === "#/pyq")   return "pyq";
+    if (h === "#/admin")        return "admin";
+    if (h.startsWith("#/pyq"))  return "pyq";
     return "landing";
+  });
+
+  // examId drives which exam is shown: "jee-mains" | "neet"
+  const [examId, setExamId] = useState(() => {
+    const h = window.location.hash;
+    if (h === "#/pyq/neet") return "neet";
+    return "jee-mains";
   });
 
   const [isDark, setIsDark] = useState(() => {
@@ -64,12 +71,27 @@ function App() {
     setPage(p);
   };
 
+  // Called from LandingPage with the exam slug: "jee-mains" or "neet"
+  const goToPyq = (id) => {
+    const slug = id || "jee-mains";
+    setExamId(slug);
+    window.location.hash = `#/pyq/${slug}`;
+    setPage("pyq");
+  };
+
   useEffect(() => {
     const fn = () => {
       const h = window.location.hash;
-      if (h === "#/admin")    setPage("admin");
-      else if (h === "#/pyq") setPage("pyq");
-      else                    setPage("landing");
+      if (h === "#/admin") {
+        setPage("admin");
+      } else if (h.startsWith("#/pyq")) {
+        // Parse exam slug from hash e.g. #/pyq/neet → "neet"
+        const slug = h.replace("#/pyq/", "").replace("#/pyq", "") || "jee-mains";
+        setExamId(slug);
+        setPage("pyq");
+      } else {
+        setPage("landing");
+      }
     };
     window.addEventListener("hashchange", fn);
     return () => window.removeEventListener("hashchange", fn);
@@ -83,13 +105,19 @@ function App() {
   );
   if (page === "pyq") return (
     <>
-      <QuestionBrowser apiBase={API_BASE} onBack={() => goTo("landing")} isDark={isDark} onToggleTheme={toggleTheme} />
+      <QuestionBrowser
+        apiBase={API_BASE}
+        onBack={() => goTo("landing")}
+        isDark={isDark}
+        onToggleTheme={toggleTheme}
+        examId={examId}
+      />
       <Analytics />
     </>
   );
   return (
     <>
-      <LandingPage onJeeMains={() => goTo("pyq")} isDark={isDark} onToggleTheme={toggleTheme} />
+      <LandingPage onJeeMains={goToPyq} isDark={isDark} onToggleTheme={toggleTheme} />
       <Analytics />
     </>
   );

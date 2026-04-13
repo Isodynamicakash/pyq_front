@@ -554,7 +554,7 @@ function QuestionEditor({ q, onChange, onApplyBelow, chapters, topics, papers })
           Subject <span style={{color:C.textDim,fontWeight:400}}>(applies to all below)</span>
         </div>
         <div style={{display:"flex",gap:6,marginBottom:6}}>
-          {["PHYSICS","CHEMISTRY","MATHEMATICS"].map(s=>(
+          {["PHYSICS","CHEMISTRY","MATHEMATICS","BIOLOGY"].map(s=>(
             <button key={s} onClick={()=>setInstant("subject")(s)} style={{
               padding:"5px 12px",borderRadius:6,fontSize:12,fontWeight:600,cursor:"pointer",
               border:`1px solid ${q.subject===s?C.blue:C.border}`,
@@ -617,6 +617,20 @@ function QuestionEditor({ q, onChange, onApplyBelow, chapters, topics, papers })
           }}
         />
       </div>
+
+      {/* Apply Changes button — updates preview and saves draft to parent */}
+      {dirty && (
+        <div style={{marginBottom:12}}>
+          <button onClick={applyDraft} style={{
+            padding:"8px 20px", borderRadius:7, fontSize:13, fontWeight:700,
+            background:C.blue, color:"#fff", border:"none", cursor:"pointer",
+            boxShadow:`0 0 0 2px ${C.blue}44`,
+          }}>✓ Apply Changes</button>
+          <span style={{marginLeft:10,fontSize:11,color:C.textDim}}>
+            Updates preview &amp; prepares for save
+          </span>
+        </div>
+      )}
 
       {/* Options */}
       {q.q_type !== "NUMERICAL" && (
@@ -2461,7 +2475,7 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
                   const globalIdx = (page - 1) * PAGE_SIZE + i;
                   return (
                     <QuestionCard key={q._dbId || q.number}
-                      q={q} index={globalIdx} total={total}
+                      q={q} index={i} total={questions.length}
                       jobId={null} apiBase={apiBase} adminKey={adminKey}
                       onChange={(u) => updateQ(i, u)}
                       onSaveOne={saveOne}

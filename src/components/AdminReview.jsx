@@ -187,8 +187,92 @@ const EXAM_OPTIONS = [
   { value: "JEE Advanced", label: "JEE Advanced" },
   { value: "NEET",         label: "NEET" },
   { value: "CUET",         label: "CUET" },
+  { value: "SSC CGL",      label: "SSC CGL" },
   { value: "Other",        label: "Other" },
 ];
+
+// SSC CGL subjects with their chapters/topics (hardcoded, mirrors llm_tagger.py)
+const SSC_CGL_TAXONOMY = {
+  "General Intelligence and Reasoning": {
+    chapters: ["Analogy","Classification","Series","Coding and Decoding","Blood Relations",
+      "Direction and Distance","Order and Ranking","Venn Diagrams","Syllogism",
+      "Matrix and Figure Based","Mathematical Operations and Puzzles",
+      "Non-Verbal Reasoning","Statement and Conclusion","Critical Thinking"],
+    topics: {
+      "Analogy":["Word Analogy","Number Analogy","Letter Analogy","Symbol Analogy","Figural Analogy"],
+      "Classification":["Word Classification","Number Classification","Odd One Out","Figural Classification"],
+      "Series":["Number Series","Letter Series","Alphabet Series","Mixed Series","Missing Number in Series"],
+      "Coding and Decoding":["Letter Coding","Number Coding","Substitution Coding","Symbol-based Coding"],
+      "Blood Relations":["Direct Blood Relations","Coded Blood Relations","Family Tree Problems"],
+      "Direction and Distance":["Simple Direction Problems","Distance and Displacement","Shadow and Clock based Direction"],
+      "Order and Ranking":["Rank from Top and Bottom","Position in a Row or Column"],
+      "Venn Diagrams":["Two-set Venn Diagrams","Three-set Venn Diagrams","Venn Diagram and Syllogism"],
+      "Syllogism":["All Some No Statements","Conclusion Drawing","Possibility Cases"],
+      "Matrix and Figure Based":["Matrix Completion","Figure Pattern Completion","Embedded Figures","Paper Folding and Cutting"],
+      "Mathematical Operations and Puzzles":["Calendar Problems","Clock Problems","Seating Arrangement","Linear Arrangement"],
+      "Non-Verbal Reasoning":["Mirror Image","Water Image","Cube and Dice"],
+      "Statement and Conclusion":["Deriving Conclusions","Course of Action","Statement and Assumption"],
+      "Critical Thinking":["Logical Problems","Cause and Effect","Inference based Questions"],
+    }
+  },
+  "General Awareness": {
+    chapters: ["History","Geography","Indian Polity and Constitution","Indian Economy",
+      "Science and Technology","Current Affairs","Miscellaneous"],
+    topics: {
+      "History":["Ancient Indian History Harappan Vedic","Maurya and Gupta Empire","Medieval India",
+        "Bhakti and Sufi Movement","1857 Revolt","Indian National Congress","Gandhi Era","Partition and Independence"],
+      "Geography":["Physical Features of India","Rivers and Lakes of India","Climate and Monsoon",
+        "Natural Vegetation and Wildlife","Agriculture","Industries and Transport","World Geography"],
+      "Indian Polity and Constitution":["Preamble Fundamental Rights","Parliament","President Vice President",
+        "Supreme Court Judiciary","Elections and Election Commission","Amendment Procedure"],
+      "Indian Economy":["National Income GDP GNP","Planning Commission NITI Aayog","Monetary Policy RBI",
+        "Banking System","Inflation WPI CPI","Major Economic Schemes"],
+      "Science and Technology":["Physics Basics","Chemistry Acids Bases","Biology Cell Human Body",
+        "Computer and IT Basics","Space Technology ISRO"],
+      "Current Affairs":["National Current Events","International Events","Sports Current Affairs"],
+      "Miscellaneous":["Famous Books and Authors","National Symbols","Important Dates Days","Art and Culture"],
+    }
+  },
+  "Quantitative Aptitude": {
+    chapters: ["Number System","Simplification","Average","Percentage","Profit Loss and Discount",
+      "Ratio and Proportion","Time and Work","Time Speed and Distance",
+      "Simple and Compound Interest","Algebra","Geometry","Mensuration",
+      "Trigonometry","Statistics","Mixture and Alligation"],
+    topics: {
+      "Number System":["LCM and HCF","Divisibility Rules","Prime Numbers","Remainders","Unit Digit"],
+      "Simplification":["BODMAS Rule","Fractions and Decimals","Surds and Indices","Square Root Cube Root"],
+      "Average":["Simple Average","Weighted Average","Average of Groups"],
+      "Percentage":["Percentage Basics","Percentage Change","Successive Change"],
+      "Profit Loss and Discount":["Profit and Loss Percentage","Successive Discounts","Marked Price and Discount"],
+      "Ratio and Proportion":["Basic Ratio","Compound Ratio","Proportion and Variation","Partnership"],
+      "Time and Work":["Basic Time and Work","Work and Wages","Pipes and Cisterns"],
+      "Time Speed and Distance":["Average Speed","Relative Speed","Boats and Streams","Trains Problems"],
+      "Simple and Compound Interest":["Simple Interest Formula","Compound Interest Formula","Growth and Depreciation"],
+      "Algebra":["Linear Equations","Quadratic Equations","Algebraic Identities","Polynomials"],
+      "Geometry":["Lines Angles Triangles","Circles Chord Tangent","Quadrilaterals","Coordinate Geometry"],
+      "Mensuration":["Area Perimeter 2D Shapes","Surface Area Volume 3D Shapes"],
+      "Trigonometry":["Trigonometric Ratios","Complementary Angles","Heights and Distances"],
+      "Statistics":["Mean Median Mode","Bar Graph Pie Chart","Data Interpretation"],
+      "Mixture and Alligation":["Simple Alligation","Mixtures of Two","Removing and Replacing"],
+    }
+  },
+  "English Comprehension": {
+    chapters: ["Reading Comprehension","Vocabulary","Grammar","Error Detection and Correction",
+      "Sentence Rearrangement","Cloze Test and Fill in the Blanks","Spelling and Word Usage"],
+    topics: {
+      "Reading Comprehension":["Factual Passages","Inferential Passages","Main Idea and Title","Tone and Attitude"],
+      "Vocabulary":["Synonyms","Antonyms","One Word Substitution","Idioms and Phrases"],
+      "Grammar":["Tenses","Subject Verb Agreement","Articles","Prepositions","Active and Passive Voice",
+        "Direct and Indirect Speech","Modals"],
+      "Error Detection and Correction":["Spotting Errors in Sentences","Phrase Replacement","Sentence Correction"],
+      "Sentence Rearrangement":["Para Jumbles","Sentence Ordering","Odd Sentence Out"],
+      "Cloze Test and Fill in the Blanks":["Single Blank","Double Blank","Cloze Passage"],
+      "Spelling and Word Usage":["Correct Spelling","Commonly Confused Words"],
+    }
+  },
+};
+
+const SSC_CGL_SUBJECTS = Object.keys(SSC_CGL_TAXONOMY);
 
 // ─── Small UI primitives — defined OUTSIDE render scope so React never treats
 //     them as "new component types" on re-render ────────────────────────────
@@ -553,16 +637,29 @@ function QuestionEditor({ q, onChange, onApplyBelow, chapters, topics, papers })
         <div style={{fontSize:11,color:C.textMuted,marginBottom:4,fontWeight:600}}>
           Subject <span style={{color:C.textDim,fontWeight:400}}>(applies to all below)</span>
         </div>
-        <div style={{display:"flex",gap:6,marginBottom:6}}>
-          {["PHYSICS","CHEMISTRY","MATHEMATICS","BIOLOGY"].map(s=>(
-            <button key={s} onClick={()=>setInstant("subject")(s)} style={{
-              padding:"5px 12px",borderRadius:6,fontSize:12,fontWeight:600,cursor:"pointer",
-              border:`1px solid ${q.subject===s?C.blue:C.border}`,
-              background:q.subject===s?C.blue+"22":C.surface,
-              color:q.subject===s?C.blueLight:C.textMuted,
-            }}>{s[0]+s.slice(1).toLowerCase()}</button>
-          ))}
-        </div>
+        {q.exam_name==="SSC CGL" ? (
+          <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:6}}>
+            {SSC_CGL_SUBJECTS.map(s=>(
+              <button key={s} onClick={()=>setInstant("subject")(s)} style={{
+                padding:"5px 12px",borderRadius:6,fontSize:11,fontWeight:600,cursor:"pointer",
+                border:`1px solid ${q.subject===s?C.purple:C.border}`,
+                background:q.subject===s?C.purple+"22":C.surface,
+                color:q.subject===s?C.purple:C.textMuted,
+              }}>{s}</button>
+            ))}
+          </div>
+        ) : (
+          <div style={{display:"flex",gap:6,marginBottom:6}}>
+            {["PHYSICS","CHEMISTRY","MATHEMATICS","BIOLOGY"].map(s=>(
+              <button key={s} onClick={()=>setInstant("subject")(s)} style={{
+                padding:"5px 12px",borderRadius:6,fontSize:12,fontWeight:600,cursor:"pointer",
+                border:`1px solid ${q.subject===s?C.blue:C.border}`,
+                background:q.subject===s?C.blue+"22":C.surface,
+                color:q.subject===s?C.blueLight:C.textMuted,
+              }}>{s[0]+s.slice(1).toLowerCase()}</button>
+            ))}
+          </div>
+        )}
         {/* PERF: fires setInstant only on blur, not on every keystroke */}
         <DebouncedInput
           value={q.subject||""}
@@ -571,7 +668,19 @@ function QuestionEditor({ q, onChange, onApplyBelow, chapters, topics, papers })
         />
       </div>
 
-      {/* Chapter · Topic */}
+      {/* Chapter · Topic — SSC CGL uses its own taxonomy dropdowns */}
+      {q.exam_name==="SSC CGL" ? (
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+          <ComboBox label="Chapter" warn={!q.chapter_name} placeholder="e.g. Analogy"
+            value={q.chapter_name||""}
+            onChange={val=>setInstant("chapter_name")(val)}
+            options={(SSC_CGL_TAXONOMY[q.subject]?.chapters||[]).map(c=>({value:c,label:c}))}/>
+          <ComboBox label="Topic (optional)" placeholder="e.g. Word Analogy"
+            value={q.topic_name||""}
+            onChange={val=>setInstant("topic_name")(val)}
+            options={((SSC_CGL_TAXONOMY[q.subject]?.topics||{})[q.chapter_name]||[]).map(t=>({value:t,label:t}))}/>
+        </div>
+      ) : (
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
         <ComboBox label="Chapter" warn={!q.chapter_name} placeholder="e.g. Electrostatics"
           value={q.chapter_name||""}
@@ -582,6 +691,7 @@ function QuestionEditor({ q, onChange, onApplyBelow, chapters, topics, papers })
           onChange={val=>setInstant("topic_name")(val)}
           options={topicOpts}/>
       </div>
+      )}
 
       {/* Difficulty · Marks */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
@@ -1251,6 +1361,7 @@ function UploadScreen({ apiBase, adminKey, openaiKey, onOpenaiKeyChange,
   const [texFile,   setTexFile]   = useState(null);
   const [imgFiles,  setImgFiles]  = useState([]);
   const [showKey,   setShowKey]   = useState(false);
+  const [uploadExam, setUploadExam] = useState(""); // exam type chosen before upload
   const inputRef    = useRef();
   const texInputRef = useRef();
   const imgInputRef = useRef();
@@ -1271,7 +1382,7 @@ function UploadScreen({ apiBase, adminKey, openaiKey, onOpenaiKeyChange,
     imgFiles.forEach(f=>form.append("images",f));
     try{
       const res=await fetch(`${apiBase}/api/admin/upload-tex-images`,{
-        method:"POST",headers:{"x-admin-key":adminKey,"x-openai-key":openaiKey},body:form,
+        method:"POST",headers:{"x-admin-key":adminKey,"x-openai-key":openaiKey,"x-exam-type":uploadExam},body:form,
       });
       if(!res.ok){const b=await res.json().catch(()=>({}));throw new Error(b.detail||res.statusText);}
       const {job_id}=await res.json();
@@ -1290,7 +1401,7 @@ function UploadScreen({ apiBase, adminKey, openaiKey, onOpenaiKeyChange,
     if(mode==="pdf") setPdfStatus("Sending to MathPix…");
     try{
       const res=await fetch(`${apiBase}/api/admin/${endpoint}`,{
-        method:"POST",headers:{"x-admin-key":adminKey,"x-openai-key":openaiKey},body:form,
+        method:"POST",headers:{"x-admin-key":adminKey,"x-openai-key":openaiKey,"x-exam-type":uploadExam},body:form,
       });
       if(!res.ok){const b=await res.json().catch(()=>({}));throw new Error(b.detail||res.statusText);}
       const {job_id}=await res.json();
@@ -1342,6 +1453,50 @@ function UploadScreen({ apiBase, adminKey, openaiKey, onOpenaiKeyChange,
               <div style={{fontSize:11,color:C.textDim,marginTop:5}}>
                 Used for chapter/topic/difficulty auto-tagging. Saved in browser localStorage.
               </div>
+            </div>
+          )}
+        </div>
+
+        {/* Exam Type Selector — choose BEFORE upload so LLM uses correct taxonomy */}
+        <div style={{
+          background:C.surface,border:`1px solid ${uploadExam==="SSC CGL"?C.purple+"66":C.border}`,
+          borderRadius:10,padding:"14px 16px",marginBottom:20,textAlign:"left",
+        }}>
+          <div style={{fontSize:12,fontWeight:700,color:C.textMuted,marginBottom:10,letterSpacing:0.5}}>
+            📋 EXAM TYPE <span style={{fontWeight:400,color:C.textDim}}>(select before uploading so AI tags with correct syllabus)</span>
+          </div>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+            {[
+              {value:"JEE Main",  label:"JEE Main",  color:C.blue},
+              {value:"JEE Advanced", label:"JEE Adv",color:C.blue},
+              {value:"NEET",      label:"NEET",       color:C.green},
+              {value:"SSC CGL",   label:"🏛 SSC CGL", color:C.purple},
+              {value:"CUET",      label:"CUET",       color:C.amber},
+              {value:"Other",     label:"Other",      color:C.textMuted},
+            ].map(({value,label,color})=>(
+              <button key={value}
+                onClick={()=>setUploadExam(v=>v===value?"":value)}
+                style={{
+                  padding:"7px 16px",borderRadius:8,fontSize:12,fontWeight:600,cursor:"pointer",
+                  border:`2px solid ${uploadExam===value?color:C.border}`,
+                  background:uploadExam===value?color+"22":C.bg,
+                  color:uploadExam===value?color:C.textMuted,
+                  transition:"all .15s",
+                }}>{label}</button>
+            ))}
+          </div>
+          {uploadExam==="SSC CGL"&&(
+            <div style={{marginTop:10,padding:"10px 12px",borderRadius:7,
+                        background:C.purple+"11",border:`1px solid ${C.purple}33`,
+                        fontSize:11,color:C.purple}}>
+              ✓ <strong>SSC CGL mode:</strong> LLM will classify into{" "}
+              <em>General Intelligence & Reasoning, General Awareness, Quantitative Aptitude, English Comprehension</em>{" "}
+              with SSC CGL chapters &amp; topics. Subject/Chapter/Topic fields in each question card will show SSC CGL options.
+            </div>
+          )}
+          {!uploadExam&&(
+            <div style={{marginTop:8,fontSize:11,color:C.textDim}}>
+              ℹ No exam selected — LLM will default to JEE taxonomy.
             </div>
           )}
         </div>

@@ -513,6 +513,17 @@ function QuestionEditor({ q, onChange, onApplyBelow, chapters, topics, papers, i
   const [dirty, setDirty] = useState(false);
   const prevQRef = useRef(q);
 
+  // SSC on-mount auto-fill: if answer already set but solution empty, fill immediately
+  useEffect(()=>{
+    const isSSC = (q.exam_name||"").toLowerCase().includes("ssc");
+    const isMCQ = !q.q_type || q.q_type === "MCQ";
+    if (isSSC && isMCQ && q.answer && !q.solution) {
+      const newSol = buildSscAutoSolution(q.answer);
+      onChange({ ...q, solution: newSol });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // run once on mount only
+
   useEffect(()=>{
     const prev = prevQRef.current;
     prevQRef.current = q;

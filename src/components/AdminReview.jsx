@@ -1103,64 +1103,72 @@ function isAutoFilledSolution(text) {
 
 function SolutionDraftTextarea({ q, onChange }) {
   const isSSC = (q.exam_name || "").toLowerCase().includes("ssc");
+  const isMCQ = !q.q_type || q.q_type === "MCQ";
 
-  const getInitialLocal = () => {
-    // On mount: if SSC + answer set + solution empty → auto-fill immediately
-    if (isSSC && q.answer && !q.q_type?.includes("MSQ") && !q.q_type?.includes("NUMERICAL")) {
-      const auto = buildSscAutoSolution(q.answer);
-      if (!q.solution) return auto;
+  // Compute what the initial value should be
+  const computeInitial = () => {
+    if (isSSC && isMCQ && q.answer && !q.solution) {
+      return { text: buildSscAutoSolution(q.answer), wasAuto: true };
     }
-    return q.solution || "";
+    return { text: q.solution || "", wasAuto: false };
   };
 
-  const [local, setLocal]        = useState(getInitialLocal);
-  const [dirty, setDirty]        = useState(false);
-  const [autoFilled, setAutoFilled] = useState(false);
-  const prevSolRef  = useRef(q.solution);
-  const prevAnsRef  = useRef(q.answer);
+  const init = computeInitial();
+  const [local,      setLocal]      = useState(init.text);
+  const [dirty,      setDirty]      = useState(false);
+  const [autoFilled, setAutoFilled] = useState(init.wasAuto);
+
+  // Use refs so the answer-change effect always reads current values
+  const localRef      = useRef(init.text);
+  const autoFilledRef = useRef(init.wasAuto);
+  const prevSolRef    = useRef(q.solution);
+  const prevAnsRef    = useRef(q.answer);
+
+  const setLocalAndRef = (val) => { localRef.current = val; setLocal(val); };
+  const setAutoAndRef  = (val) => { autoFilledRef.current = val; setAutoFilled(val); };
 
   // Sync inward when parent changes solution from outside (e.g. image insert)
   useEffect(() => {
     if (q.solution !== prevSolRef.current) {
       prevSolRef.current = q.solution;
-      setLocal(q.solution || "");
+      setLocalAndRef(q.solution || "");
       setDirty(false);
-      setAutoFilled(false);
+      setAutoAndRef(false);
     }
   }, [q.solution]);
 
   // SSC auto-fill: triggers whenever answer changes (option is clicked)
   useEffect(() => {
-    if (!isSSC) return;
+    if (!isSSC || !isMCQ) return;
     if (q.answer === prevAnsRef.current) return;
     prevAnsRef.current = q.answer;
-
-    const isMCQ = !q.q_type || q.q_type === "MCQ";
-    if (!isMCQ || !q.answer) return;
+    if (!q.answer) return;
 
     // Only auto-fill if solution is empty or was previously auto-filled
-    if (!local || isAutoFilledSolution(local) || autoFilled) {
+    const curLocal = localRef.current;
+    const curAuto  = autoFilledRef.current;
+    if (!curLocal || isAutoFilledSolution(curLocal) || curAuto) {
       const newSol = buildSscAutoSolution(q.answer);
-      setLocal(newSol);
-      setAutoFilled(true);
+      setLocalAndRef(newSol);
+      setAutoAndRef(true);
       setDirty(false);
       // Immediately commit to parent so preview updates
       prevSolRef.current = newSol;
       onChange({ ...q, solution: newSol });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q.answer, q.exam_name]);
+  // q.exam_name included so if exam switches away from SSC it stops
+  }, [q.answer, q.exam_name]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const apply = useCallback(() => {
-    prevSolRef.current = local;
-    onChange({ ...q, solution: local });
+    prevSolRef.current = localRef.current;
+    onChange({ ...q, solution: localRef.current });
     setDirty(false);
-  }, [q, local, onChange]);
+  }, [q, onChange]);
 
   const handleChange = (e) => {
-    setLocal(e.target.value);
+    setLocalAndRef(e.target.value);
     setDirty(true);
-    setAutoFilled(false); // user is manually editing — stop auto-fill override
+    setAutoAndRef(false); // user is manually editing — disable auto-fill override
   };
 
   return (

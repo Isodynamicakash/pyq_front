@@ -79,9 +79,22 @@ function App() {
     setPage("pyq");
   };
 
+  // Helper: send a GA4 page_view for the current hash-based route
+  const trackPageView = (hash) => {
+    if (typeof window.gtag !== "function") return;
+    const path = hash || window.location.hash || "/";
+    window.gtag("config", "G-TBZZSLN2TK", { page_path: path });
+  };
+
   useEffect(() => {
+    // Fire page_view for the initial load
+    trackPageView(window.location.hash);
+
     const fn = () => {
       const h = window.location.hash;
+      // Track every hash-based navigation as a new page view
+      trackPageView(h);
+
       if (h === "#/admin") {
         setPage("admin");
       } else if (h.startsWith("#/pyq")) {

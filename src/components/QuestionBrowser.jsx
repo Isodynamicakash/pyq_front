@@ -749,7 +749,19 @@ function EmptyState({ hasFilters, C }) {
   );
 }
 
-const EXAM_ID_MAP = { "jee-mains": 1, "neet": 3 };
+const EXAM_ID_MAP = {
+  "jee-mains": 1,
+  "jee-adv":   2,
+  "neet":       3,
+  "ssc-cgl":   6,
+};
+
+const EXAM_LABEL_MAP = {
+  "jee-mains": "JEE Mains",
+  "jee-adv":   "JEE Advanced",
+  "neet":      "NEET",
+  "ssc-cgl":   "SSC CGL",
+};
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function QuestionBrowser({ apiBase, onBack, isDark: isDarkProp, onToggleTheme, examId }) {
@@ -893,7 +905,7 @@ export default function QuestionBrowser({ apiBase, onBack, isDark: isDarkProp, o
             }}>EC</div>
             <span style={{fontSize:isMobile?13:15,fontWeight:800,color:C.text,letterSpacing:-.3}}>
               ExamsCalendar.PYQ
-              {examId && <span style={{fontWeight:600,color:C.textMuted}}> · {examId === "neet" ? "NEET" : "JEE Mains"}</span>}
+              {examId && <span style={{fontWeight:600,color:C.textMuted}}> · {EXAM_LABEL_MAP[examId] || examId}</span>}
             </span>
             
           </div>

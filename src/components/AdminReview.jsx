@@ -770,7 +770,16 @@ function QuestionEditor({ q, onChange, onApplyBelow, chapters, topics, papers, i
                       } else {
                         newAnswer = optionVal;
                       }
-                      onChange({ ...q, answer: newAnswer, question: draft.question, solution: draft.solution, options: draft.options });
+                      // SSC MCQ: auto-fill solution when solution is empty or was previously auto-filled
+                      const isSSCExam = (q.exam_name || "").toLowerCase().includes("ssc");
+                      const isMCQType = !q.q_type || q.q_type === "MCQ";
+                      let newSolution = draft.solution;
+                      if (isSSCExam && isMCQType) {
+                        if (!draft.solution || isAutoFilledSolution(draft.solution)) {
+                          newSolution = buildSscAutoSolution(newAnswer);
+                        }
+                      }
+                      onChange({ ...q, answer: newAnswer, question: draft.question, solution: newSolution, options: draft.options });
                     }}
                     style={{
                       width: 28, height: 28, borderRadius: "50%", flexShrink: 0, marginTop: 4,
@@ -1103,77 +1112,30 @@ function isAutoFilledSolution(text) {
 
 function SolutionDraftTextarea({ q, onChange }) {
   const isSSC = (q.exam_name || "").toLowerCase().includes("ssc");
-  const isMCQ = !q.q_type || q.q_type === "MCQ";
+  const [local, setLocal] = useState(q.solution || "");
+  const [dirty, setDirty] = useState(false);
+  const prevSolRef = useRef(q.solution);
 
-  // Compute what the initial value should be
-  const computeInitial = () => {
-    if (isSSC && isMCQ && q.answer && !q.solution) {
-      return { text: buildSscAutoSolution(q.answer), wasAuto: true };
-    }
-    return { text: q.solution || "", wasAuto: false };
-  };
-
-  const init = computeInitial();
-  const [local,      setLocal]      = useState(init.text);
-  const [dirty,      setDirty]      = useState(false);
-  const [autoFilled, setAutoFilled] = useState(init.wasAuto);
-
-  // Use refs so the answer-change effect always reads current values
-  const localRef      = useRef(init.text);
-  const autoFilledRef = useRef(init.wasAuto);
-  const prevSolRef    = useRef(q.solution);
-  const prevAnsRef    = useRef(q.answer);
-
-  const setLocalAndRef = (val) => { localRef.current = val; setLocal(val); };
-  const setAutoAndRef  = (val) => { autoFilledRef.current = val; setAutoFilled(val); };
-
-  // Sync inward when parent changes solution from outside (e.g. image insert)
+  // Sync whenever parent pushes a new solution value (auto-fill from onClick, image insert, etc.)
   useEffect(() => {
     if (q.solution !== prevSolRef.current) {
       prevSolRef.current = q.solution;
-      setLocalAndRef(q.solution || "");
+      setLocal(q.solution || "");
       setDirty(false);
-      setAutoAndRef(false);
     }
   }, [q.solution]);
 
-  // SSC auto-fill: triggers whenever answer changes (option is clicked)
-  useEffect(() => {
-    if (!isSSC || !isMCQ) return;
-    if (q.answer === prevAnsRef.current) return;
-    prevAnsRef.current = q.answer;
-    if (!q.answer) return;
-
-    // Only auto-fill if solution is empty or was previously auto-filled
-    const curLocal = localRef.current;
-    const curAuto  = autoFilledRef.current;
-    if (!curLocal || isAutoFilledSolution(curLocal) || curAuto) {
-      const newSol = buildSscAutoSolution(q.answer);
-      setLocalAndRef(newSol);
-      setAutoAndRef(true);
-      setDirty(false);
-      // Immediately commit to parent so preview updates
-      prevSolRef.current = newSol;
-      onChange({ ...q, solution: newSol });
-    }
-  // q.exam_name included so if exam switches away from SSC it stops
-  }, [q.answer, q.exam_name]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const apply = useCallback(() => {
-    prevSolRef.current = localRef.current;
-    onChange({ ...q, solution: localRef.current });
+    prevSolRef.current = local;
+    onChange({ ...q, solution: local });
     setDirty(false);
-  }, [q, onChange]);
+  }, [q, local, onChange]);
 
-  const handleChange = (e) => {
-    setLocalAndRef(e.target.value);
-    setDirty(true);
-    setAutoAndRef(false); // user is manually editing — disable auto-fill override
-  };
+  const isAutoText = isSSC && isAutoFilledSolution(local);
 
   return (
     <div>
-      {isSSC && autoFilled && !dirty && (
+      {isAutoText && !dirty && (
         <div style={{
           display: "flex", alignItems: "center", gap: 6, marginBottom: 6,
           padding: "5px 10px", borderRadius: 6,
@@ -1186,11 +1148,11 @@ function SolutionDraftTextarea({ q, onChange }) {
       <textarea
         value={local}
         rows={4}
-        onChange={handleChange}
-        onBlur={apply}   // silently apply on blur so preview updates when user clicks away
+        onChange={e => { setLocal(e.target.value); setDirty(true); }}
+        onBlur={apply}
         style={{
           width: "100%", boxSizing: "border-box", background: C.bg, color: C.text,
-          border: `1px solid ${autoFilled && !dirty ? C.green + "88" : dirty ? C.amber + "99" : C.border}`,
+          border: `1px solid ${isAutoText && !dirty ? C.green + "88" : dirty ? C.amber + "99" : C.border}`,
           borderRadius: 6,
           padding: "8px 10px", fontSize: 13,
           fontFamily: "'Fira Code', monospace", resize: "vertical", outline: "none",

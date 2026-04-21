@@ -513,17 +513,6 @@ function QuestionEditor({ q, onChange, onApplyBelow, chapters, topics, papers, i
   const [dirty, setDirty] = useState(false);
   const prevQRef = useRef(q);
 
-  // SSC on-mount auto-fill: if answer already set but solution empty, fill immediately
-  useEffect(()=>{
-    const isSSC = (q.exam_name||"").toLowerCase().includes("ssc");
-    const isMCQ = !q.q_type || q.q_type === "MCQ";
-    if (isSSC && isMCQ && q.answer && !q.solution) {
-      const newSol = buildSscAutoSolution(q.answer);
-      onChange({ ...q, solution: newSol });
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // run once on mount only
-
   useEffect(()=>{
     const prev = prevQRef.current;
     prevQRef.current = q;
@@ -1119,6 +1108,19 @@ function buildSscAutoSolution(answer) {
 function isAutoFilledSolution(text) {
   // Matches strings like "The answer is option 'a'." (any single letter)
   return /^The answer is option '[a-d]'\.$/.test((text || "").trim());
+}
+
+// Apply SSC auto-solution to a whole array of questions at load time.
+// Only fills questions that are SSC MCQ with an answer but no solution.
+function applySSCSolutions(qs) {
+  return qs.map(q => {
+    const isSSC = (q.exam_name || "").toLowerCase().includes("ssc");
+    const isMCQ = !q.q_type || q.q_type === "MCQ";
+    if (isSSC && isMCQ && q.answer && !q.solution) {
+      return { ...q, solution: buildSscAutoSolution(q.answer) };
+    }
+    return q;
+  });
 }
 
 function SolutionDraftTextarea({ q, onChange }) {
@@ -2044,8 +2046,8 @@ function ReviewScreen({ jobId, apiBase, adminKey, onBack, initialQuestions }) {
         const qData=results[idx++];
         const serverQs=qData.questions||[];
         const recovered=loadRecovery(jobId);
-        if(recovered&&recovered.length>0){setQuestions(recovered);setRecoveryBanner(true);}
-        else setQuestions(serverQs);
+        if(recovered&&recovered.length>0){setQuestions(applySSCSolutions(recovered));setRecoveryBanner(true);}
+        else setQuestions(applySSCSolutions(serverQs));
       }
       setChapters(Array.isArray(results[idx])?results[idx]:[]); idx++;
       setTopics(Array.isArray(results[idx])?results[idx]:[]); idx++;
@@ -2422,11 +2424,11 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
       const data = await res.json();
       const qs = Array.isArray(data) ? data : (data.questions || data.items || []);
       setTotal(data.total || qs.length);
-      setQuestions(qs.map(q => ({
+      setQuestions(applySSCSolutions(qs.map(q => ({
         ...q, _dbId: q.id, number: q.question_number ?? q.number ?? 0,
         q_images: q.q_images || [], sol_images: q.sol_images || [], opt_images: q.opt_images || {},
         options: q.options || [q.option_1 ?? "", q.option_2 ?? "", q.option_3 ?? "", q.option_4 ?? ""],
-      })));
+      }))));
     } catch(e) { console.error("Load error", e); }
     finally { setLoading(false); }
   }, [apiBase, adminKey, buildQS]);

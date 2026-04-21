@@ -504,7 +504,7 @@ function DebouncedInput({ value: externalValue, onCommit, placeholder = "", styl
 
 // ─── QuestionEditor ───────────────────────────────────────────────────────────
 // PERF: draft state is purely local; preview only updates when user clicks Apply
-function QuestionEditor({ q, onChange, onApplyBelow, chapters, topics, papers }) {
+function QuestionEditor({ q, onChange, onApplyBelow, chapters, topics, papers, imgUrl }) {
   const [draft, setDraft] = useState({
     question: q.question||"",
     solution: q.solution||"",
@@ -745,45 +745,74 @@ function QuestionEditor({ q, onChange, onApplyBelow, chapters, topics, papers })
       {/* Options */}
       {q.q_type !== "NUMERICAL" && (
         <div style={{ marginBottom: 12 }}>
-          <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 6, fontWeight: 600 }}>Options</div>
+          <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 6, fontWeight: 600 }}>
+            Options
+            <span style={{fontWeight:400,color:C.textDim,marginLeft:6}}>
+              (upload option images via the 🖼 Images tab)
+            </span>
+          </div>
           {[0, 1, 2, 3].map(i => {
             const optionVal = String(i + 1);
+            const optKey    = ["a","b","c","d"][i];
+            const optImgId  = (q.opt_images||{})[optKey];
             const isSelected = q.answer ? q.answer.split(',').map(s => s.trim()).includes(optionVal) : false;
             return (
-              <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 8 }}>
-                <button
-                  onClick={() => {
-                    let newAnswer;
-                    if (q.q_type === "MSQ") {
-                      let current = q.answer ? q.answer.split(',').map(s => s.trim()).filter(Boolean) : [];
-                      if (isSelected) { current = current.filter(val => val !== optionVal); }
-                      else { current.push(optionVal); }
-                      newAnswer = current.sort().join(', ');
-                    } else {
-                      newAnswer = optionVal;
-                    }
-                    onChange({ ...q, answer: newAnswer, question: draft.question, solution: draft.solution, options: draft.options });
-                  }}
-                  style={{
-                    width: 28, height: 28, borderRadius: "50%", flexShrink: 0, marginTop: 4,
-                    border: `2px solid ${isSelected ? C.green : C.border}`,
-                    background: isSelected ? C.green : "transparent",
-                    cursor: "pointer", color: isSelected ? "#fff" : C.text, fontWeight: 700, fontSize: 12,
-                  }}
-                >
-                  {i + 1}
-                </button>
-                <input
-                  value={draft.options[i] || ""}
-                  onChange={e => setOption(i)(e.target.value)}
-                  placeholder={`Option ${i + 1} (LaTeX)`}
-                  style={{
-                    flex: 1, background: C.bg, color: C.text,
-                    border: `1px solid ${isSelected ? C.green : C.border}`,
-                    borderRadius: 6, padding: "7px 10px", fontSize: 13,
-                    fontFamily: "'Fira Code', monospace", outline: "none",
-                  }}
-                />
+              <div key={i} style={{ marginBottom: 8 }}>
+                <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                  <button
+                    onClick={() => {
+                      let newAnswer;
+                      if (q.q_type === "MSQ") {
+                        let current = q.answer ? q.answer.split(',').map(s => s.trim()).filter(Boolean) : [];
+                        if (isSelected) { current = current.filter(val => val !== optionVal); }
+                        else { current.push(optionVal); }
+                        newAnswer = current.sort().join(', ');
+                      } else {
+                        newAnswer = optionVal;
+                      }
+                      onChange({ ...q, answer: newAnswer, question: draft.question, solution: draft.solution, options: draft.options });
+                    }}
+                    style={{
+                      width: 28, height: 28, borderRadius: "50%", flexShrink: 0, marginTop: 4,
+                      border: `2px solid ${isSelected ? C.green : C.border}`,
+                      background: isSelected ? C.green : "transparent",
+                      cursor: "pointer", color: isSelected ? "#fff" : C.text, fontWeight: 700, fontSize: 12,
+                    }}
+                  >
+                    {i + 1}
+                  </button>
+                  <div style={{flex:1,display:"flex",flexDirection:"column",gap:4}}>
+                    <input
+                      value={draft.options[i] || ""}
+                      onChange={e => setOption(i)(e.target.value)}
+                      placeholder={optImgId ? `Option ${i+1} — image uploaded (text optional)` : `Option ${i + 1} (LaTeX)`}
+                      style={{
+                        width:"100%", boxSizing:"border-box", background: C.bg, color: C.text,
+                        border: `1px solid ${isSelected ? C.green : optImgId ? C.blue+"88" : C.border}`,
+                        borderRadius: 6, padding: "7px 10px", fontSize: 13,
+                        fontFamily: "'Fira Code', monospace", outline: "none",
+                      }}
+                    />
+                    {/* Inline image preview when an option image exists */}
+                    {optImgId && (
+                      <div style={{
+                        display:"flex",alignItems:"flex-start",gap:8,
+                        padding:"6px 8px",borderRadius:6,
+                        background:C.surfaceHigh,border:`1px solid ${isSelected?C.green:C.blue+"55"}`,
+                      }}>
+                        <img
+                          src={imgUrl ? imgUrl(optImgId) : optImgId}
+                          alt={`opt ${i+1}`}
+                          style={{maxHeight:80,maxWidth:"100%",borderRadius:4,display:"block"}}
+                          onError={e=>{e.target.style.display="none";}}
+                        />
+                        <span style={{fontSize:10,color:C.blue,alignSelf:"center",whiteSpace:"nowrap"}}>
+                          🖼 image
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             );
           })}
@@ -1053,10 +1082,42 @@ const MathPreview = memo(function MathPreview({ content, style }) {
 // PERF: Isolated draft so typing in Solution does NOT call parent onChange
 //       (which would re-render all cards + re-typeset MathJax).
 //       Only fires upward on blur or when Apply is clicked.
+//
+// SSC AUTO-FILL: When exam is SSC (any variant) and an MCQ answer is selected,
+//   the solution box is automatically filled with "The answer is option 'X'."
+//   The auto-fill only triggers when the solution is empty OR was previously
+//   auto-filled (so manual edits are never overwritten).
+
+const OPTION_LABELS = { "1": "a", "2": "b", "3": "c", "4": "d" };
+
+function buildSscAutoSolution(answer) {
+  if (!answer) return "";
+  const letter = OPTION_LABELS[answer.trim()] || answer.trim().toLowerCase();
+  return `The answer is option '${letter}'.`;
+}
+
+function isAutoFilledSolution(text) {
+  // Matches strings like "The answer is option 'a'." (any single letter)
+  return /^The answer is option '[a-d]'\.$/.test((text || "").trim());
+}
+
 function SolutionDraftTextarea({ q, onChange }) {
-  const [local, setLocal]  = useState(q.solution || "");
-  const [dirty, setDirty]  = useState(false);
-  const prevSolRef = useRef(q.solution);
+  const isSSC = (q.exam_name || "").toLowerCase().includes("ssc");
+
+  const getInitialLocal = () => {
+    // On mount: if SSC + answer set + solution empty → auto-fill immediately
+    if (isSSC && q.answer && !q.q_type?.includes("MSQ") && !q.q_type?.includes("NUMERICAL")) {
+      const auto = buildSscAutoSolution(q.answer);
+      if (!q.solution) return auto;
+    }
+    return q.solution || "";
+  };
+
+  const [local, setLocal]        = useState(getInitialLocal);
+  const [dirty, setDirty]        = useState(false);
+  const [autoFilled, setAutoFilled] = useState(false);
+  const prevSolRef  = useRef(q.solution);
+  const prevAnsRef  = useRef(q.answer);
 
   // Sync inward when parent changes solution from outside (e.g. image insert)
   useEffect(() => {
@@ -1064,8 +1125,31 @@ function SolutionDraftTextarea({ q, onChange }) {
       prevSolRef.current = q.solution;
       setLocal(q.solution || "");
       setDirty(false);
+      setAutoFilled(false);
     }
   }, [q.solution]);
+
+  // SSC auto-fill: triggers whenever answer changes (option is clicked)
+  useEffect(() => {
+    if (!isSSC) return;
+    if (q.answer === prevAnsRef.current) return;
+    prevAnsRef.current = q.answer;
+
+    const isMCQ = !q.q_type || q.q_type === "MCQ";
+    if (!isMCQ || !q.answer) return;
+
+    // Only auto-fill if solution is empty or was previously auto-filled
+    if (!local || isAutoFilledSolution(local) || autoFilled) {
+      const newSol = buildSscAutoSolution(q.answer);
+      setLocal(newSol);
+      setAutoFilled(true);
+      setDirty(false);
+      // Immediately commit to parent so preview updates
+      prevSolRef.current = newSol;
+      onChange({ ...q, solution: newSol });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q.answer, q.exam_name]);
 
   const apply = useCallback(() => {
     prevSolRef.current = local;
@@ -1073,16 +1157,33 @@ function SolutionDraftTextarea({ q, onChange }) {
     setDirty(false);
   }, [q, local, onChange]);
 
+  const handleChange = (e) => {
+    setLocal(e.target.value);
+    setDirty(true);
+    setAutoFilled(false); // user is manually editing — stop auto-fill override
+  };
+
   return (
     <div>
+      {isSSC && autoFilled && !dirty && (
+        <div style={{
+          display: "flex", alignItems: "center", gap: 6, marginBottom: 6,
+          padding: "5px 10px", borderRadius: 6,
+          background: C.greenBg, border: `1px solid ${C.green}44`, fontSize: 11,
+        }}>
+          <span style={{ color: C.green }}>✦ Auto-filled for SSC</span>
+          <span style={{ color: C.textDim }}>— edit below to override</span>
+        </div>
+      )}
       <textarea
         value={local}
         rows={4}
-        onChange={e => { setLocal(e.target.value); setDirty(true); }}
+        onChange={handleChange}
         onBlur={apply}   // silently apply on blur so preview updates when user clicks away
         style={{
           width: "100%", boxSizing: "border-box", background: C.bg, color: C.text,
-          border: `1px solid ${dirty ? C.amber + "99" : C.border}`, borderRadius: 6,
+          border: `1px solid ${autoFilled && !dirty ? C.green + "88" : dirty ? C.amber + "99" : C.border}`,
+          borderRadius: 6,
           padding: "8px 10px", fontSize: 13,
           fontFamily: "'Fira Code', monospace", resize: "vertical", outline: "none",
         }}
@@ -1237,12 +1338,17 @@ const QuestionCard = memo(function QuestionCard({
             ? <MathPreview content={questionHtml} style={{fontSize:14,color:C.text,lineHeight:1.75,marginBottom:10}}/>
             : <span style={{color:C.textDim,fontSize:12}}>— no question text —</span>}
 
-          {q.q_type!=="NUMERICAL"&&(q.options||[]).some(o=>o)&&(
+
+          {q.q_type!=="NUMERICAL"&&(
+            (q.options||[]).some(o=>o)||Object.keys(q.opt_images||{}).length>0
+          )&&(
             <div style={{display:"flex",flexDirection:"column",gap:6}}>
-              {(q.options||[]).map((opt,i)=>{
-                if(!opt&&!(q.opt_images||{})[["a","b","c","d"][i]]) return null;
-                const isCorrect=q.answer===String(i+1);
-                const optImgId=(q.opt_images||{})[["a","b","c","d"][i]];
+              {[0,1,2,3].map((i)=>{
+                const optKey   = ["a","b","c","d"][i];
+                const optText  = (q.options||[])[i];
+                const optImgId = (q.opt_images||{})[optKey];
+                if(!optText && !optImgId) return null;
+                const isCorrect = q.answer===String(i+1);
                 return(
                   <div key={i} style={{padding:"7px 12px",borderRadius:6,
                     border:`1px solid ${isCorrect?C.green:C.border}`,
@@ -1253,12 +1359,13 @@ const QuestionCard = memo(function QuestionCard({
                       color:isCorrect?"#fff":C.textMuted,
                       display:"flex",alignItems:"center",justifyContent:"center",
                       fontSize:11,fontWeight:700}}>{i+1}</span>
-                    <span style={{color:isCorrect?C.green:C.text,fontSize:13}}>
-                      {optImgId
-                        ?<img src={imgUrl(optImgId)} alt={`opt ${i+1}`}
-                            style={{maxHeight:80,maxWidth:"100%",borderRadius:3}}
+                    <span style={{color:isCorrect?C.green:C.text,fontSize:13,flex:1}}>
+                      {optImgId&&(
+                        <img src={imgUrl(optImgId)} alt={`opt ${i+1}`}
+                            style={{maxHeight:100,maxWidth:"100%",borderRadius:3,display:"block",marginBottom:optText?4:0}}
                             onError={e=>{e.target.style.display="none";}}/>
-                        :<MathPreview content={optionHtmls[i]||""} style={{display:"inline"}}/>}
+                      )}
+                      {optText&&<MathPreview content={optionHtmls[i]||""} style={{display:"inline"}}/>}
                     </span>
                   </div>
                 );
@@ -1318,7 +1425,8 @@ const QuestionCard = memo(function QuestionCard({
               </div>
               <QuestionEditor q={q} onChange={onChange}
                 onApplyBelow={(field,val)=>setPending({field,value:val})}
-                chapters={chapters} topics={topics} papers={papers}/>
+                chapters={chapters} topics={topics} papers={papers}
+                imgUrl={imgUrl}/>
               {pendingApply&&(
                 <ApplyBelowBanner field={pendingApply.field} value={pendingApply.value}
                   questionIndex={index} totalQuestions={total}

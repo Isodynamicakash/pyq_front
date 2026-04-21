@@ -62,98 +62,21 @@ const THEMES = {
 };
 
 // ─── Nav config ───────────────────────────────────────────────────────────────
-// tabColor: idle background in dark | tabColorLight: idle bg in light | activeColor: when clicked
 const NAV_ITEMS = [
   {
     id: "pyq", label: "PYQ", icon: "📝",
     tabColor: "#1a0a3a", tabColorLight: "#ede9fe", tabText: "#a78bfa", tabTextLight: "#5b21b6",
     activeColor: "#7c3aed", activeColorLight: "#7c3aed",
     sub: [
-      { group: "JEE", items: [
-        { label: "JEE Mains",    id: "jee-mains", live: true,  icon: "🎯" },
-        { label: "NEET",         id: "neet",       live: true,  icon: "🩺" },
-        { label: "JEE Advanced", id: "jee-adv",   live: false, icon: "🏆" },
-        { label: "BITSAT",       id: "bitsat",    live: false, icon: "💻" },
-        { label: "WBJEE",        id: "wbjee",     live: false, icon: "📐" },
-        { label: "MHT-CET",      id: "mhtcet",    live: false, icon: "🔬" },
-        { label: "VITEEE",       id: "viteee",    live: false, icon: "🧪" },
+      { group: "Engineering", items: [
+        { label: "JEE Mains",    id: "jee-mains", live: true, icon: "🎯" },
+        { label: "JEE Advanced", id: "jee-adv",   live: true, icon: "🏆" },
+        { label: "NEET",         id: "neet",       live: true, icon: "🩺" },
       ]},
-      { group: "SSC", items: [
-        { label: "SSC CGL",  id: "ssc-cgl",  live: false, icon: "📋" },
-        { label: "SSC CHSL", id: "ssc-chsl", live: false, icon: "📄" },
-        { label: "SSC MTS",  id: "ssc-mts",  live: false, icon: "📌" },
-        { label: "SSC GD",   id: "ssc-gd",   live: false, icon: "🛡️" },
-      ]},
-      { group: "UPSC", items: [
-        { label: "UPSC CSE", id: "upsc-cse", live: false, icon: "🏛️" },
-        { label: "UPSC CDS", id: "upsc-cds", live: false, icon: "⚔️" },
-        { label: "UPSC NDA", id: "upsc-nda", live: false, icon: "🪖" },
-      ]},
-      { group: "CBSE", items: [
-        { label: "Class 10", id: "cbse-10", live: false, icon: "📚" },
-        { label: "Class 11", id: "cbse-11", live: false, icon: "📗" },
-        { label: "Class 12", id: "cbse-12", live: false, icon: "🎓" },
+      { group: "Government Jobs", items: [
+        { label: "SSC CGL", id: "ssc-cgl", live: true, icon: "📋" },
       ]},
     ],
-  },
-  {
-    id: "flashcards", label: "Flash Cards", icon: "⚡",
-    tabColor: "#1a1800", tabColorLight: "#fefce8", tabText: "#facc15", tabTextLight: "#854d0e",
-    activeColor: "#d97706", activeColorLight: "#d97706",
-    sub: [{ group: "Flash Cards", items: [
-      { label: "Physics",   id: "fl-phy",  live: false, icon: "⚡" },
-      { label: "Chemistry", id: "fl-chem", live: false, icon: "🧬" },
-      { label: "Maths",     id: "fl-math", live: false, icon: "∑" },
-      { label: "Biology",   id: "fl-bio",  live: false, icon: "🌿" },
-      { label: "History",   id: "fl-hist", live: false, icon: "🏺" },
-      { label: "Polity",    id: "fl-pol",  live: false, icon: "⚖️" },
-    ]}],
-  },
-  {
-    id: "quiz", label: "Quiz", icon: "🧠",
-    tabColor: "#1a0808", tabColorLight: "#fff1f2", tabText: "#f87171", tabTextLight: "#be123c",
-    activeColor: "#e11d48", activeColorLight: "#e11d48",
-    sub: [{ group: "Quiz", items: [
-      { label: "Daily Quiz",   id: "quiz-daily",   live: false, icon: "📆" },
-      { label: "Mock Tests",   id: "quiz-mock",    live: false, icon: "📊" },
-      { label: "Chapter Quiz", id: "quiz-chapter", live: false, icon: "📑" },
-      { label: "Speed Drill",  id: "quiz-speed",   live: false, icon: "⏱️" },
-    ]}],
-  },
-  {
-    id: "notes", label: "Notes", icon: "📒",
-    tabColor: "#0d1f10", tabColorLight: "#f0fdf4", tabText: "#4ade80", tabTextLight: "#166534",
-    activeColor: "#16a34a", activeColorLight: "#16a34a",
-    sub: [{ group: "Notes", items: [
-      { label: "Physics Notes",   id: "notes-phy",  live: false, icon: "⚡" },
-      { label: "Chemistry Notes", id: "notes-chem", live: false, icon: "🧬" },
-      { label: "Maths Notes",     id: "notes-math", live: false, icon: "∑" },
-      { label: "Formula Sheets",  id: "notes-frm",  live: false, icon: "🔢" },
-      { label: "Quick Revision",  id: "notes-rev",  live: false, icon: "🔁" },
-    ]}],
-  },
-  {
-    id: "books", label: "Books", icon: "📚",
-    tabColor: "#0a1a2a", tabColorLight: "#eff6ff", tabText: "#60a5fa", tabTextLight: "#1d4ed8",
-    activeColor: "#2563eb", activeColorLight: "#2563eb",
-    sub: [{ group: "Books", items: [
-      { label: "NCERT Solutions", id: "bk-ncert", live: false, icon: "📖" },
-      { label: "HC Verma",        id: "bk-hcv",   live: false, icon: "⚡" },
-      { label: "RD Sharma",       id: "bk-rds",   live: false, icon: "∑" },
-      { label: "MS Chauhan",      id: "bk-msc",   live: false, icon: "🧬" },
-      { label: "Arihant Guides",  id: "bk-ari",   live: false, icon: "📕" },
-    ]}],
-  },
-  {
-    id: "calendar", label: "Exam Calendar", icon: "📅",
-    tabColor: "#1a0a1a", tabColorLight: "#fdf4ff", tabText: "#e879f9", tabTextLight: "#86198f",
-    activeColor: "#a21caf", activeColorLight: "#a21caf",
-    sub: [{ group: "Exam Calendar", items: [
-      { label: "Upcoming Exams", id: "cal-up",    live: false, icon: "🗓️" },
-      { label: "Admit Cards",    id: "cal-admit", live: false, icon: "🪪" },
-      { label: "Results",        id: "cal-res",   live: false, icon: "📊" },
-      { label: "Notifications",  id: "cal-notif", live: false, icon: "🔔" },
-    ]}],
   },
 ];
 
@@ -180,90 +103,70 @@ function ThemeToggle({ isDark, toggle, T }) {
 
 // ─── Dropdown ─────────────────────────────────────────────────────────────────
 function Dropdown({ item, onJeeMains, onClose, T, isDark }) {
-  const isPyq = item.id === "pyq";
-  const liveColor = "#2563eb";
+  const liveColor = isDark ? "#93b4fd" : "#2563eb";
+  const liveBg    = isDark ? "#1a2654" : "#eff6ff";
+  const liveBorder = isDark ? "#2d4080" : "#bfdbfe";
 
   return (
     <div style={{
       position: "fixed", top: 64, left: "50%", transform: "translateX(-50%)",
       background: T.bgCard,
       border: `1px solid ${T.border}`,
-      borderRadius: 14, padding: isPyq ? 16 : 8,
+      borderRadius: 14, padding: 16,
       boxShadow: T.dropShadow,
       zIndex: 2000, animation: "dropIn .16s cubic-bezier(.4,0,.2,1)",
-      minWidth: isPyq ? Math.min(680, window.innerWidth - 32) : 240,
+      minWidth: Math.min(520, window.innerWidth - 32),
       maxWidth: "92vw",
     }}>
       <style>{`@keyframes dropIn{from{opacity:0;transform:translateX(-50%) translateY(-6px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}`}</style>
-
-      {isPyq ? (
-        <div>
-          <div style={{
-            fontSize: 11, fontWeight: 700, letterSpacing: 1.4, color: T.textMuted,
-            textTransform: "uppercase", marginBottom: 14, paddingBottom: 10,
-            borderBottom: `1px solid ${T.border}`,
-          }}>Previous Year Questions</div>
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-            gap: 8,
-          }}>
-            {item.sub.map(group => (
-              <div key={group.group}>
-                <div style={{
-                  fontSize: 10, fontWeight: 700, letterSpacing: 1.2,
-                  color: T.textMuted, textTransform: "uppercase",
-                  marginBottom: 6, padding: "0 6px",
-                }}>{group.group}</div>
-                {group.items.map(s => (
-                  <button key={s.id}
-                    onClick={() => { if (s.live) { onJeeMains(s.id); onClose(); } }}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 7,
-                      width: "100%", padding: "7px 8px",
-                      background: "none", border: "none", borderRadius: 8,
-                      cursor: s.live ? "pointer" : "default",
-                      textAlign: "left", transition: "background .1s",
-                    }}
-                    onMouseEnter={e => { if (s.live) e.currentTarget.style.background = T.accentBg; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "none"; }}
-                  >
-                    <span style={{ fontSize: 13 }}>{s.icon}</span>
-                    <span style={{
-                      fontSize: 13, fontWeight: 500, flex: 1,
-                      color: s.live ? T.text : T.textDisabled,
-                    }}>{s.label}</span>
-                    {s.live
-                      ? <span style={{ fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 20, background: T.accentBg, color: liveColor, border: `1px solid ${liveColor}40`, letterSpacing: .6 }}>LIVE</span>
-                      : <span style={{ fontSize: 9, fontWeight: 600, padding: "1px 6px", borderRadius: 20, background: T.soon, color: T.soonText, letterSpacing: .5 }}>SOON</span>
-                    }
-                  </button>
-                ))}
-              </div>
+      <div style={{
+        fontSize: 11, fontWeight: 700, letterSpacing: 1.4, color: T.textMuted,
+        textTransform: "uppercase", marginBottom: 14, paddingBottom: 10,
+        borderBottom: `1px solid ${T.border}`,
+      }}>Previous Year Questions</div>
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+        gap: 6,
+      }}>
+        {item.sub.map(group => (
+          <div key={group.group}>
+            <div style={{
+              fontSize: 10, fontWeight: 700, letterSpacing: 1.2,
+              color: T.textMuted, textTransform: "uppercase",
+              marginBottom: 6, padding: "0 6px",
+            }}>{group.group}</div>
+            {group.items.map(s => (
+              <button key={s.id}
+                onClick={() => { onJeeMains(s.id); onClose(); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 8,
+                  width: "100%", padding: "9px 10px",
+                  background: "none", border: `1px solid transparent`, borderRadius: 10,
+                  cursor: "pointer", textAlign: "left",
+                  transition: "background .1s, border-color .1s",
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = liveBg;
+                  e.currentTarget.style.borderColor = liveBorder;
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = "none";
+                  e.currentTarget.style.borderColor = "transparent";
+                }}
+              >
+                <span style={{ fontSize: 16 }}>{s.icon}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, flex: 1, color: T.text }}>{s.label}</span>
+                <span style={{
+                  fontSize: 9, fontWeight: 700, padding: "1px 7px", borderRadius: 20,
+                  background: liveBg, color: liveColor,
+                  border: `1px solid ${liveBorder}`, letterSpacing: .6,
+                }}>LIVE</span>
+              </button>
             ))}
           </div>
-        </div>
-      ) : (
-        <>
-          <div style={{
-            padding: "4px 8px 10px", fontSize: 11, fontWeight: 700, letterSpacing: 1.2,
-            color: T.textMuted, textTransform: "uppercase",
-            borderBottom: `1px solid ${T.border}`, marginBottom: 6,
-          }}>{item.label}</div>
-          {item.sub[0].items.map(s => (
-            <button key={s.id} style={{
-              display: "flex", alignItems: "center", gap: 10,
-              width: "100%", padding: "9px 10px",
-              background: "none", border: "none", borderRadius: 8,
-              cursor: "default", textAlign: "left",
-            }}>
-              <span style={{ fontSize: 15, minWidth: 22 }}>{s.icon}</span>
-              <span style={{ fontSize: 13, fontWeight: 500, flex: 1, color: T.textDisabled }}>{s.label}</span>
-              <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 7px", borderRadius: 20, background: T.soon, color: T.soonText, letterSpacing: .5 }}>SOON</span>
-            </button>
-          ))}
-        </>
-      )}
+        ))}
+      </div>
     </div>
   );
 }
@@ -306,7 +209,7 @@ function Hero({ onJeeMains, T, isDark }) {
         letterSpacing: .5,
       }}>
         <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#22c55e", animation: "pulse 2s ease infinite", flexShrink: 0 }} />
-        JEE Mains &amp; NEET PYQs — Live Now
+        JEE Mains · JEE Advanced · NEET · SSC CGL — Live Now
         <style>{`@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.5)}}`}</style>
       </div>
 
@@ -344,36 +247,30 @@ function Hero({ onJeeMains, T, isDark }) {
         lineHeight: 1.75, margin: "0 0 40px",
         fontWeight: 400,
       }}>
-        PYQs, flashcards, quizzes, notes and exam calendars —
-        everything a serious student needs, in one clean place.
+        Free previous year questions for JEE, NEET and SSC —
+        fully searchable with complete solutions.
       </p>
 
       {/* CTA row */}
-      <div style={{ ...anim(.3), display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
-        <button onClick={() => onJeeMains("jee-mains")} style={{
-          padding: "13px 36px", borderRadius: 10, fontSize: 15, fontWeight: 700,
-          background: "#2563eb",
-          border: "none", color: "#ffffff", cursor: "pointer",
-          boxShadow: "0 4px 20px rgba(37,99,235,.35)",
-          letterSpacing: .2, transition: "background .15s, box-shadow .15s, transform .15s",
-        }}
-          onMouseEnter={e => { e.currentTarget.style.background = "#1d4ed8"; e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 8px 28px rgba(37,99,235,.45)"; }}
-          onMouseLeave={e => { e.currentTarget.style.background = "#2563eb"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(37,99,235,.35)"; }}
-        >
-          Start with JEE Mains →
-        </button>
-        <button onClick={() => onJeeMains("neet")} style={{
-          padding: "13px 36px", borderRadius: 10, fontSize: 15, fontWeight: 700,
-          background: isDark ? "#16a34a" : "#16a34a",
-          border: "none", color: "#ffffff", cursor: "pointer",
-          boxShadow: "0 4px 20px rgba(22,163,74,.35)",
-          letterSpacing: .2, transition: "background .15s, box-shadow .15s, transform .15s",
-        }}
-          onMouseEnter={e => { e.currentTarget.style.background = "#15803d"; e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 8px 28px rgba(22,163,74,.45)"; }}
-          onMouseLeave={e => { e.currentTarget.style.background = "#16a34a"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(22,163,74,.35)"; }}
-        >
-          Start with NEET →
-        </button>
+      <div style={{ ...anim(.3), display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
+        {[
+          { label: "JEE Mains",    id: "jee-mains", bg: "#2563eb", shadow: "rgba(37,99,235,.35)",  hover: "#1d4ed8" },
+          { label: "JEE Advanced", id: "jee-adv",   bg: "#7c3aed", shadow: "rgba(124,58,237,.35)", hover: "#6d28d9" },
+          { label: "NEET",         id: "neet",       bg: "#16a34a", shadow: "rgba(22,163,74,.35)",  hover: "#15803d" },
+          { label: "SSC CGL",      id: "ssc-cgl",   bg: "#d97706", shadow: "rgba(217,119,6,.35)",   hover: "#b45309" },
+        ].map(btn => (
+          <button key={btn.id} onClick={() => onJeeMains(btn.id)} style={{
+            padding: "12px 28px", borderRadius: 10, fontSize: 14, fontWeight: 700,
+            background: btn.bg, border: "none", color: "#ffffff", cursor: "pointer",
+            boxShadow: `0 4px 20px ${btn.shadow}`,
+            letterSpacing: .2, transition: "background .15s, box-shadow .15s, transform .15s",
+          }}
+            onMouseEnter={e => { e.currentTarget.style.background = btn.hover; e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = `0 8px 28px ${btn.shadow}`; }}
+            onMouseLeave={e => { e.currentTarget.style.background = btn.bg; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = `0 4px 20px ${btn.shadow}`; }}
+          >
+            {btn.label} →
+          </button>
+        ))}
       </div>
 
       {/* Stats */}
@@ -439,128 +336,66 @@ function SectionHeader({ eyebrow, title, sub, T }) {
 // ─── Features ─────────────────────────────────────────────────────────────────
 function Features({ onJeeMains, T, isDark }) {
   const cards = [
-    { icon: "🎯", title: "JEE Mains PYQs",   desc: "10+ years of questions with complete solutions. Filter by chapter, topic, difficulty and question type.", live: true,  onClick: () => onJeeMains("jee-mains") },
-    { icon: "🩺", title: "NEET PYQs",         desc: "Complete NEET previous year papers with detailed solutions. Filter by subject, chapter, topic and year.", live: true,  onClick: () => onJeeMains("neet") },
-    { icon: "⚡", title: "Flash Cards",        desc: "High-retention revision cards for rapid recall of key concepts before exam day.",                          live: false },
-    { icon: "🧠", title: "Quiz & Mock Tests",  desc: "Timed chapter quizzes and full-length mock tests that simulate the real exam environment.",               live: false },
-    { icon: "📒", title: "Notes & Formulas",   desc: "Concise, exam-focused notes and complete formula sheets organised by topic and chapter.",                 live: false },
-    { icon: "📚", title: "Books & Solutions",  desc: "NCERT, HC Verma, RD Sharma and Arihant — solved and explained, all in one place.",                       live: false },
-    { icon: "📅", title: "Exam Calendar",      desc: "Every exam date, admit card, result and notification so you never miss a deadline again.",                live: false },
+    { icon: "🎯", title: "JEE Mains PYQs",   desc: "10+ years of questions with complete solutions. Filter by chapter, topic, difficulty and question type.", onClick: () => onJeeMains("jee-mains") },
+    { icon: "🏆", title: "JEE Advanced PYQs", desc: "Complete JEE Advanced previous year papers. Filter by subject, chapter, topic and year.",                onClick: () => onJeeMains("jee-adv") },
+    { icon: "🩺", title: "NEET PYQs",         desc: "Complete NEET previous year papers with detailed solutions. Filter by subject, chapter, topic and year.", onClick: () => onJeeMains("neet") },
+    { icon: "📋", title: "SSC CGL PYQs",      desc: "SSC CGL Tier I previous year papers across all 4 subjects. Filter by shift, chapter and more.",          onClick: () => onJeeMains("ssc-cgl") },
   ];
 
   return (
     <div style={{ position: "relative", zIndex: 1, padding: "0 24px 80px", maxWidth: 1160, margin: "0 auto" }}>
       <SectionHeader
-        eyebrow="What's Inside"
-        title="Everything you need to crack the exam"
+        eyebrow="Live Now"
+        title="Browse previous year questions"
+        sub="Fully searchable and filterable PYQ banks — free for every student."
         T={T}
       />
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
         {cards.map((c, i) => (
           <div key={c.title}
-            onClick={c.live ? c.onClick : undefined}
+            onClick={c.onClick}
             style={{
               background: T.bgCard,
-              border: `1px solid ${c.live ? (isDark ? "#2d4080" : "#bfdbfe") : T.border}`,
-              borderRadius: 14, padding: "26px 24px 22px",
-              cursor: c.live ? "pointer" : "default",
+              border: `1px solid ${isDark ? "#2d4080" : "#bfdbfe"}`,
+              borderRadius: 16, padding: "28px 24px 24px",
+              cursor: "pointer",
               transition: "transform .18s, box-shadow .18s, border-color .18s",
               animation: "fadeUp .45s ease both",
-              animationDelay: `${i * .07}s`,
+              animationDelay: `${i * .08}s`,
             }}
             onMouseEnter={e => {
-              if (c.live) {
-                e.currentTarget.style.transform = "translateY(-4px)";
-                e.currentTarget.style.boxShadow = isDark ? "0 16px 40px rgba(37,99,235,.2)" : "0 12px 32px rgba(37,99,235,.12)";
-                e.currentTarget.style.borderColor = isDark ? "#4f7ef8" : "#93c5fd";
-              } else {
-                e.currentTarget.style.borderColor = T.borderHover;
-              }
+              e.currentTarget.style.transform = "translateY(-4px)";
+              e.currentTarget.style.boxShadow = isDark ? "0 16px 40px rgba(37,99,235,.2)" : "0 12px 32px rgba(37,99,235,.12)";
+              e.currentTarget.style.borderColor = isDark ? "#4f7ef8" : "#93c5fd";
             }}
             onMouseLeave={e => {
               e.currentTarget.style.transform = "translateY(0)";
               e.currentTarget.style.boxShadow = "none";
-              e.currentTarget.style.borderColor = c.live ? (isDark ? "#2d4080" : "#bfdbfe") : T.border;
+              e.currentTarget.style.borderColor = isDark ? "#2d4080" : "#bfdbfe";
             }}
           >
-            <div style={{ fontSize: 26, marginBottom: 14 }}>{c.icon}</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+            <div style={{ fontSize: 30, marginBottom: 16 }}>{c.icon}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
               <h3 style={{
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
-                fontSize: 16, fontWeight: 700, color: c.live ? T.text : T.textMuted,
-                margin: 0,
+                fontSize: 17, fontWeight: 700, color: T.text, margin: 0,
               }}>{c.title}</h3>
-              {c.live
-                ? <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 6, background: isDark ? "#1a2654" : "#eff6ff", color: isDark ? "#93b4fd" : "#2563eb", border: `1px solid ${isDark ? "#2d4080" : "#bfdbfe"}`, letterSpacing: .5 }}>LIVE</span>
-                : <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: T.soon, color: T.soonText, letterSpacing: .4 }}>SOON</span>
-              }
+              <span style={{
+                fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 6,
+                background: isDark ? "#1a2654" : "#eff6ff",
+                color: isDark ? "#93b4fd" : "#2563eb",
+                border: `1px solid ${isDark ? "#2d4080" : "#bfdbfe"}`,
+                letterSpacing: .5, flexShrink: 0,
+              }}>LIVE</span>
             </div>
-            <p style={{ fontSize: 14, color: c.live ? T.textSub : T.textMuted, lineHeight: 1.65, margin: 0 }}>{c.desc}</p>
-            {c.live && (
-              <div style={{ marginTop: 16, fontSize: 13, fontWeight: 600, color: isDark ? "#4f7ef8" : "#2563eb", display: "flex", alignItems: "center", gap: 4 }}>
-                Explore now <span>→</span>
-              </div>
-            )}
+            <p style={{ fontSize: 14, color: T.textSub, lineHeight: 1.65, margin: "0 0 18px" }}>{c.desc}</p>
+            <div style={{ fontSize: 13, fontWeight: 600, color: isDark ? "#4f7ef8" : "#2563eb", display: "flex", alignItems: "center", gap: 4 }}>
+              Browse questions <span>→</span>
+            </div>
           </div>
         ))}
       </div>
       <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`}</style>
-    </div>
-  );
-}
-
-// ─── Why Us ───────────────────────────────────────────────────────────────────
-function WhyUs({ T, isDark }) {
-  const reasons = [
-    { icon: "🎯", title: "Exam-Focused Content",         desc: "Every question and card is curated for Indian competitive exams — not generic content. We know exactly what each exam tests." },
-    { icon: "🔍", title: "Powerful Filtering",           desc: "Filter PYQs by subject, chapter, topic, year, shift, difficulty and question type simultaneously. Find exactly what you need fast." },
-    { icon: "📐", title: "Full Step-by-Step Solutions",  desc: "Every question comes with a complete exam-style solution — not just the answer. Understand the method to tackle any variation." },
-    { icon: "⚡", title: "Rapid Revision System",        desc: "Flash cards and formula sheets designed for the final 30 days before your exam. Retain more in less time." },
-    { icon: "🧠", title: "Active Testing",               desc: "Timed chapter quizzes and mock tests simulate real exam pressure. Practise performing under conditions, not just studying." },
-    { icon: "📅", title: "Never Miss a Deadline",        desc: "Track every form date, admit card, exam date and result across JEE, SSC, UPSC and CBSE in one calendar." },
-    { icon: "📱", title: "Works on Every Device",        desc: "Fully functional on mobile, tablet and desktop. Revise on the bus, practise during lunch — no app download required." },
-    { icon: "🆓", title: "Completely Free",              desc: "No paywalls, no subscriptions, no hidden fees. Every PYQ, solution, formula and note is free for every student, forever." },
-    { icon: "📚", title: "One Platform, Zero Friction",  desc: "PYQs, notes, quizzes, books, flashcards and calendars — stop juggling multiple apps. Everything in one clean interface." },
-    { icon: "🏆", title: "Built by Students",            desc: "Every feature exists because a real student needed it during real exam preparation. We understand the grind." },
-    { icon: "🔄", title: "Always Up to Date",            desc: "New papers added as soon as exams happen. You always have the most recent questions available, automatically." },
-    { icon: "🌐", title: "All Exams, One Account",       desc: "JEE, SSC, UPSC, CBSE — one platform, one login. All your preparation material in a single place." },
-  ];
-
-  return (
-    <div style={{ position: "relative", zIndex: 1, padding: "20px 24px 100px", maxWidth: 1160, margin: "0 auto" }}>
-      <SectionHeader
-        eyebrow="Why ExamsCalendar"
-        title="Built differently. For students who are serious."
-        sub="We've rethought what a study platform should feel like — fast, focused, and built around how toppers actually prepare."
-        T={T}
-      />
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
-        {reasons.map((r, i) => (
-          <div key={r.title}
-            style={{
-              background: T.bgCard, border: `1px solid ${T.border}`,
-              borderRadius: 14, padding: "22px 22px 20px",
-              transition: "border-color .18s, transform .18s",
-              animation: "fadeUp .45s ease both",
-              animationDelay: `${i * .05}s`,
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = T.borderHover; e.currentTarget.style.transform = "translateY(-2px)"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.transform = "translateY(0)"; }}
-          >
-            <div style={{
-              width: 40, height: 40, borderRadius: 10,
-              background: T.accentBg, border: `1px solid ${isDark ? "#2d4080" : "#bfdbfe"}`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 18, marginBottom: 14,
-            }}>{r.icon}</div>
-            <h3 style={{
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              fontSize: 15, fontWeight: 700, color: T.text, margin: "0 0 8px",
-            }}>{r.title}</h3>
-            <p style={{ fontSize: 13, color: T.textSub, lineHeight: 1.7, margin: 0 }}>{r.desc}</p>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
@@ -579,11 +414,8 @@ function Footer({ T }) {
         fontSize: 18, fontWeight: 800, marginBottom: 10,
         color: T.accent, letterSpacing: -.3,
       }}>ExamsCalendar.PYQ</div>
-      <div style={{ fontSize: 13, color: T.textMuted, marginBottom: 4 }}>
-        Built for serious students. Free forever.
-      </div>
-      <div style={{ fontSize: 12, color: T.textDisabled, marginTop: 2 }}>
-        JEE · SSC · UPSC · CBSE · and many more coming soon
+      <div style={{ fontSize: 13, color: T.textMuted }}>
+        Free PYQs for JEE · JEE Advanced · NEET · SSC CGL
       </div>
     </footer>
   );
@@ -704,7 +536,6 @@ export default function LandingPage({ onJeeMains, isDark, onToggleTheme }) {
 
       <Hero onJeeMains={onJeeMains} T={T} isDark={isDark} />
       <Features onJeeMains={onJeeMains} T={T} isDark={isDark} />
-      <WhyUs T={T} isDark={isDark} />
       <Footer T={T} />
     </div>
   );

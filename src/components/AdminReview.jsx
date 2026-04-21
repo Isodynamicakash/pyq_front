@@ -611,15 +611,25 @@ function QuestionEditor({ q, onChange, onApplyBelow, chapters, topics, papers, i
           <div style={{fontSize:11,color:!q.shift?C.amber:C.textMuted,marginBottom:4,fontWeight:600}}>
             Shift {!q.shift&&"⚠ MISSING"}
           </div>
-          <div style={{display:"flex",gap:6}}>
-            {["Morning","Evening"].map(s=>(
-              <button key={s} onClick={()=>setInstant("shift")(s)} style={{
-                flex:1,padding:"8px 0",borderRadius:6,fontSize:13,fontWeight:600,cursor:"pointer",
-                border:`1px solid ${q.shift===s?C.blue:C.border}`,
-                background:q.shift===s?C.blue+"22":C.surface,
-                color:q.shift===s?C.blueLight:C.textMuted,
-              }}>{s==="Morning"?"☀️ Morning":"🌙 Evening"}</button>
-            ))}
+          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+            {(q.exam_name||"").toLowerCase().includes("ssc")
+              ? ["Shift 1","Shift 2","Shift 3","Shift 4"].map(s=>(
+                  <button key={s} onClick={()=>setInstant("shift")(s)} style={{
+                    flex:1,padding:"8px 0",borderRadius:6,fontSize:12,fontWeight:600,cursor:"pointer",
+                    border:`1px solid ${q.shift===s?C.blue:C.border}`,
+                    background:q.shift===s?C.blue+"22":C.surface,
+                    color:q.shift===s?C.blueLight:C.textMuted,
+                  }}>{s}</button>
+                ))
+              : ["Morning","Evening"].map(s=>(
+                  <button key={s} onClick={()=>setInstant("shift")(s)} style={{
+                    flex:1,padding:"8px 0",borderRadius:6,fontSize:13,fontWeight:600,cursor:"pointer",
+                    border:`1px solid ${q.shift===s?C.blue:C.border}`,
+                    background:q.shift===s?C.blue+"22":C.surface,
+                    color:q.shift===s?C.blueLight:C.textMuted,
+                  }}>{s==="Morning"?"☀️ Morning":"🌙 Evening"}</button>
+                ))
+            }
           </div>
         </div>
         <div style={{marginBottom:12}}>

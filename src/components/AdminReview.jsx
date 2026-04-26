@@ -2026,6 +2026,7 @@ function ReviewScreen({ jobId, apiBase, adminKey, onBack, initialQuestions }) {
   const [page,           setPage]           = useState(1);
   const autoSaveRef = useRef(null);
   const topRef = useRef(null);
+  const serverQsRef  = useRef([]); // holds fresh server data so Discard can revert
 
   // PERF: auto-save debounced to 2s with ref-equality guard
   const prevQsRef = useRef(questions);
@@ -2054,10 +2055,15 @@ function ReviewScreen({ jobId, apiBase, adminKey, onBack, initialQuestions }) {
       let idx=0;
       if(!initialQuestions){
         const qData=results[idx++];
-        const serverQs=qData.questions||[];
+        const serverQs=applySSCSolutions(qData.questions||[]);
         const recovered=loadRecovery(jobId);
-        if(recovered&&recovered.length>0){setQuestions(applySSCSolutions(recovered));setRecoveryBanner(true);}
-        else setQuestions(applySSCSolutions(serverQs));
+        if(recovered&&recovered.length>0){
+          setQuestions(recovered);
+          serverQsRef.current=serverQs;
+          setRecoveryBanner(true);
+        } else {
+          setQuestions(serverQs);
+        }
       }
       setChapters(Array.isArray(results[idx])?results[idx]:[]); idx++;
       setTopics(Array.isArray(results[idx])?results[idx]:[]); idx++;
@@ -2175,7 +2181,7 @@ function ReviewScreen({ jobId, apiBase, adminKey, onBack, initialQuestions }) {
   return(
     <div style={{background:C.bg,minHeight:"100vh",display:"flex",flexDirection:"column"}}>
 
-      {/* Crash Recovery Banner */}
+      {/* Crash Recovery Banner — data already loaded, Discard reverts to server */}
       {recoveryBanner&&(
         <div style={{
           background:"#1e3a5f",border:`1px solid ${C.blue}`,
@@ -2183,16 +2189,16 @@ function ReviewScreen({ jobId, apiBase, adminKey, onBack, initialQuestions }) {
         }}>
           <span style={{fontSize:20}}>🔄</span>
           <span style={{color:C.text,fontSize:13,flex:1}}>
-            <strong style={{color:C.blueLight}}>Unsaved session found!</strong>{" "}
-            Browser crash ya page reload se data bach gaya hai. Restore karein?
+            <strong style={{color:C.blueLight}}>Unsaved session restored!</strong>{" "}
+            Browser crash ya page reload se data bach gaya — aapke edits load ho gaye hain.
           </span>
-          <button onClick={()=>{const saved=loadRecovery(jobId);if(saved) setQuestions(saved);setRecoveryBanner(false);}}
+          <button onClick={()=>setRecoveryBanner(false)}
             style={{background:C.blue,color:"#fff",border:"none",borderRadius:6,padding:"7px 18px",fontSize:13,fontWeight:700,cursor:"pointer"}}>
-            ✓ Restore Data
+            ✓ Keep My Edits
           </button>
-          <button onClick={()=>{clearRecovery(jobId);setRecoveryBanner(false);}}
+          <button onClick={()=>{clearRecovery(jobId);setQuestions(serverQsRef.current);setRecoveryBanner(false);}}
             style={{background:"transparent",color:C.textMuted,border:`1px solid ${C.border}`,borderRadius:6,padding:"7px 14px",fontSize:12,cursor:"pointer"}}>
-            ✕ Discard
+            ✕ Discard (use server data)
           </button>
         </div>
       )}
@@ -2389,14 +2395,46 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
   const [page,        setPage]        = useState(1);
 
   // ── Data from server ────────────────────────────────────────────────────────
-  const [questions,   setQuestions]   = useState([]);
-  const [total,       setTotal]       = useState(0);
-  const [loading,     setLoading]     = useState(false);
-  const [chapters,    setChapters]    = useState([]);
-  const [topics,      setTopics]      = useState([]);
-  const [papers,      setPapers]      = useState([]);
-  const [saving,      setSaving]      = useState(false);
-  const [saveMsg,     setSaveMsg]     = useState(null);
+  const [questions,      setQuestions]      = useState([]);
+  const [total,          setTotal]          = useState(0);
+  const [loading,        setLoading]        = useState(false);
+  const [chapters,       setChapters]       = useState([]);
+  const [topics,         setTopics]         = useState([]);
+  const [papers,         setPapers]         = useState([]);
+  const [saving,         setSaving]         = useState(false);
+  const [saveMsg,        setSaveMsg]        = useState(null);
+  const [bulkSaveResult, setBulkSaveResult] = useState(null);
+  const [recoveryBanner, setRecoveryBanner] = useState(false);
+
+  // ── Crash recovery — keyed by current filter fingerprint ───────────────────
+  const EDIT_RECOVERY_KEY = "examside_edit_recovery";
+  const saveEditRecovery = useCallback((qs) => {
+    try { localStorage.setItem(EDIT_RECOVERY_KEY, JSON.stringify({questions: qs, savedAt: Date.now()})); } catch(e) {}
+  }, []);
+  const loadEditRecovery = useCallback(() => {
+    try {
+      const raw = localStorage.getItem(EDIT_RECOVERY_KEY);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (Date.now() - data.savedAt > 86400000) { localStorage.removeItem(EDIT_RECOVERY_KEY); return null; }
+      return data.questions;
+    } catch(e) { return null; }
+  }, []);
+  const clearEditRecovery = useCallback(() => {
+    try { localStorage.removeItem(EDIT_RECOVERY_KEY); } catch(e) {}
+  }, []);
+
+  // Auto-save debounced 2s whenever questions change (only if there are unsaved edits)
+  const autoSaveRef  = useRef(null);
+  const prevQsRef    = useRef(questions);
+  useEffect(() => {
+    if (questions === prevQsRef.current) return;
+    prevQsRef.current = questions;
+    if (questions.length === 0) return;
+    if (autoSaveRef.current) clearTimeout(autoSaveRef.current);
+    autoSaveRef.current = setTimeout(() => saveEditRecovery(questions), 2000);
+    return () => clearTimeout(autoSaveRef.current);
+  }, [questions, saveEditRecovery]);
 
   // Filter options derived from papers/chapters (not from loaded questions)
   const uniqueExams  = useMemo(()=>[...new Set(papers.map(p=>p.exam_name).filter(Boolean))].sort(),[papers]);
@@ -2428,20 +2466,32 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
   // ── Fetch questions from backend (server-side filter + pagination) ──────────
   const fetchQuestions = useCallback(async (p) => {
     setLoading(true);
+    setBulkSaveResult(null);
     const h = {"x-admin-key": adminKey};
     try {
       const res = await fetch(`${apiBase}/api/admin/questions?${buildQS(p)}`, {headers: h});
       const data = await res.json();
       const qs = Array.isArray(data) ? data : (data.questions || data.items || []);
       setTotal(data.total || qs.length);
-      setQuestions(applySSCSolutions(qs.map(q => ({
+      // Check for recovery on first load
+      const mapped = applySSCSolutions(qs.map(q => ({
         ...q, _dbId: q.id, number: q.question_number ?? q.number ?? 0,
         q_images: q.q_images || [], sol_images: q.sol_images || [], opt_images: q.opt_images || {},
         options: q.options || [q.option_1 ?? "", q.option_2 ?? "", q.option_3 ?? "", q.option_4 ?? ""],
-      }))));
+      })));
+      const recovered = loadEditRecovery();
+      if (recovered && recovered.length > 0 && p === 1) {
+        // Merge recovered edits into freshly fetched questions by _dbId
+        const recoveryMap = new Map(recovered.map(q => [q._dbId, q]));
+        const merged = mapped.map(q => recoveryMap.has(q._dbId) ? {...q, ...recoveryMap.get(q._dbId), _dbId: q._dbId} : q);
+        setQuestions(merged);
+        setRecoveryBanner(true);
+      } else {
+        setQuestions(mapped);
+      }
     } catch(e) { console.error("Load error", e); }
     finally { setLoading(false); }
-  }, [apiBase, adminKey, buildQS]);
+  }, [apiBase, adminKey, buildQS, loadEditRecovery]);
 
   // ── Load filter option lists once on mount ──────────────────────────────────
   const loadMeta = useCallback(async () => {
@@ -2467,6 +2517,17 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
 
   const updateQ = useCallback((i, u) => setQuestions(p => { const n=[...p]; n[i]=u; return n; }), []);
 
+  // ── Apply to all below — scoped ONLY to the current page's visible questions ─
+  // "below" means index i+1 … questions.length-1 on this page only
+  const applyBelow = useCallback((fromIndex, field, value) => {
+    setQuestions(prev => prev.map((q, i) => {
+      if (i <= fromIndex) return q;
+      if (field === "exam_date") return {...q, exam_date:value, year:value.slice(0,4)};
+      if (field === "q_type")    return {...q, q_type:value};
+      return {...q, [field]:value};
+    }));
+  }, []);
+
   // ── Manually added questions (no server fetch needed, lives in local state) ──
   const [manualQuestions, setManualQuestions] = useState([]);
 
@@ -2483,59 +2544,82 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
     setManualQuestions(prev => prev.map(q => q._manualId === manualId ? u : q));
   }, []);
 
+  // ── Build save payload from a question object ─────────────────────────────
+  const buildPayload = (q) => ({
+    question_number: q.number, q_type: q.q_type,
+    subject: q.subject, subject_name: q.subject,
+    exam_name: q.exam_name,
+    exam_date: q.exam_date || null,
+    year: q.exam_date ? parseInt(q.exam_date.slice(0,4)) : (q.year ? parseInt(q.year) : null),
+    shift: q.shift, chapter_name: q.chapter_name, topic_name: q.topic_name,
+    difficulty: q.difficulty, marks_correct: q.marks_correct, marks_wrong: q.marks_wrong,
+    question: q.question, options: q.options, answer: q.answer, solution: q.solution,
+  });
+
   const saveOne = async (q) => {
     setSaving(true); setSaveMsg(null);
     try {
-      const payload = {
-        question_number: q.number, q_type: q.q_type,
-        subject: q.subject, subject_name: q.subject,
-        exam_name: q.exam_name,
-        exam_date: q.exam_date || null,
-        year: q.exam_date ? parseInt(q.exam_date.slice(0,4)) : (q.year ? parseInt(q.year) : null),
-        shift: q.shift, chapter_name: q.chapter_name, topic_name: q.topic_name,
-        difficulty: q.difficulty, marks_correct: q.marks_correct, marks_wrong: q.marks_wrong,
-        question: q.question, options: q.options, answer: q.answer, solution: q.solution,
-      };
-
       let res;
       if (q._dbId) {
-        // ── Existing question: update in place ─────────────────────────────
         res = await fetch(`${apiBase}/api/admin/update-question/${q._dbId}`, {
           method: "PUT",
           headers: {"Content-Type":"application/json","x-admin-key":adminKey},
-          body: JSON.stringify(payload),
+          body: JSON.stringify(buildPayload(q)),
         });
       } else {
-        // ── New manually added question: create in DB (no job_id needed) ───
         res = await fetch(`${apiBase}/api/admin/create-question`, {
           method: "POST",
           headers: {"Content-Type":"application/json","x-admin-key":adminKey},
-          body: JSON.stringify(payload),
+          body: JSON.stringify(buildPayload(q)),
         });
         if (res.ok) {
           const data = await res.json();
-          // Stamp the new DB id so subsequent saves use update-question
           setQuestions(prev => prev.map(pq =>
-            (pq._isManual && pq.number === q.number && !pq._dbId)
-              ? { ...pq, _dbId: data.id }
-              : pq
+            (pq._isManual && pq.number === q.number && !pq._dbId) ? {...pq, _dbId: data.id} : pq
           ));
         }
       }
-
       if (!res.ok) { const b = await res.json().catch(()=>({})); throw new Error(b.detail||res.statusText); }
       setSaveMsg({ok:true, msg:`Q${q.number||"+"} saved ✓`});
     } catch(e) { setSaveMsg({ok:false, msg:String(e)}); }
     finally { setSaving(false); setTimeout(()=>setSaveMsg(null), 3000); }
   };
 
-  const applyBelow = useCallback((fromIndex, field, value) => {
-    setQuestions(prev => prev.map((q, i) => {
-      if (i <= fromIndex) return q;
-      if (field === "exam_date") return {...q, exam_date:value, year:value.slice(0,4)};
-      return {...q, [field]:value};
-    }));
-  }, []);
+  // ── Bulk Save — saves ALL currently visible (filtered) questions on this page ─
+  // Uses batching of 8 parallel requests just like ReviewScreen
+  const bulkSave = async () => {
+    if (saving || questions.length === 0) return;
+    setSaving(true); setBulkSaveResult(null); setSaveMsg(null);
+    const BATCH = 8;
+    let savedCount = 0, failedCount = 0;
+    for (let start = 0; start < questions.length; start += BATCH) {
+      const batch = questions.slice(start, start + BATCH);
+      await Promise.all(batch.map(async (q) => {
+        try {
+          let res;
+          if (q._dbId) {
+            res = await fetch(`${apiBase}/api/admin/update-question/${q._dbId}`, {
+              method: "PUT",
+              headers: {"Content-Type":"application/json","x-admin-key":adminKey},
+              body: JSON.stringify(buildPayload(q)),
+            });
+          } else {
+            res = await fetch(`${apiBase}/api/admin/create-question`, {
+              method: "POST",
+              headers: {"Content-Type":"application/json","x-admin-key":adminKey},
+              body: JSON.stringify(buildPayload(q)),
+            });
+          }
+          if (!res.ok) { failedCount++; } else { savedCount++; }
+        } catch(e) { failedCount++; }
+      }));
+      setBulkSaveResult({saved: savedCount, failed: failedCount, total: questions.length, inProgress: true});
+    }
+    if (failedCount === 0) clearEditRecovery();
+    setBulkSaveResult({saved: savedCount, failed: failedCount, total: questions.length, inProgress: false});
+    setSaving(false);
+    setTimeout(() => setBulkSaveResult(null), 5000);
+  };
 
   const clearAll = () => {
     setFilterSubj(""); setFilterDate(""); setFilterShift("");
@@ -2545,6 +2629,29 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
 
   return (
     <div style={{background:C.bg, minHeight:"100vh"}}>
+
+      {/* ── Crash Recovery Banner ─────────────────────────────────────────────── */}
+      {recoveryBanner && (
+        <div style={{
+          background:"#1e3a5f", border:`1px solid ${C.blue}`,
+          padding:"12px 24px", display:"flex", alignItems:"center", gap:14, flexWrap:"wrap",
+        }}>
+          <span style={{fontSize:20}}>🔄</span>
+          <span style={{color:C.text, fontSize:13, flex:1}}>
+            <strong style={{color:C.blueLight}}>Unsaved edits found!</strong>{" "}
+            Pichle session ke changes bach gaye hain. Restore karein?
+          </span>
+          <button onClick={()=>{ const saved=loadEditRecovery(); if(saved){ const map=new Map(saved.map(q=>[q._dbId,q])); setQuestions(prev=>prev.map(q=>map.has(q._dbId)?{...q,...map.get(q._dbId),_dbId:q._dbId}:q)); } setRecoveryBanner(false); }}
+            style={{background:C.blue,color:"#fff",border:"none",borderRadius:6,padding:"7px 18px",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+            ✓ Restore Edits
+          </button>
+          <button onClick={()=>{ clearEditRecovery(); setRecoveryBanner(false); }}
+            style={{background:"transparent",color:C.textMuted,border:`1px solid ${C.border}`,borderRadius:6,padding:"7px 14px",fontSize:12,cursor:"pointer"}}>
+            ✕ Discard
+          </button>
+        </div>
+      )}
+
       {/* Sticky top bar */}
       <div style={{position:"sticky",top:0,zIndex:100,background:C.surface,borderBottom:`1px solid ${C.border}`}}>
         <div style={{padding:"10px 24px",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
@@ -2565,13 +2672,27 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
                    border:`1px solid ${C.border}`,borderRadius:6,padding:"6px 10px",
                    fontSize:13,outline:"none"}}/>
           <span style={{flex:1}}/>
-          {saveMsg && (
+
+          {/* Bulk Save result badge */}
+          {bulkSaveResult && (
+            <span style={{fontSize:12,padding:"4px 12px",borderRadius:6,
+                         color: bulkSaveResult.failed > 0 ? C.amber : C.green,
+                         background: bulkSaveResult.failed > 0 ? C.amberBg : C.greenBg}}>
+              {bulkSaveResult.inProgress
+                ? `⏳ Saving… ${bulkSaveResult.saved}/${bulkSaveResult.total}`
+                : bulkSaveResult.failed > 0
+                  ? `⚠ ${bulkSaveResult.saved} saved, ${bulkSaveResult.failed} failed`
+                  : `✓ All ${bulkSaveResult.saved} saved`}
+            </span>
+          )}
+          {saveMsg && !bulkSaveResult && (
             <span style={{fontSize:12,padding:"4px 12px",borderRadius:6,
                          color:saveMsg.ok?C.green:C.red,
                          background:saveMsg.ok?C.greenBg:C.redBg}}>
               {saveMsg.msg}
             </span>
           )}
+
           <button onClick={()=>setFiltersOpen(o=>!o)} style={{
             padding:"6px 14px",borderRadius:6,fontSize:12,fontWeight:600,cursor:"pointer",
             border:`1px solid ${filtersOpen||activeFilterCount>0?C.blue:C.border}`,
@@ -2587,6 +2708,18 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
             }}>✕ Clear all</button>
           )}
           <Btn color={C.blue} small onClick={()=>fetchQuestions(page)}>↺ Refresh</Btn>
+
+          {/* Bulk Save button — only shows when questions are loaded */}
+          {questions.length > 0 && (
+            <button onClick={bulkSave} disabled={saving} style={{
+              padding:"6px 16px",borderRadius:6,fontSize:12,fontWeight:700,cursor:saving?"not-allowed":"pointer",
+              border:`1px solid ${C.amber}`,background:saving?C.amberBg:C.amber+"22",
+              color:saving?C.textDim:C.amber,opacity:saving?0.7:1,
+            }}>
+              {saving ? "⏳ Saving…" : `💾 Bulk Save (${questions.length} shown)`}
+            </button>
+          )}
+
           <Btn color={C.green} onClick={onUploadNew}>＋ Upload New Paper</Btn>
         </div>
 
@@ -2698,7 +2831,7 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
                       onChange={(u) => updateManualQ(q._manualId, u)}
                       onSaveOne={saveOne}
                       onApplyBelow={(field, value) => {
-                        // Apply to all manual questions below this one
+                        // Scoped to manual questions only
                         setManualQuestions(prev => prev.map((pq, pi) => {
                           if (pi <= i) return pq;
                           if (field === "exam_date") return {...pq, exam_date:value, year:value.slice(0,4)};
@@ -2726,20 +2859,39 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
               </div>
             ) : (
             <>
+              {/* Bulk save hint strip */}
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
+                          marginBottom:14,padding:"8px 12px",borderRadius:8,
+                          background:C.surface,border:`1px solid ${C.border}`}}>
+                <span style={{fontSize:12,color:C.textMuted}}>
+                  Showing <strong style={{color:C.text}}>{questions.length}</strong> of{" "}
+                  <strong style={{color:C.blueLight}}>{total.toLocaleString()}</strong> questions
+                  {activeFilterCount > 0 && <span style={{color:C.amber}}> (filtered)</span>}.
+                  {" "}<span style={{color:C.textDim}}>
+                    "Apply below" and "Bulk Save" act only on the {questions.length} visible questions.
+                  </span>
+                </span>
+                <button onClick={bulkSave} disabled={saving} style={{
+                  padding:"5px 14px",borderRadius:6,fontSize:12,fontWeight:700,
+                  cursor:saving?"not-allowed":"pointer",
+                  border:`1px solid ${C.amber}`,background:saving?C.amberBg:C.amber+"22",
+                  color:saving?C.textDim:C.amber,opacity:saving?0.7:1,flexShrink:0,
+                }}>
+                  {saving ? "⏳ Saving…" : `💾 Bulk Save (${questions.length})`}
+                </button>
+              </div>
+
               <div style={{display:"flex",flexDirection:"column",gap:16}}>
-                {questions.map((q, i) => {
-                  const globalIdx = (page - 1) * PAGE_SIZE + i;
-                  return (
-                    <QuestionCard key={q._dbId || q.number}
-                      q={q} index={i} total={questions.length}
-                      jobId={null} apiBase={apiBase} adminKey={adminKey}
-                      onChange={(u) => updateQ(i, u)}
-                      onSaveOne={saveOne}
-                      onApplyBelow={(field, value) => applyBelow(i, field, value)}
-                      onRemove={()=>{}}
-                      chapters={chapters} topics={topics} papers={papers}/>
-                  );
-                })}
+                {questions.map((q, i) => (
+                  <QuestionCard key={q._dbId || q.number}
+                    q={q} index={i} total={questions.length}
+                    jobId={null} apiBase={apiBase} adminKey={adminKey}
+                    onChange={(u) => updateQ(i, u)}
+                    onSaveOne={saveOne}
+                    onApplyBelow={(field, value) => applyBelow(i, field, value)}
+                    onRemove={()=>{}}
+                    chapters={chapters} topics={topics} papers={papers}/>
+                ))}
               </div>
               {totalPages > 1 && (
                 <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:8,marginTop:28}}>
@@ -2766,24 +2918,43 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
 }
 
 // ─── Root ─────────────────────────────────────────────────────────────────────
+// Persisted screens: "review" and "processing" survive a page reload.
+// On reload with a saved jobId + processing screen → resume polling automatically.
+const VALID_PERSISTED_SCREENS = ["review", "processing"];
+
 export default function AdminReview({ apiBase="http://localhost:8000", adminKey="" }) {
-  const [screen,    setScreen]    = useState(()=>{
-    const saved=localStorage.getItem("examside_screen");
-    return saved==="review"?"review":"edit";
+  const [screen, setScreen] = useState(() => {
+    const saved = localStorage.getItem("examside_screen");
+    const jobId = localStorage.getItem("examside_jobid");
+    // Only restore processing if we also have a jobId to poll
+    if (saved === "processing" && jobId) return "processing";
+    if (saved === "review") return "review";
+    return "edit";
   });
   const [jobId,     setJobId]     = useState(()=>localStorage.getItem("examside_jobid")||null);
   const [openaiKey, setOpenaiKey] = useState(()=>localStorage.getItem("examside_openai_key")||"");
   const [latexJobId]              = useState(()=>`latex_${Date.now()}`);
 
+  // Show a recovery notice when we auto-resumed the processing screen after reload
+  const [resumedProcessing, setResumedProcessing] = useState(()=>{
+    const saved = localStorage.getItem("examside_screen");
+    const jobId = localStorage.getItem("examside_jobid");
+    return saved === "processing" && !!jobId;
+  });
+
   const goScreen=(s,jid)=>{
     setScreen(s);
+    setResumedProcessing(false);
     if(jid!==undefined){
       setJobId(jid);
       if(jid) localStorage.setItem("examside_jobid",jid);
       else    localStorage.removeItem("examside_jobid");
     }
-    if(s==="review") localStorage.setItem("examside_screen","review");
-    else             localStorage.removeItem("examside_screen");
+    if(VALID_PERSISTED_SCREENS.includes(s)){
+      localStorage.setItem("examside_screen", s);
+    } else {
+      localStorage.removeItem("examside_screen");
+    }
   };
 
   const saveOpenaiKey=(k)=>{
@@ -2801,6 +2972,24 @@ export default function AdminReview({ apiBase="http://localhost:8000", adminKey=
   return(
     <MathJaxContext config={MATHJAX_CONFIG}>
       <div style={{fontFamily:"'Inter', system-ui, sans-serif"}}>
+
+        {/* ── Processing resume banner — shown when page was reloaded mid-processing ── */}
+        {screen==="processing" && resumedProcessing && (
+          <div style={{
+            position:"fixed",top:0,left:0,right:0,zIndex:9999,
+            background:"#1e3a5f",borderBottom:`2px solid ${C.blue}`,
+            padding:"10px 24px",display:"flex",alignItems:"center",gap:14,
+          }}>
+            <span style={{fontSize:18}}>🔄</span>
+            <span style={{color:C.text,fontSize:13,flex:1}}>
+              <strong style={{color:C.blueLight}}>Processing resumed</strong> — page reload detect hua, job still running hai.
+            </span>
+            <button onClick={()=>setResumedProcessing(false)}
+              style={{background:"transparent",color:C.textMuted,border:`1px solid ${C.border}`,
+                     borderRadius:6,padding:"5px 12px",fontSize:12,cursor:"pointer"}}>✕</button>
+          </div>
+        )}
+
         {screen==="edit"      &&<EditExistingScreen apiBase={apiBase} adminKey={adminKey} onUploadNew={()=>goScreen("upload")}/>}
         {screen==="upload"    &&<UploadScreen       apiBase={apiBase} adminKey={adminKey}
                                   openaiKey={openaiKey} onOpenaiKeyChange={saveOpenaiKey}
@@ -2809,6 +2998,7 @@ export default function AdminReview({ apiBase="http://localhost:8000", adminKey=
                                   onOpenImageManager={()=>goScreen("images")}
                                   onBack={()=>goScreen("edit")}/>}
         {screen==="processing"&&<ProcessingScreen   jobId={jobId} apiBase={apiBase} adminKey={adminKey}
+                                  resumedAfterReload={resumedProcessing}
                                   onReady={()=>goScreen("review")}/>}
         {screen==="review"    &&<ReviewScreen       jobId={jobId} apiBase={apiBase} adminKey={adminKey}
                                   onBack={()=>goScreen("edit")}/>}

@@ -9,20 +9,6 @@ const API_BASE       = import.meta.env.VITE_API_BASE       || "http://localhost:
 const ADMIN_KEY      = import.meta.env.VITE_ADMIN_KEY      || "";
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "admin123";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function parsePath(pathname) {
-  if (pathname === "/admin")          return { page: "admin",   examId: null };
-  if (pathname.startsWith("/pyq/"))   return { page: "pyq",     examId: pathname.replace("/pyq/", "") || "jee-mains" };
-  if (pathname === "/pyq")            return { page: "pyq",     examId: "jee-mains" };
-  return { page: "landing", examId: null };
-}
-
-function navigate(path) {
-  window.history.pushState({}, "", path);
-  window.dispatchEvent(new PopStateEvent("popstate"));
-}
-
-// ─── AdminGate ────────────────────────────────────────────────────────────────
 function AdminGate() {
   const [input,  setInput]  = useState("");
   const [error,  setError]  = useState(false);
@@ -52,9 +38,20 @@ function AdminGate() {
   );
 }
 
-// ─── App ──────────────────────────────────────────────────────────────────────
 function App() {
-  const [route, setRoute] = useState(() => parsePath(window.location.pathname));
+  const [page, setPage] = useState(() => {
+    const h = window.location.hash;
+    if (h === "#/admin")        return "admin";
+    if (h.startsWith("#/pyq"))  return "pyq";
+    return "landing";
+  });
+
+  // examId drives which exam is shown: "jee-mains" | "neet"
+  const [examId, setExamId] = useState(() => {
+    const h = window.location.hash;
+    if (h === "#/pyq/neet") return "neet";
+    return "jee-mains";
+  });
 
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem("ec_theme");
@@ -69,36 +66,61 @@ function App() {
     });
   };
 
-  const trackPageView = (path) => {
+  const goTo = (p) => {
+    window.location.hash = p === "landing" ? "" : `#/${p}`;
+    setPage(p);
+  };
+
+  // Called from LandingPage with the exam slug: "jee-mains" or "neet"
+  const goToPyq = (id) => {
+    const slug = id || "jee-mains";
+    setExamId(slug);
+    window.location.hash = `#/pyq/${slug}`;
+    setPage("pyq");
+  };
+
+  // Helper: send a GA4 page_view for the current hash-based route
+  const trackPageView = (hash) => {
     if (typeof window.gtag !== "function") return;
+    const path = hash || window.location.hash || "/";
     window.gtag("config", "G-TBZZSLN2TK", { page_path: path });
   };
 
   useEffect(() => {
-    trackPageView(window.location.pathname);
+    // Fire page_view for the initial load
+    trackPageView(window.location.hash);
+
     const fn = () => {
-      setRoute(parsePath(window.location.pathname));
-      trackPageView(window.location.pathname);
+      const h = window.location.hash;
+      // Track every hash-based navigation as a new page view
+      trackPageView(h);
+
+      if (h === "#/admin") {
+        setPage("admin");
+      } else if (h.startsWith("#/pyq")) {
+        // Parse exam slug from hash e.g. #/pyq/neet → "neet"
+        const slug = h.replace("#/pyq/", "").replace("#/pyq", "") || "jee-mains";
+        setExamId(slug);
+        setPage("pyq");
+      } else {
+        setPage("landing");
+      }
     };
-    window.addEventListener("popstate", fn);
-    return () => window.removeEventListener("popstate", fn);
+    window.addEventListener("hashchange", fn);
+    return () => window.removeEventListener("hashchange", fn);
   }, []);
 
-  const goTo = (pathname) => navigate(pathname);
-
-  const goToPyq = (id) => {
-    const slug = id || "jee-mains";
-    navigate(`/pyq/${slug}`);
-  };
-
-  const { page, examId } = route;
-
-  if (page === "admin") return <><AdminGate /><Analytics /></>;
-  if (page === "pyq")   return (
+  if (page === "admin") return (
+    <>
+      <AdminGate />
+      <Analytics />
+    </>
+  );
+  if (page === "pyq") return (
     <>
       <QuestionBrowser
         apiBase={API_BASE}
-        onBack={() => navigate("/")}
+        onBack={() => goTo("landing")}
         isDark={isDark}
         onToggleTheme={toggleTheme}
         examId={examId}

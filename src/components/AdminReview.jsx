@@ -2405,6 +2405,8 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
   const [saveMsg,        setSaveMsg]        = useState(null);
   const [bulkSaveResult, setBulkSaveResult] = useState(null);
   const [recoveryBanner, setRecoveryBanner] = useState(false);
+  // applyBelow across all filtered questions
+  const [applyingBelow,  setApplyingBelow]  = useState(null); // {field, value, fetched, total} | null
 
   // ── Crash recovery — keyed by current filter fingerprint ───────────────────
   const EDIT_RECOVERY_KEY = "examside_edit_recovery";
@@ -2448,10 +2450,10 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
   const resetPage  = () => setPage(1);
 
   // ── Build query string from current filters ─────────────────────────────────
-  const buildQS = useCallback((p) => {
+  const buildQS = useCallback((p, limitOverride) => {
     const qs = new URLSearchParams();
-    qs.set("limit",  PAGE_SIZE);
-    qs.set("offset", (p - 1) * PAGE_SIZE);
+    qs.set("limit",  limitOverride ?? PAGE_SIZE);
+    qs.set("offset", (p - 1) * (limitOverride ?? PAGE_SIZE));
     if (filterSubj)  qs.set("subject",       filterSubj);
     if (filterDate)  qs.set("exam_date",      filterDate);
     if (filterShift) qs.set("shift",          filterShift);
@@ -2462,6 +2464,42 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
     if (search)      qs.set("search",         search);
     return qs.toString();
   }, [filterSubj, filterDate, filterShift, filterExam, filterChap, filterDiff, filterType, search]);
+
+  // ── Map raw server question → internal shape ──────────────────────────────
+  const mapQ = (q) => ({
+    ...q, _dbId: q.id, number: q.question_number ?? q.number ?? 0,
+    q_images: q.q_images || [], sol_images: q.sol_images || [], opt_images: q.opt_images || {},
+    options: q.options || [q.option_1 ?? "", q.option_2 ?? "", q.option_3 ?? "", q.option_4 ?? ""],
+  });
+
+  // ── Fetch ALL filtered questions across all pages (for bulk ops) ───────────
+  // Streams pages of 100 and appends; calls onProgress(fetched, total) each page.
+  const fetchAllFiltered = useCallback(async (onProgress) => {
+    const h = {"x-admin-key": adminKey};
+    const FETCH_LIMIT = 100;
+    // First get total count
+    const first = await fetch(`${apiBase}/api/admin/questions?${buildQS(1, FETCH_LIMIT)}`, {headers: h});
+    const firstData = await first.json();
+    const serverTotal = firstData.total || (Array.isArray(firstData) ? firstData.length : 0);
+    const firstQs = Array.isArray(firstData) ? firstData : (firstData.questions || firstData.items || []);
+    let all = firstQs.map(mapQ);
+    onProgress && onProgress(all.length, serverTotal);
+
+    // Fetch remaining pages in parallel batches of 3
+    const remaining = Math.ceil((serverTotal - FETCH_LIMIT) / FETCH_LIMIT);
+    for (let p = 2; p <= remaining + 1; p += 3) {
+      const batch = [];
+      for (let pp = p; pp < p + 3 && pp <= remaining + 1; pp++) {
+        batch.push(fetch(`${apiBase}/api/admin/questions?${buildQS(pp, FETCH_LIMIT)}`, {headers: h})
+          .then(r => r.json())
+          .then(d => (Array.isArray(d) ? d : (d.questions || d.items || [])).map(mapQ)));
+      }
+      const results = await Promise.all(batch);
+      all = all.concat(results.flat());
+      onProgress && onProgress(all.length, serverTotal);
+    }
+    return all;
+  }, [apiBase, adminKey, buildQS]);
 
   // ── Fetch questions from backend (server-side filter + pagination) ──────────
   const fetchQuestions = useCallback(async (p) => {
@@ -2474,11 +2512,7 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
       const qs = Array.isArray(data) ? data : (data.questions || data.items || []);
       setTotal(data.total || qs.length);
       // Check for recovery on first load
-      const mapped = applySSCSolutions(qs.map(q => ({
-        ...q, _dbId: q.id, number: q.question_number ?? q.number ?? 0,
-        q_images: q.q_images || [], sol_images: q.sol_images || [], opt_images: q.opt_images || {},
-        options: q.options || [q.option_1 ?? "", q.option_2 ?? "", q.option_3 ?? "", q.option_4 ?? ""],
-      })));
+      const mapped = applySSCSolutions(qs.map(mapQ));
       const recovered = loadEditRecovery();
       if (recovered && recovered.length > 0 && p === 1) {
         // Merge recovered edits into freshly fetched questions by _dbId
@@ -2517,16 +2551,63 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
 
   const updateQ = useCallback((i, u) => setQuestions(p => { const n=[...p]; n[i]=u; return n; }), []);
 
-  // ── Apply to all below — scoped ONLY to the current page's visible questions ─
-  // "below" means index i+1 … questions.length-1 on this page only
-  const applyBelow = useCallback((fromIndex, field, value) => {
+  // ── Apply field to ALL filtered questions (all pages) then bulk-save ────────
+  // fromIndex = local page index of the triggering card; questions below it on
+  // the current page are updated in local state immediately. Then all remaining
+  // pages are fetched and saved server-side.
+  const applyBelow = useCallback(async (fromIndex, field, value) => {
+    // 1. Apply immediately to cards below on current page (instant UI feedback)
     setQuestions(prev => prev.map((q, i) => {
       if (i <= fromIndex) return q;
       if (field === "exam_date") return {...q, exam_date:value, year:value.slice(0,4)};
       if (field === "q_type")    return {...q, q_type:value};
       return {...q, [field]:value};
     }));
-  }, []);
+
+    // 2. Fetch ALL filtered questions, apply the field, and save all
+    setApplyingBelow({field, value, fetched:0, total:0});
+    setSaveMsg(null); setBulkSaveResult(null);
+    try {
+      const all = await fetchAllFiltered((fetched, total) =>
+        setApplyingBelow({field, value, fetched, total, phase:"fetching"})
+      );
+
+      // Apply field to every question (entire filtered set)
+      const patched = all.map(q => {
+        if (field === "exam_date") return {...q, exam_date:value, year:value.slice(0,4)};
+        if (field === "q_type")    return {...q, q_type:value};
+        return {...q, [field]:value};
+      });
+
+      // Save in batches of 8
+      const BATCH = 8;
+      let savedCount = 0, failedCount = 0;
+      for (let s = 0; s < patched.length; s += BATCH) {
+        const batch = patched.slice(s, s + BATCH);
+        await Promise.all(batch.map(async (q) => {
+          if (!q._dbId) return;
+          try {
+            const res = await fetch(`${apiBase}/api/admin/update-question/${q._dbId}`, {
+              method: "PUT",
+              headers: {"Content-Type":"application/json","x-admin-key":adminKey},
+              body: JSON.stringify(buildPayload(q)),
+            });
+            if (!res.ok) failedCount++; else savedCount++;
+          } catch(e) { failedCount++; }
+        }));
+        setApplyingBelow({field, value, fetched: savedCount + failedCount, total: patched.length, phase:"saving"});
+      }
+
+      // Refresh current page to reflect saved data
+      await fetchQuestions(page);
+      setApplyingBelow(null);
+      setBulkSaveResult({saved: savedCount, failed: failedCount, total: patched.length, inProgress: false});
+      setTimeout(() => setBulkSaveResult(null), 5000);
+    } catch(e) {
+      setApplyingBelow(null);
+      setSaveMsg({ok:false, msg:`Apply failed: ${e.message}`});
+    }
+  }, [fetchAllFiltered, fetchQuestions, page, apiBase, adminKey]);
 
   // ── Manually added questions (no server fetch needed, lives in local state) ──
   const [manualQuestions, setManualQuestions] = useState([]);
@@ -2585,38 +2666,53 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
     finally { setSaving(false); setTimeout(()=>setSaveMsg(null), 3000); }
   };
 
-  // ── Bulk Save — saves ALL currently visible (filtered) questions on this page ─
-  // Uses batching of 8 parallel requests just like ReviewScreen
+  // ── Bulk Save — fetches ALL filtered questions across all pages, saves all ───
   const bulkSave = async () => {
-    if (saving || questions.length === 0) return;
+    if (saving) return;
     setSaving(true); setBulkSaveResult(null); setSaveMsg(null);
-    const BATCH = 8;
-    let savedCount = 0, failedCount = 0;
-    for (let start = 0; start < questions.length; start += BATCH) {
-      const batch = questions.slice(start, start + BATCH);
-      await Promise.all(batch.map(async (q) => {
-        try {
-          let res;
-          if (q._dbId) {
-            res = await fetch(`${apiBase}/api/admin/update-question/${q._dbId}`, {
-              method: "PUT",
-              headers: {"Content-Type":"application/json","x-admin-key":adminKey},
-              body: JSON.stringify(buildPayload(q)),
-            });
-          } else {
-            res = await fetch(`${apiBase}/api/admin/create-question`, {
-              method: "POST",
-              headers: {"Content-Type":"application/json","x-admin-key":adminKey},
-              body: JSON.stringify(buildPayload(q)),
-            });
-          }
-          if (!res.ok) { failedCount++; } else { savedCount++; }
-        } catch(e) { failedCount++; }
-      }));
-      setBulkSaveResult({saved: savedCount, failed: failedCount, total: questions.length, inProgress: true});
+    try {
+      // Step 1: fetch all filtered questions
+      setBulkSaveResult({saved:0, failed:0, total, inProgress:true, phase:"fetching"});
+      const all = await fetchAllFiltered((fetched, serverTotal) =>
+        setBulkSaveResult({saved:0, failed:0, total:serverTotal, inProgress:true, phase:"fetching", fetched})
+      );
+
+      // Step 2: merge local edits from current page into the full set
+      const localMap = new Map(questions.map(q => [q._dbId, q]));
+      const merged = all.map(q => localMap.has(q._dbId) ? localMap.get(q._dbId) : q);
+
+      // Step 3: save in batches of 8
+      const BATCH = 8;
+      let savedCount = 0, failedCount = 0;
+      for (let start = 0; start < merged.length; start += BATCH) {
+        const batch = merged.slice(start, start + BATCH);
+        await Promise.all(batch.map(async (q) => {
+          try {
+            let res;
+            if (q._dbId) {
+              res = await fetch(`${apiBase}/api/admin/update-question/${q._dbId}`, {
+                method: "PUT",
+                headers: {"Content-Type":"application/json","x-admin-key":adminKey},
+                body: JSON.stringify(buildPayload(q)),
+              });
+            } else {
+              res = await fetch(`${apiBase}/api/admin/create-question`, {
+                method: "POST",
+                headers: {"Content-Type":"application/json","x-admin-key":adminKey},
+                body: JSON.stringify(buildPayload(q)),
+              });
+            }
+            if (!res.ok) failedCount++; else savedCount++;
+          } catch(e) { failedCount++; }
+        }));
+        setBulkSaveResult({saved: savedCount, failed: failedCount, total: merged.length, inProgress: true, phase:"saving"});
+      }
+      if (failedCount === 0) clearEditRecovery();
+      setBulkSaveResult({saved: savedCount, failed: failedCount, total: merged.length, inProgress: false});
+    } catch(e) {
+      setSaveMsg({ok:false, msg:`Bulk save failed: ${e.message}`});
+      setBulkSaveResult(null);
     }
-    if (failedCount === 0) clearEditRecovery();
-    setBulkSaveResult({saved: savedCount, failed: failedCount, total: questions.length, inProgress: false});
     setSaving(false);
     setTimeout(() => setBulkSaveResult(null), 5000);
   };
@@ -2673,19 +2769,28 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
                    fontSize:13,outline:"none"}}/>
           <span style={{flex:1}}/>
 
-          {/* Bulk Save result badge */}
-          {bulkSaveResult && (
+          {/* Bulk Save / Apply Below progress badge */}
+          {applyingBelow && (
+            <span style={{fontSize:12,padding:"4px 12px",borderRadius:6,color:C.amber,background:C.amberBg}}>
+              {applyingBelow.phase==="fetching"
+                ? `⏳ Fetching… ${applyingBelow.fetched||0}/${applyingBelow.total||"?"}`
+                : `⚡ Applying ${applyingBelow.field}… ${applyingBelow.fetched||0}/${applyingBelow.total||"?"}`}
+            </span>
+          )}
+          {bulkSaveResult && !applyingBelow && (
             <span style={{fontSize:12,padding:"4px 12px",borderRadius:6,
                          color: bulkSaveResult.failed > 0 ? C.amber : C.green,
                          background: bulkSaveResult.failed > 0 ? C.amberBg : C.greenBg}}>
               {bulkSaveResult.inProgress
-                ? `⏳ Saving… ${bulkSaveResult.saved}/${bulkSaveResult.total}`
+                ? bulkSaveResult.phase==="fetching"
+                  ? `⏳ Fetching ${bulkSaveResult.fetched||0}/${bulkSaveResult.total}…`
+                  : `💾 Saving… ${bulkSaveResult.saved}/${bulkSaveResult.total}`
                 : bulkSaveResult.failed > 0
                   ? `⚠ ${bulkSaveResult.saved} saved, ${bulkSaveResult.failed} failed`
                   : `✓ All ${bulkSaveResult.saved} saved`}
             </span>
           )}
-          {saveMsg && !bulkSaveResult && (
+          {saveMsg && !bulkSaveResult && !applyingBelow && (
             <span style={{fontSize:12,padding:"4px 12px",borderRadius:6,
                          color:saveMsg.ok?C.green:C.red,
                          background:saveMsg.ok?C.greenBg:C.redBg}}>
@@ -2709,14 +2814,15 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
           )}
           <Btn color={C.blue} small onClick={()=>fetchQuestions(page)}>↺ Refresh</Btn>
 
-          {/* Bulk Save button — only shows when questions are loaded */}
-          {questions.length > 0 && (
-            <button onClick={bulkSave} disabled={saving} style={{
-              padding:"6px 16px",borderRadius:6,fontSize:12,fontWeight:700,cursor:saving?"not-allowed":"pointer",
+          {/* Bulk Save button — operates on ALL filtered questions, not just current page */}
+          {total > 0 && (
+            <button onClick={bulkSave} disabled={saving||!!applyingBelow} style={{
+              padding:"6px 16px",borderRadius:6,fontSize:12,fontWeight:700,
+              cursor:(saving||applyingBelow)?"not-allowed":"pointer",
               border:`1px solid ${C.amber}`,background:saving?C.amberBg:C.amber+"22",
-              color:saving?C.textDim:C.amber,opacity:saving?0.7:1,
+              color:(saving||applyingBelow)?C.textDim:C.amber,opacity:(saving||applyingBelow)?0.7:1,
             }}>
-              {saving ? "⏳ Saving…" : `💾 Bulk Save (${questions.length} shown)`}
+              {saving ? "⏳ Saving…" : `💾 Bulk Save (${total.toLocaleString()} filtered)`}
             </button>
           )}
 
@@ -2859,32 +2965,31 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
               </div>
             ) : (
             <>
-              {/* Bulk save hint strip */}
+              {/* Bulk save hint strip — shows real total, not just page count */}
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
                           marginBottom:14,padding:"8px 12px",borderRadius:8,
                           background:C.surface,border:`1px solid ${C.border}`}}>
                 <span style={{fontSize:12,color:C.textMuted}}>
                   Showing <strong style={{color:C.text}}>{questions.length}</strong> of{" "}
-                  <strong style={{color:C.blueLight}}>{total.toLocaleString()}</strong> questions
-                  {activeFilterCount > 0 && <span style={{color:C.amber}}> (filtered)</span>}.
+                  <strong style={{color:C.blueLight}}>{total.toLocaleString()}</strong> filtered questions.
                   {" "}<span style={{color:C.textDim}}>
-                    "Apply below" and "Bulk Save" act only on the {questions.length} visible questions.
+                    "Bulk Save" and "Apply below" operate on <strong style={{color:C.amber}}>all {total.toLocaleString()}</strong> filtered questions.
                   </span>
                 </span>
-                <button onClick={bulkSave} disabled={saving} style={{
+                <button onClick={bulkSave} disabled={saving||!!applyingBelow} style={{
                   padding:"5px 14px",borderRadius:6,fontSize:12,fontWeight:700,
-                  cursor:saving?"not-allowed":"pointer",
+                  cursor:(saving||applyingBelow)?"not-allowed":"pointer",
                   border:`1px solid ${C.amber}`,background:saving?C.amberBg:C.amber+"22",
-                  color:saving?C.textDim:C.amber,opacity:saving?0.7:1,flexShrink:0,
+                  color:(saving||applyingBelow)?C.textDim:C.amber,opacity:(saving||applyingBelow)?0.7:1,flexShrink:0,
                 }}>
-                  {saving ? "⏳ Saving…" : `💾 Bulk Save (${questions.length})`}
+                  {saving ? "⏳ Saving…" : `💾 Bulk Save (${total.toLocaleString()})`}
                 </button>
               </div>
 
               <div style={{display:"flex",flexDirection:"column",gap:16}}>
                 {questions.map((q, i) => (
                   <QuestionCard key={q._dbId || q.number}
-                    q={q} index={i} total={questions.length}
+                    q={q} index={i} total={total}
                     jobId={null} apiBase={apiBase} adminKey={adminKey}
                     onChange={(u) => updateQ(i, u)}
                     onSaveOne={saveOne}

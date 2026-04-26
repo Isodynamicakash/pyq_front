@@ -62,23 +62,7 @@ const THEMES = {
 };
 
 // ─── Nav config ───────────────────────────────────────────────────────────────
-const NAV_ITEMS = [
-  {
-    id: "pyq", label: "PYQ", icon: "📝",
-    tabColor: "#1a0a3a", tabColorLight: "#ede9fe", tabText: "#a78bfa", tabTextLight: "#5b21b6",
-    activeColor: "#7c3aed", activeColorLight: "#7c3aed",
-    sub: [
-      { group: "Engineering", items: [
-        { label: "JEE Mains",    id: "jee-mains", live: true, icon: "🎯" },
-        { label: "JEE Advanced", id: "jee-adv",   live: true, icon: "🏆" },
-        { label: "NEET",         id: "neet",       live: true, icon: "🩺" },
-      ]},
-      { group: "Government Jobs", items: [
-        { label: "SSC CGL", id: "ssc-cgl", live: true, icon: "📋" },
-      ]},
-    ],
-  },
-];
+const NAV_ITEMS = [];
 
 // ─── Theme toggle button ──────────────────────────────────────────────────────
 function ThemeToggle({ isDark, toggle, T }) {
@@ -285,10 +269,10 @@ function Hero({ onJeeMains, T, isDark }) {
         boxShadow: T.shadow,
       }}>
         {[
-          { num: "3,500+", label: "PYQs" },
+          { num: "50,000+", label: "PYQs" },
           { num: "10+",    label: "Years Covered" },
           { num: "100%",   label: "Free to Use" },
-          { num: "6+",     label: "Exam Categories" },
+          { num: "4",      label: "Exam Categories" },
         ].map((s, i) => (
           <div key={s.label} style={{
             textAlign: "center",

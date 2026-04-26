@@ -1236,7 +1236,7 @@ function buildHtml(text, imgUrlFn) {
 const QuestionCard = memo(function QuestionCard({
   q, index, total, jobId, apiBase, adminKey,
   onChange, onSaveOne, onApplyBelow, onRemove,
-  chapters, topics, papers, saveError,
+  chapters, topics, papers, saveError, isDirty,
 }) {
   const [tab,          setTab]     = useState(null);
   const [pendingApply, setPending] = useState(null);
@@ -1268,9 +1268,9 @@ const QuestionCard = memo(function QuestionCard({
   return(
     <div style={{
       background:C.surface,
-      border:`1px solid ${saveError?C.red:C.border}`,
+      border:`1px solid ${saveError?C.red:isDirty?C.amber+"88":C.border}`,
       borderRadius:10,overflow:"hidden",
-      boxShadow:saveError?`0 0 0 2px ${C.red}44`:"none",
+      boxShadow:saveError?`0 0 0 2px ${C.red}44`:isDirty?`0 0 0 1px ${C.amber}44`:"none",
     }}>
 
       {saveError&&(
@@ -1301,6 +1301,7 @@ const QuestionCard = memo(function QuestionCard({
         {!q.shift       &&<Badge label="SHIFT MISSING"    color={C.amber}/>}
         {!q.chapter_name&&<Badge label="CHAPTER MISSING"  color={C.amber}/>}
         {!q.answer      &&<Badge label="ANSWER MISSING"   color={C.red}/>}
+        {isDirty        &&<Badge label="● UNSAVED"          color={C.amber}/>}
         <span style={{flex:1}}/>
         <button
           onClick={()=>{
@@ -2382,7 +2383,7 @@ function ActiveChip({label,onClear}){
 function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
   const PAGE_SIZE = 10;
 
-  // ── Server-side filter state ────────────────────────────────────────────────
+  // ── Filters ─────────────────────────────────────────────────────────────────
   const [filterSubj,  setFilterSubj]  = useState("");
   const [filterDate,  setFilterDate]  = useState("");
   const [filterShift, setFilterShift] = useState("");
@@ -2392,26 +2393,25 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
   const [filterType,  setFilterType]  = useState("");
   const [search,      setSearch]      = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [page,        setPage]        = useState(1);
 
-  // ── Data from server ────────────────────────────────────────────────────────
+  // ── All filtered questions live in memory — same as ReviewScreen ─────────────
   const [questions,      setQuestions]      = useState([]);
-  const [total,          setTotal]          = useState(0);
   const [loading,        setLoading]        = useState(false);
+  const [fetchMsg,       setFetchMsg]       = useState(""); // "Fetching 200/1001…"
   const [chapters,       setChapters]       = useState([]);
   const [topics,         setTopics]         = useState([]);
   const [papers,         setPapers]         = useState([]);
   const [saving,         setSaving]         = useState(false);
-  const [saveMsg,        setSaveMsg]        = useState(null);
-  const [bulkSaveResult, setBulkSaveResult] = useState(null);
+  const [saveResult,     setSaveResult]     = useState(null);
+  const [saveErrors,     setSaveErrors]     = useState({});
   const [recoveryBanner, setRecoveryBanner] = useState(false);
-  // applyBelow across all filtered questions
-  const [applyingBelow,  setApplyingBelow]  = useState(null); // {field, value, fetched, total} | null
+  const [page,           setPage]           = useState(1);
+  const serverQsRef = useRef([]);
 
-  // ── Crash recovery — keyed by current filter fingerprint ───────────────────
+  // ── Crash recovery ────────────────────────────────────────────────────────────
   const EDIT_RECOVERY_KEY = "examside_edit_recovery";
   const saveEditRecovery = useCallback((qs) => {
-    try { localStorage.setItem(EDIT_RECOVERY_KEY, JSON.stringify({questions: qs, savedAt: Date.now()})); } catch(e) {}
+    try { localStorage.setItem(EDIT_RECOVERY_KEY, JSON.stringify({questions:qs, savedAt:Date.now()})); } catch(e) {}
   }, []);
   const loadEditRecovery = useCallback(() => {
     try {
@@ -2426,9 +2426,9 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
     try { localStorage.removeItem(EDIT_RECOVERY_KEY); } catch(e) {}
   }, []);
 
-  // Auto-save debounced 2s whenever questions change (only if there are unsaved edits)
-  const autoSaveRef  = useRef(null);
-  const prevQsRef    = useRef(questions);
+  // Auto-save to localStorage (debounced 2s) — same as ReviewScreen
+  const autoSaveRef = useRef(null);
+  const prevQsRef   = useRef(questions);
   useEffect(() => {
     if (questions === prevQsRef.current) return;
     prevQsRef.current = questions;
@@ -2438,22 +2438,19 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
     return () => clearTimeout(autoSaveRef.current);
   }, [questions, saveEditRecovery]);
 
-  // Filter options derived from papers/chapters (not from loaded questions)
+  // ── Filter meta (for pills) ──────────────────────────────────────────────────
   const uniqueExams  = useMemo(()=>[...new Set(papers.map(p=>p.exam_name).filter(Boolean))].sort(),[papers]);
   const uniqueDates  = useMemo(()=>[...new Set(papers.map(p=>p.exam_date_str||p.exam_date).filter(Boolean))].sort((a,b)=>b.localeCompare(a)),[papers]);
   const uniqueShifts = useMemo(()=>[...new Set(papers.map(p=>p.shift).filter(Boolean))].sort(),[papers]);
   const uniqueChaps  = useMemo(()=>[...new Set(chapters.map(c=>c.name).filter(Boolean))].sort(),[chapters]);
+  const fmtDate = (d) => d ? new Date(d+"T00:00:00").toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}) : d;
+  const activeFilterCount = [filterDate,filterShift,filterExam,filterChap,filterDiff,filterType,filterSubj].filter(Boolean).length;
 
-  const fmtDate=(d)=>d?new Date(d+"T00:00:00").toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}):d;
-  const activeFilterCount=[filterDate,filterShift,filterExam,filterChap,filterDiff,filterType,filterSubj].filter(Boolean).length;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const resetPage  = () => setPage(1);
-
-  // ── Build query string from current filters ─────────────────────────────────
-  const buildQS = useCallback((p, limitOverride) => {
+  // ── Build query string (no limit/offset — we fetch all) ─────────────────────
+  const buildFilterQS = useCallback(() => {
     const qs = new URLSearchParams();
-    qs.set("limit",  limitOverride ?? PAGE_SIZE);
-    qs.set("offset", (p - 1) * (limitOverride ?? PAGE_SIZE));
+    qs.set("limit", 2000); // fetch all matching
+    qs.set("offset", 0);
     if (filterSubj)  qs.set("subject",       filterSubj);
     if (filterDate)  qs.set("exam_date",      filterDate);
     if (filterShift) qs.set("shift",          filterShift);
@@ -2465,283 +2462,215 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
     return qs.toString();
   }, [filterSubj, filterDate, filterShift, filterExam, filterChap, filterDiff, filterType, search]);
 
-  // ── Map raw server question → internal shape ──────────────────────────────
   const mapQ = (q) => ({
     ...q, _dbId: q.id, number: q.question_number ?? q.number ?? 0,
-    q_images: q.q_images || [], sol_images: q.sol_images || [], opt_images: q.opt_images || {},
-    options: q.options || [q.option_1 ?? "", q.option_2 ?? "", q.option_3 ?? "", q.option_4 ?? ""],
+    q_images: q.q_images||[], sol_images: q.sol_images||[], opt_images: q.opt_images||{},
+    options: q.options||[q.option_1??"", q.option_2??"", q.option_3??"", q.option_4??""],
   });
 
-  // ── Fetch ALL filtered questions across all pages (for bulk ops) ───────────
-  // Streams pages of 100 and appends; calls onProgress(fetched, total) each page.
-  const fetchAllFiltered = useCallback(async (onProgress) => {
+  // ── Fetch ALL matching questions into state — same feel as ReviewScreen ───────
+  // For very large sets (>2000) streams pages and shows progress.
+  const fetchQuestions = useCallback(async () => {
+    setLoading(true); setSaveResult(null); setFetchMsg(""); setPage(1);
     const h = {"x-admin-key": adminKey};
-    const FETCH_LIMIT = 100;
-    // First get total count
-    const first = await fetch(`${apiBase}/api/admin/questions?${buildQS(1, FETCH_LIMIT)}`, {headers: h});
-    const firstData = await first.json();
-    const serverTotal = firstData.total || (Array.isArray(firstData) ? firstData.length : 0);
-    const firstQs = Array.isArray(firstData) ? firstData : (firstData.questions || firstData.items || []);
-    let all = firstQs.map(mapQ);
-    onProgress && onProgress(all.length, serverTotal);
-
-    // Fetch remaining pages in parallel batches of 3
-    const remaining = Math.ceil((serverTotal - FETCH_LIMIT) / FETCH_LIMIT);
-    for (let p = 2; p <= remaining + 1; p += 3) {
-      const batch = [];
-      for (let pp = p; pp < p + 3 && pp <= remaining + 1; pp++) {
-        batch.push(fetch(`${apiBase}/api/admin/questions?${buildQS(pp, FETCH_LIMIT)}`, {headers: h})
-          .then(r => r.json())
-          .then(d => (Array.isArray(d) ? d : (d.questions || d.items || [])).map(mapQ)));
-      }
-      const results = await Promise.all(batch);
-      all = all.concat(results.flat());
-      onProgress && onProgress(all.length, serverTotal);
-    }
-    return all;
-  }, [apiBase, adminKey, buildQS]);
-
-  // ── Fetch questions from backend (server-side filter + pagination) ──────────
-  const fetchQuestions = useCallback(async (p) => {
-    setLoading(true);
-    setBulkSaveResult(null);
-    const h = {"x-admin-key": adminKey};
+    const LIMIT = 500;
     try {
-      const res = await fetch(`${apiBase}/api/admin/questions?${buildQS(p)}`, {headers: h});
+      // First page — also gives us total
+      const qs = new URLSearchParams();
+      qs.set("limit", LIMIT); qs.set("offset", 0);
+      if (filterSubj)  qs.set("subject",       filterSubj);
+      if (filterDate)  qs.set("exam_date",      filterDate);
+      if (filterShift) qs.set("shift",          filterShift);
+      if (filterExam)  qs.set("exam_name",      filterExam);
+      if (filterChap)  qs.set("chapter",        filterChap);
+      if (filterDiff)  qs.set("difficulty",     filterDiff);
+      if (filterType)  qs.set("question_type",  filterType);
+      if (search)      qs.set("search",         search);
+
+      const res  = await fetch(`${apiBase}/api/admin/questions?${qs}`, {headers:h});
       const data = await res.json();
-      const qs = Array.isArray(data) ? data : (data.questions || data.items || []);
-      setTotal(data.total || qs.length);
-      // Check for recovery on first load
-      const mapped = applySSCSolutions(qs.map(mapQ));
+      const serverTotal = data.total || (Array.isArray(data) ? data.length : 0);
+      let all = (Array.isArray(data) ? data : (data.questions||data.items||[])).map(mapQ);
+
+      // Fetch remaining pages in parallel
+      if (serverTotal > LIMIT) {
+        setFetchMsg(`Fetching ${all.length}/${serverTotal}…`);
+        const totalPages = Math.ceil(serverTotal / LIMIT);
+        const rest = await Promise.all(
+          Array.from({length: totalPages - 1}, (_, i) => {
+            const pqs = new URLSearchParams(qs);
+            pqs.set("offset", (i+1)*LIMIT);
+            return fetch(`${apiBase}/api/admin/questions?${pqs}`, {headers:h})
+              .then(r=>r.json())
+              .then(d=>(Array.isArray(d)?d:(d.questions||d.items||[])).map(mapQ));
+          })
+        );
+        all = all.concat(rest.flat());
+        setFetchMsg("");
+      }
+
+      const mapped = applySSCSolutions(all);
       const recovered = loadEditRecovery();
-      if (recovered && recovered.length > 0 && p === 1) {
-        // Merge recovered edits into freshly fetched questions by _dbId
-        const recoveryMap = new Map(recovered.map(q => [q._dbId, q]));
-        const merged = mapped.map(q => recoveryMap.has(q._dbId) ? {...q, ...recoveryMap.get(q._dbId), _dbId: q._dbId} : q);
-        setQuestions(merged);
+      if (recovered && recovered.length > 0) {
+        const recovMap = new Map(recovered.map(q=>[q._dbId, q]));
+        serverQsRef.current = mapped;
+        setQuestions(mapped.map(q => recovMap.has(q._dbId) ? {...q, ...recovMap.get(q._dbId), _dbId:q._dbId} : q));
         setRecoveryBanner(true);
       } else {
+        serverQsRef.current = mapped;
         setQuestions(mapped);
       }
     } catch(e) { console.error("Load error", e); }
-    finally { setLoading(false); }
-  }, [apiBase, adminKey, buildQS, loadEditRecovery]);
+    finally { setLoading(false); setFetchMsg(""); }
+  }, [apiBase, adminKey, filterSubj, filterDate, filterShift, filterExam, filterChap, filterDiff, filterType, search, loadEditRecovery]);
 
-  // ── Load filter option lists once on mount ──────────────────────────────────
-  const loadMeta = useCallback(async () => {
+  // Load meta once
+  useEffect(() => {
     const h = {"x-admin-key": adminKey};
-    const [cRes, tRes, pRes] = await Promise.all([
-      fetch(`${apiBase}/api/admin/chapters`, {headers: h}).then(r=>r.json()).catch(()=>[]),
-      fetch(`${apiBase}/api/admin/topics`,   {headers: h}).then(r=>r.json()).catch(()=>[]),
-      fetch(`${apiBase}/api/admin/papers`,   {headers: h}).then(r=>r.json()).catch(()=>[]),
-    ]);
-    setChapters(Array.isArray(cRes) ? cRes : []);
-    setTopics(Array.isArray(tRes) ? tRes : []);
-    setPapers(Array.isArray(pRes) ? pRes : []);
+    Promise.all([
+      fetch(`${apiBase}/api/admin/chapters`,{headers:h}).then(r=>r.json()).catch(()=>[]),
+      fetch(`${apiBase}/api/admin/topics`,  {headers:h}).then(r=>r.json()).catch(()=>[]),
+      fetch(`${apiBase}/api/admin/papers`,  {headers:h}).then(r=>r.json()).catch(()=>[]),
+    ]).then(([c,t,p]) => {
+      setChapters(Array.isArray(c)?c:[]);
+      setTopics(Array.isArray(t)?t:[]);
+      setPapers(Array.isArray(p)?p:[]);
+    });
   }, [apiBase, adminKey]);
 
-  useEffect(() => { loadMeta(); }, [loadMeta]);
-
-  // Re-fetch when filters change (reset to page 1)
-  useEffect(() => { setPage(1); fetchQuestions(1); },
+  // Fetch whenever filters change
+  useEffect(() => { fetchQuestions(); },
     [filterSubj, filterDate, filterShift, filterExam, filterChap, filterDiff, filterType, search]);
 
-  // Re-fetch when page changes
-  useEffect(() => { fetchQuestions(page); }, [page]);
+  // ── Local-only updates — NO server calls ─────────────────────────────────────
+  const updateQ = useCallback((i, u) =>
+    setQuestions(p => { const n=[...p]; n[i]=u; return n; }), []);
 
-  const updateQ = useCallback((i, u) => setQuestions(p => { const n=[...p]; n[i]=u; return n; }), []);
-
-  // ── Apply field to ALL filtered questions (all pages) then bulk-save ────────
-  // fromIndex = local page index of the triggering card; questions below it on
-  // the current page are updated in local state immediately. Then all remaining
-  // pages are fetched and saved server-side.
-  const applyBelow = useCallback(async (fromIndex, field, value) => {
-    // 1. Apply immediately to cards below on current page (instant UI feedback)
+  const applyBelow = useCallback((fromIndex, field, value) => {
     setQuestions(prev => prev.map((q, i) => {
       if (i <= fromIndex) return q;
       if (field === "exam_date") return {...q, exam_date:value, year:value.slice(0,4)};
       if (field === "q_type")    return {...q, q_type:value};
       return {...q, [field]:value};
     }));
+  }, []);
 
-    // 2. Fetch ALL filtered questions, apply the field, and save all
-    setApplyingBelow({field, value, fetched:0, total:0});
-    setSaveMsg(null); setBulkSaveResult(null);
-    try {
-      const all = await fetchAllFiltered((fetched, total) =>
-        setApplyingBelow({field, value, fetched, total, phase:"fetching"})
-      );
-
-      // Apply field to every question (entire filtered set)
-      const patched = all.map(q => {
-        if (field === "exam_date") return {...q, exam_date:value, year:value.slice(0,4)};
-        if (field === "q_type")    return {...q, q_type:value};
-        return {...q, [field]:value};
-      });
-
-      // Save in batches of 8
-      const BATCH = 8;
-      let savedCount = 0, failedCount = 0;
-      for (let s = 0; s < patched.length; s += BATCH) {
-        const batch = patched.slice(s, s + BATCH);
-        await Promise.all(batch.map(async (q) => {
-          if (!q._dbId) return;
-          try {
-            const res = await fetch(`${apiBase}/api/admin/update-question/${q._dbId}`, {
-              method: "PUT",
-              headers: {"Content-Type":"application/json","x-admin-key":adminKey},
-              body: JSON.stringify(buildPayload(q)),
-            });
-            if (!res.ok) failedCount++; else savedCount++;
-          } catch(e) { failedCount++; }
-        }));
-        setApplyingBelow({field, value, fetched: savedCount + failedCount, total: patched.length, phase:"saving"});
-      }
-
-      // Refresh current page to reflect saved data
-      await fetchQuestions(page);
-      setApplyingBelow(null);
-      setBulkSaveResult({saved: savedCount, failed: failedCount, total: patched.length, inProgress: false});
-      setTimeout(() => setBulkSaveResult(null), 5000);
-    } catch(e) {
-      setApplyingBelow(null);
-      setSaveMsg({ok:false, msg:`Apply failed: ${e.message}`});
-    }
-  }, [fetchAllFiltered, fetchQuestions, page, apiBase, adminKey]);
-
-  // ── Manually added questions (no server fetch needed, lives in local state) ──
+  // ── Manually added questions ──────────────────────────────────────────────────
   const [manualQuestions, setManualQuestions] = useState([]);
-
   const insertManualQuestion = useCallback(() => {
-    const blank = createBlankQuestion(0, manualQuestions);
-    setManualQuestions(prev => [blank, ...prev]);
-  }, [manualQuestions]);
-
-  const removeManualQuestion = useCallback((manualId) => {
-    setManualQuestions(prev => prev.filter(q => q._manualId !== manualId));
+    setManualQuestions(prev => [createBlankQuestion(0, prev), ...prev]);
   }, []);
+  const removeManualQuestion = useCallback((id) =>
+    setManualQuestions(prev => prev.filter(q => q._manualId !== id)), []);
+  const updateManualQ = useCallback((id, u) =>
+    setManualQuestions(prev => prev.map(q => q._manualId === id ? u : q)), []);
 
-  const updateManualQ = useCallback((manualId, u) => {
-    setManualQuestions(prev => prev.map(q => q._manualId === manualId ? u : q));
-  }, []);
-
-  // ── Build save payload from a question object ─────────────────────────────
+  // ── Save payload builder ──────────────────────────────────────────────────────
   const buildPayload = (q) => ({
     question_number: q.number, q_type: q.q_type,
-    subject: q.subject, subject_name: q.subject,
-    exam_name: q.exam_name,
-    exam_date: q.exam_date || null,
+    subject: q.subject, subject_name: q.subject, exam_name: q.exam_name,
+    exam_date: q.exam_date||null,
     year: q.exam_date ? parseInt(q.exam_date.slice(0,4)) : (q.year ? parseInt(q.year) : null),
     shift: q.shift, chapter_name: q.chapter_name, topic_name: q.topic_name,
     difficulty: q.difficulty, marks_correct: q.marks_correct, marks_wrong: q.marks_wrong,
     question: q.question, options: q.options, answer: q.answer, solution: q.solution,
   });
 
+  // ── Single save (Verify & Save button) ───────────────────────────────────────
   const saveOne = async (q) => {
-    setSaving(true); setSaveMsg(null);
+    setSaving(true); setSaveResult(null);
     try {
       let res;
       if (q._dbId) {
         res = await fetch(`${apiBase}/api/admin/update-question/${q._dbId}`, {
-          method: "PUT",
-          headers: {"Content-Type":"application/json","x-admin-key":adminKey},
+          method:"PUT", headers:{"Content-Type":"application/json","x-admin-key":adminKey},
           body: JSON.stringify(buildPayload(q)),
         });
       } else {
         res = await fetch(`${apiBase}/api/admin/create-question`, {
-          method: "POST",
-          headers: {"Content-Type":"application/json","x-admin-key":adminKey},
+          method:"POST", headers:{"Content-Type":"application/json","x-admin-key":adminKey},
           body: JSON.stringify(buildPayload(q)),
         });
         if (res.ok) {
-          const data = await res.json();
-          setQuestions(prev => prev.map(pq =>
-            (pq._isManual && pq.number === q.number && !pq._dbId) ? {...pq, _dbId: data.id} : pq
-          ));
+          const d = await res.json();
+          setManualQuestions(prev => prev.map(pq =>
+            pq._manualId === q._manualId ? {...pq, _dbId: d.id} : pq));
         }
       }
-      if (!res.ok) { const b = await res.json().catch(()=>({})); throw new Error(b.detail||res.statusText); }
-      setSaveMsg({ok:true, msg:`Q${q.number||"+"} saved ✓`});
-    } catch(e) { setSaveMsg({ok:false, msg:String(e)}); }
-    finally { setSaving(false); setTimeout(()=>setSaveMsg(null), 3000); }
+      if (!res.ok) { const b=await res.json().catch(()=>({})); throw new Error(b.detail||res.statusText); }
+      setSaveResult({saved_count:1, failed_count:0});
+    } catch(e) {
+      setSaveErrors(prev => ({...prev, [q._dbId||q._manualId]: String(e)}));
+    } finally {
+      setSaving(false);
+      setTimeout(() => setSaveResult(null), 3000);
+    }
   };
 
-  // ── Bulk Save — fetches ALL filtered questions across all pages, saves all ───
-  const bulkSave = async () => {
-    if (saving) return;
-    setSaving(true); setBulkSaveResult(null); setSaveMsg(null);
-    try {
-      // Step 1: fetch all filtered questions
-      setBulkSaveResult({saved:0, failed:0, total, inProgress:true, phase:"fetching"});
-      const all = await fetchAllFiltered((fetched, serverTotal) =>
-        setBulkSaveResult({saved:0, failed:0, total:serverTotal, inProgress:true, phase:"fetching", fetched})
-      );
-
-      // Step 2: merge local edits from current page into the full set
-      const localMap = new Map(questions.map(q => [q._dbId, q]));
-      const merged = all.map(q => localMap.has(q._dbId) ? localMap.get(q._dbId) : q);
-
-      // Step 3: save in batches of 8
-      const BATCH = 8;
-      let savedCount = 0, failedCount = 0;
-      for (let start = 0; start < merged.length; start += BATCH) {
-        const batch = merged.slice(start, start + BATCH);
-        await Promise.all(batch.map(async (q) => {
-          try {
-            let res;
-            if (q._dbId) {
-              res = await fetch(`${apiBase}/api/admin/update-question/${q._dbId}`, {
-                method: "PUT",
-                headers: {"Content-Type":"application/json","x-admin-key":adminKey},
-                body: JSON.stringify(buildPayload(q)),
-              });
-            } else {
-              res = await fetch(`${apiBase}/api/admin/create-question`, {
-                method: "POST",
-                headers: {"Content-Type":"application/json","x-admin-key":adminKey},
-                body: JSON.stringify(buildPayload(q)),
-              });
-            }
-            if (!res.ok) failedCount++; else savedCount++;
-          } catch(e) { failedCount++; }
-        }));
-        setBulkSaveResult({saved: savedCount, failed: failedCount, total: merged.length, inProgress: true, phase:"saving"});
-      }
-      if (failedCount === 0) clearEditRecovery();
-      setBulkSaveResult({saved: savedCount, failed: failedCount, total: merged.length, inProgress: false});
-    } catch(e) {
-      setSaveMsg({ok:false, msg:`Bulk save failed: ${e.message}`});
-      setBulkSaveResult(null);
+  // ── Bulk Save — saves ALL in-memory questions to DB (same as ReviewScreen) ───
+  const saveAll = async (subset) => {
+    setSaving(true); setSaveResult(null);
+    const newErrors = {};
+    const savedKeys = new Set();
+    const BATCH = 8;
+    for (let s=0; s<subset.length; s+=BATCH) {
+      const batch = subset.slice(s, s+BATCH);
+      await Promise.all(batch.map(async (q) => {
+        const key = q._manualId || String(q._dbId||q.number);
+        try {
+          let res;
+          if (q._dbId) {
+            res = await fetch(`${apiBase}/api/admin/update-question/${q._dbId}`, {
+              method:"PUT", headers:{"Content-Type":"application/json","x-admin-key":adminKey},
+              body: JSON.stringify(buildPayload(q)),
+            });
+          } else {
+            res = await fetch(`${apiBase}/api/admin/create-question`, {
+              method:"POST", headers:{"Content-Type":"application/json","x-admin-key":adminKey},
+              body: JSON.stringify(buildPayload(q)),
+            });
+          }
+          if (!res.ok) { const b=await res.json().catch(()=>({})); newErrors[key]=b.detail||`HTTP ${res.status}`; }
+          else savedKeys.add(key);
+        } catch(e) { newErrors[key]=String(e); }
+      }));
+      setSaveResult({saved_count:savedKeys.size, failed_count:Object.keys(newErrors).length, in_progress:true});
     }
+    setSaveErrors(prev=>({...prev,...newErrors}));
+    if (Object.keys(newErrors).length===0) clearEditRecovery();
+    setSaveResult({saved_count:savedKeys.size, failed_count:Object.keys(newErrors).length});
     setSaving(false);
-    setTimeout(() => setBulkSaveResult(null), 5000);
+    setPage(1);
   };
 
   const clearAll = () => {
     setFilterSubj(""); setFilterDate(""); setFilterShift("");
     setFilterExam(""); setFilterChap(""); setFilterDiff("");
-    setFilterType(""); setSearch(""); resetPage();
+    setFilterType(""); setSearch("");
   };
 
-  return (
-    <div style={{background:C.bg, minHeight:"100vh"}}>
+  // ── Client-side pagination ────────────────────────────────────────────────────
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(questions.length/PAGE_SIZE)), [questions]);
+  const paginated  = useMemo(() => questions.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE), [questions, page]);
+  const pageOffset = (page-1)*PAGE_SIZE;
 
-      {/* ── Crash Recovery Banner ─────────────────────────────────────────────── */}
+  return (
+    <div style={{background:C.bg, minHeight:"100vh", display:"flex", flexDirection:"column"}}>
+
+      {/* Crash Recovery Banner */}
       {recoveryBanner && (
-        <div style={{
-          background:"#1e3a5f", border:`1px solid ${C.blue}`,
-          padding:"12px 24px", display:"flex", alignItems:"center", gap:14, flexWrap:"wrap",
-        }}>
+        <div style={{background:"#1e3a5f",border:`1px solid ${C.blue}`,
+                    padding:"12px 24px",display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}}>
           <span style={{fontSize:20}}>🔄</span>
-          <span style={{color:C.text, fontSize:13, flex:1}}>
-            <strong style={{color:C.blueLight}}>Unsaved edits found!</strong>{" "}
-            Pichle session ke changes bach gaye hain. Restore karein?
+          <span style={{color:C.text,fontSize:13,flex:1}}>
+            <strong style={{color:C.blueLight}}>Unsaved session restored!</strong>{" "}
+            Aapke pichle edits wapas load ho gaye hain.
           </span>
-          <button onClick={()=>{ const saved=loadEditRecovery(); if(saved){ const map=new Map(saved.map(q=>[q._dbId,q])); setQuestions(prev=>prev.map(q=>map.has(q._dbId)?{...q,...map.get(q._dbId),_dbId:q._dbId}:q)); } setRecoveryBanner(false); }}
+          <button onClick={()=>setRecoveryBanner(false)}
             style={{background:C.blue,color:"#fff",border:"none",borderRadius:6,padding:"7px 18px",fontSize:13,fontWeight:700,cursor:"pointer"}}>
-            ✓ Restore Edits
+            ✓ Keep My Edits
           </button>
-          <button onClick={()=>{ clearEditRecovery(); setRecoveryBanner(false); }}
+          <button onClick={()=>{clearEditRecovery();setQuestions(serverQsRef.current);setRecoveryBanner(false);}}
             style={{background:"transparent",color:C.textMuted,border:`1px solid ${C.border}`,borderRadius:6,padding:"7px 14px",fontSize:12,cursor:"pointer"}}>
             ✕ Discard
           </button>
@@ -2749,136 +2678,99 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
       )}
 
       {/* Sticky top bar */}
-      <div style={{position:"sticky",top:0,zIndex:100,background:C.surface,borderBottom:`1px solid ${C.border}`}}>
+      <div style={{position:"sticky",top:0,zIndex:100,background:C.surface,borderBottom:`1px solid ${C.border}`,flexShrink:0}}>
         <div style={{padding:"10px 24px",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
           <span style={{color:C.text,fontWeight:700,fontSize:15}}>📚 Edit Existing Questions</span>
           <span style={{color:C.textMuted,fontSize:12}}>
-            <strong style={{color:C.blueLight}}>{total.toLocaleString()}</strong> total
-            {activeFilterCount > 0 && <span style={{color:C.textDim}}> (filtered)</span>}
+            <strong style={{color:C.blueLight}}>{questions.length.toLocaleString()}</strong> loaded
+            {activeFilterCount>0 && <span style={{color:C.textDim}}> (filtered)</span>}
           </span>
-          {activeFilterCount > 0 && (
-            <span style={{fontSize:11,padding:"2px 8px",borderRadius:10,
-                         background:C.blue+"33",color:C.blueLight,fontWeight:700}}>
+          {fetchMsg && <span style={{fontSize:12,color:C.amber}}>{fetchMsg}</span>}
+          {activeFilterCount>0 && (
+            <span style={{fontSize:11,padding:"2px 8px",borderRadius:10,background:C.blue+"33",color:C.blueLight,fontWeight:700}}>
               {activeFilterCount} filter{activeFilterCount>1?"s":""} active
             </span>
           )}
-          <input value={search} onChange={e=>{setSearch(e.target.value);resetPage();}}
+          {totalPages>1 && <span style={{fontSize:12,color:C.textDim}}>pg {page}/{totalPages}</span>}
+          <input value={search} onChange={e=>setSearch(e.target.value)}
             placeholder="🔍 Search question text or number…"
             style={{flex:1,minWidth:200,maxWidth:340,background:C.bg,color:C.text,
-                   border:`1px solid ${C.border}`,borderRadius:6,padding:"6px 10px",
-                   fontSize:13,outline:"none"}}/>
+                   border:`1px solid ${C.border}`,borderRadius:6,padding:"6px 10px",fontSize:13,outline:"none"}}/>
           <span style={{flex:1}}/>
-
-          {/* Bulk Save / Apply Below progress badge */}
-          {applyingBelow && (
-            <span style={{fontSize:12,padding:"4px 12px",borderRadius:6,color:C.amber,background:C.amberBg}}>
-              {applyingBelow.phase==="fetching"
-                ? `⏳ Fetching… ${applyingBelow.fetched||0}/${applyingBelow.total||"?"}`
-                : `⚡ Applying ${applyingBelow.field}… ${applyingBelow.fetched||0}/${applyingBelow.total||"?"}`}
-            </span>
-          )}
-          {bulkSaveResult && !applyingBelow && (
+          {saveResult && (
             <span style={{fontSize:12,padding:"4px 12px",borderRadius:6,
-                         color: bulkSaveResult.failed > 0 ? C.amber : C.green,
-                         background: bulkSaveResult.failed > 0 ? C.amberBg : C.greenBg}}>
-              {bulkSaveResult.inProgress
-                ? bulkSaveResult.phase==="fetching"
-                  ? `⏳ Fetching ${bulkSaveResult.fetched||0}/${bulkSaveResult.total}…`
-                  : `💾 Saving… ${bulkSaveResult.saved}/${bulkSaveResult.total}`
-                : bulkSaveResult.failed > 0
-                  ? `⚠ ${bulkSaveResult.saved} saved, ${bulkSaveResult.failed} failed`
-                  : `✓ All ${bulkSaveResult.saved} saved`}
+                         color:saveResult.in_progress?C.blue:saveResult.failed_count>0?C.amber:C.green,
+                         background:saveResult.in_progress?C.blue+"22":saveResult.failed_count>0?C.amberBg:C.greenBg}}>
+              {saveResult.in_progress && `⏳ Saving… ${saveResult.saved_count} done`}
+              {!saveResult.in_progress && saveResult.saved_count>0 && `✓ Saved ${saveResult.saved_count}`}
+              {!saveResult.in_progress && saveResult.failed_count>0 && ` · ❌ ${saveResult.failed_count} failed`}
             </span>
           )}
-          {saveMsg && !bulkSaveResult && !applyingBelow && (
-            <span style={{fontSize:12,padding:"4px 12px",borderRadius:6,
-                         color:saveMsg.ok?C.green:C.red,
-                         background:saveMsg.ok?C.greenBg:C.redBg}}>
-              {saveMsg.msg}
-            </span>
-          )}
-
           <button onClick={()=>setFiltersOpen(o=>!o)} style={{
             padding:"6px 14px",borderRadius:6,fontSize:12,fontWeight:600,cursor:"pointer",
             border:`1px solid ${filtersOpen||activeFilterCount>0?C.blue:C.border}`,
             background:filtersOpen||activeFilterCount>0?C.blue+"22":C.surface,
             color:filtersOpen||activeFilterCount>0?C.blueLight:C.textMuted,
-          }}>
-            ⚙ Filters {activeFilterCount>0?`(${activeFilterCount})`:""} {filtersOpen?"▲":"▼"}
-          </button>
-          {activeFilterCount > 0 && (
-            <button onClick={clearAll} style={{
-              padding:"6px 12px",borderRadius:6,fontSize:12,fontWeight:600,cursor:"pointer",
-              border:`1px solid ${C.red}44`,background:C.redBg,color:C.red,
-            }}>✕ Clear all</button>
+          }}>⚙ Filters {activeFilterCount>0?`(${activeFilterCount})`:""} {filtersOpen?"▲":"▼"}</button>
+          {activeFilterCount>0 && (
+            <button onClick={clearAll} style={{padding:"6px 12px",borderRadius:6,fontSize:12,fontWeight:600,
+              cursor:"pointer",border:`1px solid ${C.red}44`,background:C.redBg,color:C.red}}>✕ Clear all</button>
           )}
-          <Btn color={C.blue} small onClick={()=>fetchQuestions(page)}>↺ Refresh</Btn>
-
-          {/* Bulk Save button — operates on ALL filtered questions, not just current page */}
-          {total > 0 && (
-            <button onClick={bulkSave} disabled={saving||!!applyingBelow} style={{
-              padding:"6px 16px",borderRadius:6,fontSize:12,fontWeight:700,
-              cursor:(saving||applyingBelow)?"not-allowed":"pointer",
-              border:`1px solid ${C.amber}`,background:saving?C.amberBg:C.amber+"22",
-              color:(saving||applyingBelow)?C.textDim:C.amber,opacity:(saving||applyingBelow)?0.7:1,
-            }}>
-              {saving ? "⏳ Saving…" : `💾 Bulk Save (${total.toLocaleString()} filtered)`}
-            </button>
-          )}
-
+          <Btn color={C.blue} small onClick={fetchQuestions}>↺ Refresh</Btn>
+          <Btn color={C.amber} disabled={saving||questions.length===0} onClick={()=>saveAll(questions)}>
+            {saving?"Saving…":`💾 Bulk Save (${questions.length})`}
+          </Btn>
           <Btn color={C.green} onClick={onUploadNew}>＋ Upload New Paper</Btn>
         </div>
 
+        {/* Filter panels — same as before */}
         {filtersOpen && (
-          <div style={{padding:"10px 24px 14px",borderTop:`1px solid ${C.border}`,
-                      background:C.bg,display:"flex",flexDirection:"column",gap:10}}>
+          <div style={{padding:"10px 24px 14px",borderTop:`1px solid ${C.border}`,background:C.bg,display:"flex",flexDirection:"column",gap:10}}>
             <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
               <span style={{fontSize:11,color:C.textDim,fontWeight:700,width:64,flexShrink:0}}>SUBJECT</span>
               {["PHYSICS","CHEMISTRY","MATHEMATICS","BIOLOGY"].map(s=>(
                 <FilterPill key={s} label={s[0]+s.slice(1).toLowerCase()} active={filterSubj===s} color={C.blue}
-                  onClick={()=>{setFilterSubj(v=>v===s?"":s);resetPage();}}/>
+                  onClick={()=>setFilterSubj(v=>v===s?"":s)}/>
               ))}
             </div>
-            {uniqueExams.length > 0 && (
+            {uniqueExams.length>0 && (
               <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                 <span style={{fontSize:11,color:C.textDim,fontWeight:700,width:64,flexShrink:0}}>EXAM</span>
                 {uniqueExams.map(e=>(
                   <FilterPill key={e} label={e} active={filterExam===e} color={C.purple}
-                    onClick={()=>{setFilterExam(v=>v===e?"":e);resetPage();}}/>
+                    onClick={()=>setFilterExam(v=>v===e?"":e)}/>
                 ))}
               </div>
             )}
-            {uniqueDates.length > 0 && (
+            {uniqueDates.length>0 && (
               <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                 <span style={{fontSize:11,color:C.textDim,fontWeight:700,width:64,flexShrink:0}}>DATE</span>
                 <div style={{display:"flex",gap:6,flexWrap:"wrap",flex:1}}>
                   {uniqueDates.map(d=>(
                     <FilterPill key={d} label={fmtDate(d)} active={filterDate===d} color={C.blueLight}
-                      onClick={()=>{setFilterDate(v=>v===d?"":d);resetPage();}}/>
+                      onClick={()=>setFilterDate(v=>v===d?"":d)}/>
                   ))}
                 </div>
-                <input type="date" value={filterDate}
-                  onChange={e=>{setFilterDate(e.target.value);resetPage();}}
-                  style={{background:C.surface,color:C.text,border:`1px solid ${filterDate?C.blueLight:C.border}`,
-                         borderRadius:6,padding:"4px 8px",fontSize:12,outline:"none"}}/>
+                <input type="date" value={filterDate} onChange={e=>setFilterDate(e.target.value)}
+                  style={{background:C.surface,color:C.text,border:`1px solid ${filterDate?C.blueLight:C.border}`,borderRadius:6,padding:"4px 8px",fontSize:12,outline:"none"}}/>
               </div>
             )}
-            {uniqueShifts.length > 0 && (
+            {uniqueShifts.length>0 && (
               <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                 <span style={{fontSize:11,color:C.textDim,fontWeight:700,width:64,flexShrink:0}}>SHIFT</span>
                 {uniqueShifts.map(s=>(
                   <FilterPill key={s} label={s} active={filterShift===s} color={C.amber}
-                    onClick={()=>{setFilterShift(v=>v===s?"":s);resetPage();}}/>
+                    onClick={()=>setFilterShift(v=>v===s?"":s)}/>
                 ))}
               </div>
             )}
-            {uniqueChaps.length > 0 && (
+            {uniqueChaps.length>0 && (
               <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                 <span style={{fontSize:11,color:C.textDim,fontWeight:700,width:64,flexShrink:0}}>CHAPTER</span>
                 <div style={{display:"flex",gap:6,flexWrap:"wrap",flex:1}}>
                   {uniqueChaps.map(c=>(
                     <FilterPill key={c} label={c} active={filterChap===c} color={C.purple}
-                      onClick={()=>{setFilterChap(v=>v===c?"":c);resetPage();}}/>
+                      onClick={()=>setFilterChap(v=>v===c?"":c)}/>
                   ))}
                 </div>
               </div>
@@ -2889,40 +2781,43 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
                 {["easy","medium","hard"].map(d=>(
                   <FilterPill key={d} label={d[0].toUpperCase()+d.slice(1)} active={filterDiff===d}
                     color={d==="easy"?C.green:d==="hard"?C.red:C.amber}
-                    onClick={()=>{setFilterDiff(v=>v===d?"":d);resetPage();}}/>
+                    onClick={()=>setFilterDiff(v=>v===d?"":d)}/>
                 ))}
               </div>
               <div style={{display:"flex",alignItems:"center",gap:8}}>
                 <span style={{fontSize:11,color:C.textDim,fontWeight:700,width:64,flexShrink:0}}>TYPE</span>
                 {["MCQ","MSQ","NUMERICAL"].map(t=>(
                   <FilterPill key={t} label={t} active={filterType===t} color={C.blueLight}
-                    onClick={()=>{setFilterType(v=>v===t?"":t);resetPage();}}/>
+                    onClick={()=>setFilterType(v=>v===t?"":t)}/>
                 ))}
               </div>
             </div>
           </div>
         )}
 
-        {!filtersOpen && activeFilterCount > 0 && (
+        {!filtersOpen && activeFilterCount>0 && (
           <div style={{padding:"6px 24px 8px",display:"flex",gap:6,flexWrap:"wrap",borderTop:`1px solid ${C.border}`}}>
-            {filterSubj  && <ActiveChip label={`Subject: ${filterSubj[0]+filterSubj.slice(1).toLowerCase()}`} onClear={()=>{setFilterSubj("");resetPage();}}/>}
-            {filterExam  && <ActiveChip label={`Exam: ${filterExam}`}          onClear={()=>{setFilterExam("");resetPage();}}/>}
-            {filterDate  && <ActiveChip label={`Date: ${fmtDate(filterDate)}`} onClear={()=>{setFilterDate("");resetPage();}}/>}
-            {filterShift && <ActiveChip label={`Shift: ${filterShift}`}        onClear={()=>{setFilterShift("");resetPage();}}/>}
-            {filterChap  && <ActiveChip label={`Chapter: ${filterChap}`}       onClear={()=>{setFilterChap("");resetPage();}}/>}
-            {filterDiff  && <ActiveChip label={`Diff: ${filterDiff}`}          onClear={()=>{setFilterDiff("");resetPage();}}/>}
-            {filterType  && <ActiveChip label={`Type: ${filterType}`}          onClear={()=>{setFilterType("");resetPage();}}/>}
+            {filterSubj  && <ActiveChip label={`Subject: ${filterSubj[0]+filterSubj.slice(1).toLowerCase()}`} onClear={()=>setFilterSubj("")}/>}
+            {filterExam  && <ActiveChip label={`Exam: ${filterExam}`}          onClear={()=>setFilterExam("")}/>}
+            {filterDate  && <ActiveChip label={`Date: ${fmtDate(filterDate)}`} onClear={()=>setFilterDate("")}/>}
+            {filterShift && <ActiveChip label={`Shift: ${filterShift}`}        onClear={()=>setFilterShift("")}/>}
+            {filterChap  && <ActiveChip label={`Chapter: ${filterChap}`}       onClear={()=>setFilterChap("")}/>}
+            {filterDiff  && <ActiveChip label={`Diff: ${filterDiff}`}          onClear={()=>setFilterDiff("")}/>}
+            {filterType  && <ActiveChip label={`Type: ${filterType}`}          onClear={()=>setFilterType("")}/>}
           </div>
         )}
       </div>
 
-      <div style={{maxWidth:1100,margin:"0 auto",padding:"24px 16px"}}>
+      {/* Body */}
+      <div style={{maxWidth:1100,margin:"0 auto",padding:"24px 16px",flex:1}}>
         {loading ? (
-          <div style={{textAlign:"center",color:C.textMuted,padding:60}}>Loading questions…</div>
+          <div style={{textAlign:"center",color:C.textMuted,padding:60}}>
+            {fetchMsg || "Loading questions…"}
+          </div>
         ) : (
           <>
-            {/* ── Manually added questions (always shown at top, no pagination) ── */}
-            {manualQuestions.length > 0 && (
+            {/* Manual questions */}
+            {manualQuestions.length>0 && (
               <div style={{marginBottom:24}}>
                 <div style={{fontSize:11,fontWeight:700,color:C.purple,letterSpacing:1,
                             textTransform:"uppercase",marginBottom:10,padding:"6px 12px",
@@ -2930,90 +2825,79 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
                   ＋ New Questions (unsaved)
                 </div>
                 <div style={{display:"flex",flexDirection:"column",gap:16}}>
-                  {manualQuestions.map((q, i) => (
+                  {manualQuestions.map((q,i)=>(
                     <QuestionCard key={q._manualId}
                       q={q} index={i} total={manualQuestions.length}
                       jobId={null} apiBase={apiBase} adminKey={adminKey}
-                      onChange={(u) => updateManualQ(q._manualId, u)}
+                      saveError={saveErrors[q._manualId]}
+                      onChange={(u)=>updateManualQ(q._manualId,u)}
                       onSaveOne={saveOne}
-                      onApplyBelow={(field, value) => {
-                        // Scoped to manual questions only
-                        setManualQuestions(prev => prev.map((pq, pi) => {
-                          if (pi <= i) return pq;
-                          if (field === "exam_date") return {...pq, exam_date:value, year:value.slice(0,4)};
-                          return {...pq, [field]:value};
+                      onApplyBelow={(field,value)=>{
+                        setManualQuestions(prev=>prev.map((pq,pi)=>{
+                          if(pi<=i) return pq;
+                          if(field==="exam_date") return {...pq,exam_date:value,year:value.slice(0,4)};
+                          return {...pq,[field]:value};
                         }));
                       }}
-                      onRemove={() => removeManualQuestion(q._manualId)}
+                      onRemove={()=>removeManualQuestion(q._manualId)}
                       chapters={chapters} topics={topics} papers={papers}/>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* ── Add Question button ── */}
             <div style={{marginBottom:20}}>
               <AddQuestionButton onClick={insertManualQuestion}/>
             </div>
 
-            {/* ── Server-fetched questions ── */}
-            {questions.length === 0 ? (
+            {questions.length===0 ? (
               <div style={{textAlign:"center",color:C.textMuted,padding:60}}>
-                {activeFilterCount > 0 || search
-                  ? <><span>No questions match the current filters. </span><button onClick={clearAll} style={{color:C.blue,background:"none",border:"none",cursor:"pointer",fontSize:14,fontWeight:600}}>Clear filters →</button></>
-                  : <><span>No questions found. </span><button onClick={onUploadNew} style={{color:C.blue,background:"none",border:"none",cursor:"pointer",fontSize:14,fontWeight:600}}>Upload a paper →</button></>}
+                {activeFilterCount>0||search
+                  ? <><span>No questions match the current filters. </span>
+                      <button onClick={clearAll} style={{color:C.blue,background:"none",border:"none",cursor:"pointer",fontSize:14,fontWeight:600}}>Clear filters →</button></>
+                  : <><span>No questions found. </span>
+                      <button onClick={onUploadNew} style={{color:C.blue,background:"none",border:"none",cursor:"pointer",fontSize:14,fontWeight:600}}>Upload a paper →</button></>}
               </div>
             ) : (
-            <>
-              {/* Bulk save hint strip — shows real total, not just page count */}
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
-                          marginBottom:14,padding:"8px 12px",borderRadius:8,
-                          background:C.surface,border:`1px solid ${C.border}`}}>
-                <span style={{fontSize:12,color:C.textMuted}}>
-                  Showing <strong style={{color:C.text}}>{questions.length}</strong> of{" "}
-                  <strong style={{color:C.blueLight}}>{total.toLocaleString()}</strong> filtered questions.
-                  {" "}<span style={{color:C.textDim}}>
-                    "Bulk Save" and "Apply below" operate on <strong style={{color:C.amber}}>all {total.toLocaleString()}</strong> filtered questions.
-                  </span>
-                </span>
-                <button onClick={bulkSave} disabled={saving||!!applyingBelow} style={{
-                  padding:"5px 14px",borderRadius:6,fontSize:12,fontWeight:700,
-                  cursor:(saving||applyingBelow)?"not-allowed":"pointer",
-                  border:`1px solid ${C.amber}`,background:saving?C.amberBg:C.amber+"22",
-                  color:(saving||applyingBelow)?C.textDim:C.amber,opacity:(saving||applyingBelow)?0.7:1,flexShrink:0,
-                }}>
-                  {saving ? "⏳ Saving…" : `💾 Bulk Save (${total.toLocaleString()})`}
-                </button>
-              </div>
-
-              <div style={{display:"flex",flexDirection:"column",gap:16}}>
-                {questions.map((q, i) => (
-                  <QuestionCard key={q._dbId || q.number}
-                    q={q} index={i} total={total}
-                    jobId={null} apiBase={apiBase} adminKey={adminKey}
-                    onChange={(u) => updateQ(i, u)}
-                    onSaveOne={saveOne}
-                    onApplyBelow={(field, value) => applyBelow(i, field, value)}
-                    onRemove={()=>{}}
-                    chapters={chapters} topics={topics} papers={papers}/>
-                ))}
-              </div>
-              {totalPages > 1 && (
-                <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:8,marginTop:28}}>
-                  <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1}
-                    style={{padding:"7px 16px",borderRadius:6,background:C.surface,
-                           border:`1px solid ${C.border}`,color:page===1?C.textDim:C.text,
-                           cursor:page===1?"not-allowed":"pointer",fontSize:13}}>← Prev</button>
-                  <span style={{padding:"7px 14px",color:C.textMuted,fontSize:13}}>
-                    Page <strong style={{color:C.text}}>{page}</strong> / <strong style={{color:C.text}}>{totalPages}</strong>
-                  </span>
-                  <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages}
-                    style={{padding:"7px 16px",borderRadius:6,background:C.surface,
-                           border:`1px solid ${C.border}`,color:page===totalPages?C.textDim:C.text,
-                           cursor:page===totalPages?"not-allowed":"pointer",fontSize:13}}>Next →</button>
+              <>
+                <div style={{display:"flex",flexDirection:"column"}}>
+                  <AddQuestionButton onClick={()=>{}}/>
+                  {paginated.map((q,i)=>{
+                    const globalIdx = pageOffset+i;
+                    const key = q._dbId||q._manualId||q.number;
+                    return (
+                      <div key={key}>
+                        <QuestionCard
+                          q={q} index={globalIdx} total={questions.length}
+                          jobId={null} apiBase={apiBase} adminKey={adminKey}
+                          saveError={saveErrors[q._dbId||q._manualId]}
+                          onChange={(u)=>updateQ(globalIdx,u)}
+                          onSaveOne={saveOne}
+                          onApplyBelow={(field,value)=>applyBelow(globalIdx,field,value)}
+                          onRemove={()=>{}}
+                          chapters={chapters} topics={topics} papers={papers}/>
+                        <AddQuestionButton onClick={()=>{}}/>
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
-            </>
+
+                {totalPages>1 && (
+                  <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:8,marginTop:28}}>
+                    <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1}
+                      style={{padding:"7px 16px",borderRadius:6,background:C.surface,
+                             border:`1px solid ${C.border}`,color:page===1?C.textDim:C.text,
+                             cursor:page===1?"not-allowed":"pointer",fontSize:13}}>← Prev</button>
+                    <span style={{padding:"7px 14px",color:C.textMuted,fontSize:13}}>
+                      Page <strong style={{color:C.text}}>{page}</strong> / <strong style={{color:C.text}}>{totalPages}</strong>
+                    </span>
+                    <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages}
+                      style={{padding:"7px 16px",borderRadius:6,background:C.surface,
+                             border:`1px solid ${C.border}`,color:page===totalPages?C.textDim:C.text,
+                             cursor:page===totalPages?"not-allowed":"pointer",fontSize:13}}>Next →</button>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}
@@ -3021,6 +2905,7 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
     </div>
   );
 }
+
 
 // ─── Root ─────────────────────────────────────────────────────────────────────
 // Persisted screens: "review" and "processing" survive a page reload.

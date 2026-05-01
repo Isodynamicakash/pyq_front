@@ -21,6 +21,13 @@ import { EXAM_TAXONOMY, EXAM_LABEL } from "./EXAM_TAXONOMY.js";
 import SearchBar from "./SearchBar.jsx";
 
 
+// ── Slug normalizer (same as main.jsx — defensive guard) ──────────────────────
+const SLUG_ALIAS = { "jee-mains":"jee-main", "jee-adv":"jee-advanced" };
+function normalizeExamSlug(s) {
+  const slug = (s||"").trim().toLowerCase();
+  return SLUG_ALIAS[slug] || slug;
+}
+
 // ── Config ─────────────────────────────────────────────────────────────────────
 const MATHJAX_CONFIG = {
   loader: { load: ["input/tex", "output/chtml"] },
@@ -194,7 +201,7 @@ function Sidebar({examSlug,active,onSelect,liveFilters,C,isMobile,open,onClose})
     });
   };
 
-  const examData = EXAM_TAXONOMY[examSlug] || {subjects:[]};
+  const examData = EXAM_TAXONOMY[normalizeExamSlug(examSlug)] || {subjects:[]};
   const{years=[],shifts=[],dates=[],question_types=[]}=liveFilters||{};
 
   const selectedSubj = examData.subjects.find(s=>s.slug===active.subject)||null;
@@ -569,7 +576,7 @@ export default function QuestionBrowser({apiBase,onBack,isDark:isDarkProp,onTogg
   const hasAny=!!(active.chapter||active.subject);
 
   // Pill label — for subject/chapter/topic show name from EXAM_TAXONOMY
-  const examData=EXAM_TAXONOMY[examId]||{subjects:[]};
+  const examData=EXAM_TAXONOMY[normalizeExamSlug(examId)]||{subjects:[]};
   const pillLabel=(k,v)=>{
     if(k==="subject"){return examData.subjects.find(s=>s.slug===v)?.name||v;}
     if(k==="chapter"){
@@ -613,7 +620,7 @@ export default function QuestionBrowser({apiBase,onBack,isDark:isDarkProp,onTogg
             <div style={{width:30,height:30,borderRadius:8,flexShrink:0,background:`linear-gradient(135deg,${C.accent},${C.purple})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:900,color:"#fff",letterSpacing:-.5}}>EC</div>
             <span style={{fontSize:isMobile?13:15,fontWeight:800,color:C.text,letterSpacing:-.3}}>
               ExamsCalendar.PYQ
-              {examId&&<span style={{fontWeight:600,color:C.textMuted}}> · {EXAM_LABEL[examId]||examId}</span>}
+              {examId&&<span style={{fontWeight:600,color:C.textMuted}}> · {EXAM_LABEL[normalizeExamSlug(examId)]||examId}</span>}
             </span>
           </div>
 

@@ -18,6 +18,7 @@ import { MathJaxContext, MathJax } from "better-react-mathjax";
 // To update: regenerate from fresh_taxonomy_FINAL.sql source of truth.
 
 import { EXAM_TAXONOMY, EXAM_LABEL } from "./EXAM_TAXONOMY.js";
+import SearchBar from "./SearchBar.jsx";
 
 
 // ── Config ─────────────────────────────────────────────────────────────────────
@@ -182,6 +183,17 @@ function ChipGroup({items,active,onToggle,colorFn,C}){
 // Subject/chapter/topic come from EXAM_TAXONOMY (static).
 // years/shifts/dates come from `liveFilters` (fetched from DB).
 function Sidebar({examSlug,active,onSelect,liveFilters,C,isMobile,open,onClose}){
+
+  // Called when user picks a result from SearchBar
+  const handleSearchSelect = ({subject, chapter, topic}) => {
+    onSelect({
+      ...active,
+      subject,
+      chapter,
+      topic,       // null if user selected a chapter
+    });
+  };
+
   const examData = EXAM_TAXONOMY[examSlug] || {subjects:[]};
   const{years=[],shifts=[],dates=[],question_types=[]}=liveFilters||{};
 
@@ -220,6 +232,9 @@ function Sidebar({examSlug,active,onSelect,liveFilters,C,isMobile,open,onClose})
           {isMobile&&<button onClick={onClose} style={{fontSize:11,color:C.accent,background:C.accentBg,border:`1px solid ${C.accent}33`,borderRadius:20,padding:"3px 12px",cursor:"pointer",fontWeight:700}}>Done</button>}
         </div>
       </div>
+
+      {/* Search bar — scoped to current exam's chapters + topics */}
+      <SearchBar examSlug={examSlug} onSelect={handleSearchSelect} C={C} />
 
       <div style={{overflowY:"auto",flex:1,minHeight:0,scrollbarWidth:"thin"}}>
 

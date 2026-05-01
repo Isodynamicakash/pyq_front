@@ -16,6 +16,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo, memo } from "react";
 import { MathJaxContext, MathJax } from "better-react-mathjax";
+import { EXAM_TAXONOMY } from "./EXAM_TAXONOMY.js";
 // react-window removed — using simple pagination instead
 
 const MATHJAX_CONFIG = {
@@ -274,6 +275,42 @@ const SSC_CGL_TAXONOMY = {
 
 const SSC_CGL_SUBJECTS = Object.keys(SSC_CGL_TAXONOMY);
 
+// ─── Taxonomy helpers — build chapter/topic options from EXAM_TAXONOMY.js ────
+// exam_name display values → EXAM_TAXONOMY keys
+const EXAM_NAME_TO_SLUG = {
+  "JEE Main":     "jee-main",
+  "JEE Advanced": "jee-advanced",
+  "NEET":         "neet",
+};
+
+/**
+ * Returns all chapter objects [{name, slug, topics}] for the given exam+subject.
+ * If subject is empty/unknown, returns chapters across all subjects.
+ */
+function getTaxonomyChapters(examName, subjectName) {
+  const slug = EXAM_NAME_TO_SLUG[examName];
+  if (!slug || !EXAM_TAXONOMY[slug]) return [];
+  const subjects = EXAM_TAXONOMY[slug].subjects || [];
+  if (!subjectName) return subjects.flatMap(s => s.chapters || []);
+  const matched = subjects.find(
+    s => s.name.toLowerCase() === subjectName.toLowerCase()
+  );
+  // Exact subject match → return its chapters; otherwise return all
+  return matched ? (matched.chapters || []) : subjects.flatMap(s => s.chapters || []);
+}
+
+/**
+ * Returns topic names for a given chapter within the taxonomy.
+ */
+function getTaxonomyTopics(examName, subjectName, chapterName) {
+  const chapters = getTaxonomyChapters(examName, subjectName);
+  const ch = chapters.find(
+    c => c.name.toLowerCase() === (chapterName || "").toLowerCase()
+  );
+  return ch ? (ch.topics || []) : [];
+}
+
+
 // ─── Small UI primitives — defined OUTSIDE render scope so React never treats
 //     them as "new component types" on re-render ────────────────────────────
 
@@ -283,6 +320,7 @@ function ApplyBelowBanner({ field, value, questionIndex, totalQuestions, onApply
   const fieldLabel = {
     subject: "Subject", exam_date: "Exam Date", shift: "Shift",
     chapter_name: "Chapter", topic_name: "Topic", exam_name: "Exam", q_type: "Question Type",
+    marks_correct: "Marks (+)", marks_wrong: "Marks (−)",
   }[field] || field;
   return (
     <div style={{
@@ -532,7 +570,7 @@ function QuestionEditor({ q, onChange, onApplyBelow, chapters, topics, papers, i
 
   const setInstant = useCallback((field)=>(val)=>{
     onChange({...q,[field]:val,question:draft.question,solution:draft.solution,options:draft.options});
-    if(["subject","exam_date","shift","chapter_name","topic_name","exam_name","q_type"].includes(field)&&val)
+    if(["subject","exam_date","shift","chapter_name","topic_name","exam_name","q_type","marks_correct","marks_wrong"].includes(field)&&(val!==undefined&&val!==""))
       onApplyBelow(field,val);
   },[q,draft,onChange,onApplyBelow]);
 
@@ -541,9 +579,17 @@ function QuestionEditor({ q, onChange, onApplyBelow, chapters, topics, papers, i
     setDirty(true);
   },[]);
 
-  // PERF: memoize option lists so they don't recompute on every keystroke
-  const chapterOpts = useMemo(()=>buildChapterOptions(chapters),[chapters]);
-  const topicOpts   = useMemo(()=>buildTopicOptions(topics,q.chapter_name),[topics,q.chapter_name]);
+  // PERF: memoize option lists — prefer EXAM_TAXONOMY, fall back to DB fetch
+  const chapterOpts = useMemo(()=>{
+    const taxChapters = getTaxonomyChapters(q.exam_name, q.subject);
+    if(taxChapters.length>0) return taxChapters.map(c=>({value:c.name,label:c.name}));
+    return buildChapterOptions(chapters);
+  },[q.exam_name,q.subject,chapters]);
+  const topicOpts   = useMemo(()=>{
+    const taxTopics = getTaxonomyTopics(q.exam_name, q.subject, q.chapter_name);
+    if(taxTopics.length>0) return taxTopics.map(t=>({value:t.name,label:t.name}));
+    return buildTopicOptions(topics,q.chapter_name);
+  },[q.exam_name,q.subject,q.chapter_name,topics]);
   const paperOpts   = useMemo(()=>buildPaperOptions(papers),[papers]);
 
   const handlePaperSelect = useCallback((paperId)=>{
@@ -1341,7 +1387,7 @@ const QuestionCard = memo(function QuestionCard({
                 const optText  = (q.options||[])[i];
                 const optImgId = (q.opt_images||{})[optKey];
                 if(!optText && !optImgId) return null;
-                const isCorrect = q.answer===String(i+1);
+                const isCorrect = q.answer ? q.answer.split(',').map(s=>s.trim()).includes(String(i+1)) : false;
                 return(
                   <div key={i} style={{padding:"7px 12px",borderRadius:6,
                     border:`1px solid ${isCorrect?C.green:C.border}`,

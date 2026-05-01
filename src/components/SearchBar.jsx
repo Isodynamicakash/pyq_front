@@ -16,9 +16,12 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { EXAM_TAXONOMY } from "./EXAM_TAXONOMY.js";
 
+const SLUG_ALIAS = { "jee-mains":"jee-main", "jee-adv":"jee-advanced" };
+const normalizeSlug = s => SLUG_ALIAS[(s||"").toLowerCase()] || (s||"");
+
 // ── Build flat search index for one exam ──────────────────────────────────────
 function buildIndex(examSlug) {
-  const exam = EXAM_TAXONOMY[examSlug];
+  const exam = EXAM_TAXONOMY[normalizeSlug(examSlug)];
   if (!exam) return [];
 
   const entries = [];

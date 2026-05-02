@@ -191,7 +191,7 @@ const EXAM_OPTIONS = [
   { value: "Other",        label: "Other" },
 ];
 
-// SSC CGL — from EXAM_TAXONOMY.js (ssc-cgl)
+// Taxonomy from EXAM_TAXONOMY.js — all exams
 const SSC_CGL_TAXONOMY = {
   "Quantitative Aptitude": {
     chapters: ['Number System', 'Simplification and Approximation', 'Percentage', 'Ratio and Proportion', 'Average', 'Profit, Loss and Discount', 'Simple and Compound Interest', 'Mixture and Alligation', 'Time and Work', 'Pipes and Cisterns', 'Time, Speed and Distance', 'Problems on Trains', 'Boats and Streams', 'Algebra', 'Geometry', 'Mensuration', 'Trigonometry', 'Heights and Distances', 'Statistics and Data Interpretation'],
@@ -270,9 +270,33 @@ const SSC_CGL_TAXONOMY = {
   },
 };
 
+
 const SSC_CGL_SUBJECTS = Object.keys(SSC_CGL_TAXONOMY);
 
-// JEE Main — from EXAM_TAXONOMY.js (jee-main)
+const EXAM_TAXONOMY_MAP = {
+  "JEE Main":     JEE_MAIN_TAXONOMY,
+  "JEE Advanced": JEE_ADVANCED_TAXONOMY,
+  "NEET":         NEET_TAXONOMY,
+  "SSC CGL":      SSC_CGL_TAXONOMY,
+};
+
+function getTaxonomyChapters(examName, subjectName) {
+  const tax = EXAM_TAXONOMY_MAP[examName];
+  if (!tax) return null;
+  if (!subjectName) return Object.values(tax).flatMap(s => s.chapters || []);
+  const key = Object.keys(tax).find(k => k.toLowerCase() === (subjectName||"").toLowerCase());
+  if (!key) return Object.values(tax).flatMap(s => s.chapters || []);
+  return tax[key].chapters || [];
+}
+
+function getTaxonomyTopics(examName, subjectName, chapterName) {
+  const tax = EXAM_TAXONOMY_MAP[examName];
+  if (!tax || !chapterName) return null;
+  const key = Object.keys(tax).find(k => k.toLowerCase() === (subjectName||"").toLowerCase())
+           || Object.keys(tax)[0];
+  return (tax[key]?.topics || {})[chapterName] || null;
+}
+
 const JEE_MAIN_TAXONOMY = {
   "Physics": {
     chapters: ['Physical World', 'Units and Measurements', 'Motion in a Straight Line', 'Motion in a Plane', 'Laws of Motion', 'Work, Energy and Power', 'System of Particles and Rotational Motion', 'Gravitation', 'Mechanical Properties of Solids', 'Mechanical Properties of Fluids', 'Thermal Properties of Matter', 'Thermodynamics', 'Kinetic Theory', 'Oscillations', 'Waves', 'Electric Charges and Fields', 'Electrostatic Potential and Capacitance', 'Current Electricity', 'Moving Charges and Magnetism', 'Magnetism and Matter', 'Electromagnetic Induction', 'Alternating Current', 'Electromagnetic Waves', 'Ray Optics and Optical Instruments', 'Wave Optics', 'Dual Nature of Radiation and Matter', 'Atoms', 'Nuclei', 'Semiconductor Electronics: Materials, Devices and Simple Circuits'],
@@ -377,7 +401,6 @@ const JEE_MAIN_TAXONOMY = {
   },
 };
 
-// JEE Advanced — from EXAM_TAXONOMY.js (jee-advanced)
 const JEE_ADVANCED_TAXONOMY = {
   "Physics": {
     chapters: ['Physical World', 'Units and Measurements', 'Motion in a Straight Line', 'Motion in a Plane', 'Laws of Motion', 'Work, Energy and Power', 'System of Particles and Rotational Motion', 'Gravitation', 'Mechanical Properties of Solids', 'Mechanical Properties of Fluids', 'Thermal Properties of Matter', 'Thermodynamics', 'Kinetic Theory', 'Oscillations', 'Waves', 'Electric Charges and Fields', 'Electrostatic Potential and Capacitance', 'Current Electricity', 'Moving Charges and Magnetism', 'Magnetism and Matter', 'Electromagnetic Induction', 'Alternating Current', 'Electromagnetic Waves', 'Ray Optics and Optical Instruments', 'Wave Optics', 'Dual Nature of Radiation and Matter', 'Atoms', 'Nuclei', 'Semiconductor Electronics: Materials, Devices and Simple Circuits'],
@@ -482,7 +505,6 @@ const JEE_ADVANCED_TAXONOMY = {
   },
 };
 
-// NEET — from EXAM_TAXONOMY.js (neet)
 const NEET_TAXONOMY = {
   "Physics": {
     chapters: ['Physical World', 'Units and Measurements', 'Motion in a Straight Line', 'Motion in a Plane', 'Laws of Motion', 'Work, Energy and Power', 'System of Particles and Rotational Motion', 'Gravitation', 'Mechanical Properties of Solids', 'Mechanical Properties of Fluids', 'Thermal Properties of Matter', 'Thermodynamics', 'Kinetic Theory', 'Oscillations', 'Waves', 'Electric Charges and Fields', 'Electrostatic Potential and Capacitance', 'Current Electricity', 'Moving Charges and Magnetism', 'Magnetism and Matter', 'Electromagnetic Induction', 'Alternating Current', 'Electromagnetic Waves', 'Ray Optics and Optical Instruments', 'Wave Optics', 'Dual Nature of Radiation and Matter', 'Atoms', 'Nuclei', 'Semiconductor Electronics: Materials, Devices and Simple Circuits'],
@@ -598,42 +620,6 @@ const NEET_TAXONOMY = {
   },
 };
 
-// ─── Unified taxonomy lookup ──────────────────────────────────────────────────
-// Maps exam display name → its taxonomy constant
-const EXAM_TAXONOMY_MAP = {
-  "JEE Main":     JEE_MAIN_TAXONOMY,
-  "JEE Advanced": JEE_ADVANCED_TAXONOMY,
-  "NEET":         NEET_TAXONOMY,
-  "SSC CGL":      SSC_CGL_TAXONOMY,
-};
-
-/**
- * Returns chapter names for a given exam + subject.
- * Falls back to DB-fetched chapters if exam not in map.
- */
-function getTaxonomyChapters(examName, subjectName) {
-  const tax = EXAM_TAXONOMY_MAP[examName];
-  if (!tax) return null; // signal to use DB fallback
-  if (!subjectName) return Object.values(tax).flatMap(s => s.chapters || []);
-  // case-insensitive subject match
-  const key = Object.keys(tax).find(
-    k => k.toLowerCase() === (subjectName || "").toLowerCase()
-  );
-  if (!key) return Object.values(tax).flatMap(s => s.chapters || []);
-  return tax[key].chapters || [];
-}
-
-/**
- * Returns topic names for a given exam + subject + chapter.
- */
-function getTaxonomyTopics(examName, subjectName, chapterName) {
-  const tax = EXAM_TAXONOMY_MAP[examName];
-  if (!tax || !chapterName) return null;
-  const key = Object.keys(tax).find(
-    k => k.toLowerCase() === (subjectName || "").toLowerCase()
-  ) || Object.keys(tax)[0];
-  return (tax[key]?.topics || {})[chapterName] || null;
-}
 
 // ─── Small UI primitives — defined OUTSIDE render scope so React never treats
 //     them as "new component types" on re-render ────────────────────────────
@@ -903,15 +889,15 @@ function QuestionEditor({ q, onChange, onApplyBelow, chapters, topics, papers, i
     setDirty(true);
   },[]);
 
-  // PERF: memoize option lists — prefer taxonomy constants, fall back to DB fetch
+  // PERF: prefer taxonomy constants, fall back to DB
   const chapterOpts = useMemo(()=>{
-    const taxChs = getTaxonomyChapters(q.exam_name, q.subject);
-    if(taxChs && taxChs.length>0) return [...new Set(taxChs)].map(c=>({value:c,label:c}));
+    const t=getTaxonomyChapters(q.exam_name,q.subject);
+    if(t&&t.length>0) return [...new Set(t)].map(c=>({value:c,label:c}));
     return buildChapterOptions(chapters);
   },[q.exam_name,q.subject,chapters]);
   const topicOpts   = useMemo(()=>{
-    const taxTps = getTaxonomyTopics(q.exam_name, q.subject, q.chapter_name);
-    if(taxTps && taxTps.length>0) return [...new Set(taxTps)].map(t=>({value:t,label:t}));
+    const t=getTaxonomyTopics(q.exam_name,q.subject,q.chapter_name);
+    if(t&&t.length>0) return [...new Set(t)].map(t=>({value:t,label:t}));
     return buildTopicOptions(topics,q.chapter_name);
   },[q.exam_name,q.subject,q.chapter_name,topics]);
   const paperOpts   = useMemo(()=>buildPaperOptions(papers),[papers]);
@@ -1054,11 +1040,11 @@ function QuestionEditor({ q, onChange, onApplyBelow, chapters, topics, papers, i
           <ComboBox label="Chapter" warn={!q.chapter_name} placeholder="e.g. Analogy"
             value={q.chapter_name||""}
             onChange={val=>setInstant("chapter_name")(val)}
-            options={(getTaxonomyChapters("SSC CGL",q.subject)||[]).map(c=>({value:c,label:c}))}/>
+            options={(getTaxonomyChapters('SSC CGL',q.subject)||[]).map(c=>({value:c,label:c}))}/>
           <ComboBox label="Topic (optional)" placeholder="e.g. Word Analogy"
             value={q.topic_name||""}
             onChange={val=>setInstant("topic_name")(val)}
-            options={(getTaxonomyTopics("SSC CGL",q.subject,q.chapter_name)||[]).map(t=>({value:t,label:t}))}/>
+            options={(getTaxonomyTopics('SSC CGL',q.subject,q.chapter_name)||[]).map(t=>({value:t,label:t}))}/>
         </div>
       ) : (
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
@@ -1123,6 +1109,31 @@ function QuestionEditor({ q, onChange, onApplyBelow, chapters, topics, papers, i
       )}
 
       {/* Options */}
+      {q.q_type === "NUMERICAL" && (
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 6, fontWeight: 600 }}>
+            Numerical Answer
+            <span style={{ fontWeight: 400, color: C.textDim, marginLeft: 6 }}>
+              (exact value or range e.g. 29.88 or 29-30)
+            </span>
+          </div>
+          <input
+            value={q.answer || ""}
+            onChange={e => onChange({ ...q, answer: e.target.value, question: draft.question, solution: draft.solution, options: draft.options })}
+            placeholder="Enter numerical answer…"
+            style={{
+              width: "100%", boxSizing: "border-box", background: C.bg, color: C.green,
+              border: `2px solid ${q.answer ? C.green : C.amber}`,
+              borderRadius: 6, padding: "10px 14px", fontSize: 16, fontWeight: 700,
+              fontFamily: "'Fira Code', monospace", outline: "none",
+            }}
+          />
+          {!q.answer && (
+            <div style={{ fontSize: 11, color: C.amber, marginTop: 4 }}>⚠ Enter the numerical answer to mark this question ready</div>
+          )}
+        </div>
+      )}
+
       {q.q_type !== "NUMERICAL" && (
         <div style={{ marginBottom: 12 }}>
           <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 6, fontWeight: 600 }}>
@@ -2499,6 +2510,8 @@ function ReviewScreen({ jobId, apiBase, adminKey, onBack, initialQuestions }) {
     setSaving(true);setSaveResult(null);
     const newErrors={};
     const savedKeys=new Set();
+    // Capture not-ready keys BEFORE save so they're always preserved
+    const subsetKeys=new Set(subset.map(q=>q._manualId||String(q.number)));
     const BATCH_SIZE=8;
     for(let batchStart=0;batchStart<subset.length;batchStart+=BATCH_SIZE){
       const batch=subset.slice(batchStart,batchStart+BATCH_SIZE);
@@ -2525,15 +2538,15 @@ function ReviewScreen({ jobId, apiBase, adminKey, onBack, initialQuestions }) {
     }
     setSaveErrors(prev=>({...prev,...newErrors}));
     setQuestions(prev=>{
-      const remaining=prev.filter(q=>!savedKeys.has(q._manualId||String(q.number)));
-      const failed=remaining.filter(q=>newErrors[q._manualId||String(q.number)]);
-      const others=remaining.filter(q=>!newErrors[q._manualId||String(q.number)]);
-      return[...failed,...others];
+      // Keep: (1) questions not in the save batch (not-ready), (2) questions that failed to save
+      const notReady=prev.filter(q=>!subsetKeys.has(q._manualId||String(q.number)));
+      const failed  =prev.filter(q=>subsetKeys.has(q._manualId||String(q.number))&&newErrors[q._manualId||String(q.number)]);
+      return [...failed, ...notReady];
     });
     if(Object.keys(newErrors).length===0) clearRecovery(jobId);
-    setSaveResult({saved_count:savedKeys.size,failed_count:Object.keys(newErrors).length});
+    setSaveResult({saved_count:savedKeys.size,failed_count:Object.keys(newErrors).length,not_ready_count:questions.filter(q=>!isReady(q)).length});
     setSaving(false);
-    setPage(1); // reset to page 1 after save reorders the list
+    setPage(1);
   };
 
   // ── Pagination ───────────────────────────────────────────────────────────────
@@ -2617,7 +2630,8 @@ function ReviewScreen({ jobId, apiBase, adminKey, onBack, initialQuestions }) {
                          background:saveResult.in_progress?C.blue+"22":saveResult.failed_count>0?C.amberBg:C.greenBg}}>
               {saveResult.in_progress&&`⏳ Saving… ${saveResult.saved_count} done`}
               {!saveResult.in_progress&&saveResult.saved_count>0&&`✓ Saved ${saveResult.saved_count}`}
-              {!saveResult.in_progress&&saveResult.failed_count>0&&` · ❌ ${saveResult.failed_count} failed (shown at top)`}
+              {!saveResult.in_progress&&saveResult.not_ready_count>0&&` · ⚠ ${saveResult.not_ready_count} not ready (shown below)`}
+              {!saveResult.in_progress&&saveResult.failed_count>0&&` · ❌ ${saveResult.failed_count} failed`}
             </span>
           )}
           <Btn color={C.green} disabled={saving||readyCount===0}

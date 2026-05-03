@@ -466,9 +466,13 @@ function EmptyState({hasFilters,C}){
   );
 }
 
-// ── EXAM_ID_MAP loaded from static taxonomy (no DB fetch) ──────────────────────
-// We derive exam IDs at runtime by calling /api/exams once.
-// This keeps the frontend decoupled from hardcoded DB IDs.
+// ── EXAM_SLUG_TO_ID — mirrors DB exams table exactly, no API call needed ────────
+const EXAM_SLUG_TO_ID = {
+  "jee-main":     1,
+  "jee-advanced": 2,
+  "neet":         3,
+  "ssc-cgl":      6,
+};
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 export default function QuestionBrowser({apiBase,onBack,isDark:isDarkProp,onToggleTheme,examId}){
@@ -478,8 +482,8 @@ export default function QuestionBrowser({apiBase,onBack,isDark:isDarkProp,onTogg
   const[isMobile,setIsMobile] =useState(window.innerWidth<768);
   const[drawerOpen,setDrawerOpen]=useState(false);
 
-  // examNumericId — resolved from /api/exams (slug → DB integer)
-  const[examNumericId,setExamNumericId]=useState(null);
+  // examNumericId — resolved instantly from static map, no async API call
+  const examNumericId = EXAM_SLUG_TO_ID[normalizeExamSlug(examId)] || null;
 
   // liveFilters — only years/shifts/dates from DB
   const[liveFilters,setLiveFilters]=useState({years:[],shifts:[],dates:[],question_types:["MCQ","MSQ","NUMERICAL"]});
@@ -503,19 +507,7 @@ export default function QuestionBrowser({apiBase,onBack,isDark:isDarkProp,onTogg
     return()=>window.removeEventListener("resize",fn);
   },[]);
 
-  // Resolve exam numeric ID from /api/exams — called once per examId change
-  useEffect(()=>{
-    if(!examId)return;
-    fetch(`${API_URL}/api/exams`)
-      .then(r=>r.json())
-      .then(data=>{
-        const id=(data.by_slug||{})[examId]||null;
-        setExamNumericId(id);
-      })
-      .catch(console.error);
-  },[examId,API_URL]);
-
-  // Fetch live filters (years/shifts/dates) once examNumericId is known
+  // Fetch live filters (years/shifts/dates) — examNumericId is now immediate (static map)
   useEffect(()=>{
     const param=examNumericId?`?exam_id=${examNumericId}`:"";
     setActive(EMPTY_ACTIVE);setQuestions([]);setTotal(0);setPage(1);

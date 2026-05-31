@@ -2406,6 +2406,7 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
   const [saveMsg,        setSaveMsg]        = useState(null);
   const [bulkSaveResult, setBulkSaveResult] = useState(null);
   const [recoveryBanner, setRecoveryBanner] = useState(false);
+  const [saveUpToResult, setSaveUpToResult] = useState(null); // { saved, failed, total, upToPage, inProgress }
 
   // ── Crash recovery — keyed by current filter fingerprint ───────────────────
   const EDIT_RECOVERY_KEY = "examside_edit_recovery";
@@ -2622,7 +2623,82 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
     setTimeout(() => setBulkSaveResult(null), 5000);
   };
 
-  const clearAll = () => {
+  // ── Save Till Here — fetches pages 1…currentPage and saves every question ────
+  // Page N button saves N * PAGE_SIZE questions (all pages up to and including N)
+  const saveUpToPage = async (upToPage) => {
+    if (saving) return;
+    setSaving(true); setSaveUpToResult(null); setSaveMsg(null); setBulkSaveResult(null);
+    const BATCH = 8;
+    let savedCount = 0, failedCount = 0, totalCount = 0;
+    const h = {"x-admin-key": adminKey};
+
+    for (let p = 1; p <= upToPage; p++) {
+      // Fetch this page's questions from server
+      let pageQs = [];
+      try {
+        const qs = new URLSearchParams();
+        qs.set("limit",  PAGE_SIZE);
+        qs.set("offset", (p - 1) * PAGE_SIZE);
+        if (filterSubj)  qs.set("subject",       filterSubj);
+        if (filterDate)  qs.set("exam_date",      filterDate);
+        if (filterShift) qs.set("shift",          filterShift);
+        if (filterExam)  qs.set("exam_name",      filterExam);
+        if (filterChap)  qs.set("chapter",        filterChap);
+        if (filterDiff)  qs.set("difficulty",     filterDiff);
+        if (filterType)  qs.set("question_type",  filterType);
+        if (search)      qs.set("search",         search);
+        const res = await fetch(`${apiBase}/api/admin/questions?${qs.toString()}`, {headers: h});
+        const data = await res.json();
+        const raw = Array.isArray(data) ? data : (data.questions || data.items || []);
+        // For the current page, prefer the already-edited in-memory questions
+        if (p === page) {
+          pageQs = questions;
+        } else {
+          pageQs = raw.map(q => ({
+            ...q, _dbId: q.id,
+            options: q.options || [q.option_1 ?? "", q.option_2 ?? "", q.option_3 ?? "", q.option_4 ?? ""],
+          }));
+        }
+      } catch(e) {
+        failedCount += PAGE_SIZE;
+        setSaveUpToResult({saved: savedCount, failed: failedCount, total: upToPage * PAGE_SIZE, upToPage, inProgress: true});
+        continue;
+      }
+
+      totalCount += pageQs.length;
+      // Save in batches of 8
+      for (let start = 0; start < pageQs.length; start += BATCH) {
+        const batch = pageQs.slice(start, start + BATCH);
+        await Promise.all(batch.map(async (q) => {
+          try {
+            let res;
+            if (q._dbId) {
+              res = await fetch(`${apiBase}/api/admin/update-question/${q._dbId}`, {
+                method: "PUT",
+                headers: {"Content-Type":"application/json","x-admin-key":adminKey},
+                body: JSON.stringify(buildPayload(q)),
+              });
+            } else {
+              res = await fetch(`${apiBase}/api/admin/create-question`, {
+                method: "POST",
+                headers: {"Content-Type":"application/json","x-admin-key":adminKey},
+                body: JSON.stringify(buildPayload(q)),
+              });
+            }
+            if (!res.ok) { failedCount++; } else { savedCount++; }
+          } catch(e) { failedCount++; }
+        }));
+        setSaveUpToResult({saved: savedCount, failed: failedCount, total: totalCount, upToPage, inProgress: true});
+      }
+    }
+
+    if (failedCount === 0) clearEditRecovery();
+    setSaveUpToResult({saved: savedCount, failed: failedCount, total: totalCount, upToPage, inProgress: false});
+    setSaving(false);
+    setTimeout(() => setSaveUpToResult(null), 6000);
+  };
+
+
     setFilterSubj(""); setFilterDate(""); setFilterShift("");
     setFilterExam(""); setFilterChap(""); setFilterDiff("");
     setFilterType(""); setSearch(""); resetPage();
@@ -2894,6 +2970,49 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
                     chapters={chapters} topics={topics} papers={papers}/>
                 ))}
               </div>
+
+              {/* ── Save Till Here button — saves pages 1…currentPage ── */}
+              <div style={{
+                display:"flex",alignItems:"center",justifyContent:"space-between",
+                marginTop:20,padding:"12px 16px",borderRadius:8,
+                background:C.surface,border:`1px solid ${C.border}`,
+              }}>
+                <div style={{fontSize:12,color:C.textMuted}}>
+                  <strong style={{color:C.text}}>Save Till Here</strong>
+                  {" — "}saves all questions from page{" "}
+                  <strong style={{color:C.blueLight}}>1</strong> to page{" "}
+                  <strong style={{color:C.blueLight}}>{page}</strong>
+                  {" "}(<strong style={{color:C.text}}>{page * PAGE_SIZE}</strong> questions max)
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+                  {saveUpToResult && (
+                    <span style={{fontSize:12,padding:"4px 12px",borderRadius:6,
+                      color: saveUpToResult.failed > 0 ? C.amber : C.green,
+                      background: saveUpToResult.failed > 0 ? C.amberBg : C.greenBg}}>
+                      {saveUpToResult.inProgress
+                        ? `⏳ Saving… ${saveUpToResult.saved}/${saveUpToResult.total}`
+                        : saveUpToResult.failed > 0
+                          ? `⚠ ${saveUpToResult.saved} saved, ${saveUpToResult.failed} failed`
+                          : `✓ ${saveUpToResult.saved} questions saved (pages 1–${saveUpToResult.upToPage})`}
+                    </span>
+                  )}
+                  <button
+                    onClick={() => saveUpToPage(page)}
+                    disabled={saving}
+                    style={{
+                      padding:"7px 18px",borderRadius:6,fontSize:12,fontWeight:700,
+                      cursor:saving?"not-allowed":"pointer",
+                      border:`1px solid ${C.green}`,
+                      background:saving?C.greenBg:C.green+"22",
+                      color:saving?C.textDim:C.green,
+                      opacity:saving?0.7:1,
+                    }}
+                  >
+                    {saving ? "⏳ Saving…" : `💾 Save Till Here (pages 1–${page})`}
+                  </button>
+                </div>
+              </div>
+
               {totalPages > 1 && (
                 <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:8,marginTop:28}}>
                   <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1}

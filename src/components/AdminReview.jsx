@@ -2148,6 +2148,9 @@ function ReviewScreen({ jobId, apiBase, adminKey, onBack, initialQuestions }) {
           });
           const data=await res.json();
           if(!res.ok) newErrors[qKey]=data.detail||`HTTP ${res.status}`;
+          else if(!data.saved_count||data.saved_count===0)
+            // HTTP 200 but DB rejected it (constraint/FK/etc.) — show the real reason
+            newErrors[qKey]=data.failed?.[0]?.error||"DB rejected this question (no rows inserted)";
           else savedKeys.add(qKey);
         }catch(e){newErrors[qKey]=String(e);}
       }));
@@ -2699,6 +2702,7 @@ function EditExistingScreen({ apiBase, adminKey, onUploadNew }) {
   };
 
 
+  const clearAll = () => {
     setFilterSubj(""); setFilterDate(""); setFilterShift("");
     setFilterExam(""); setFilterChap(""); setFilterDiff("");
     setFilterType(""); setSearch(""); resetPage();

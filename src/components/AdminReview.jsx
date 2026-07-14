@@ -200,10 +200,19 @@ const EXAM_SLUG_MAP = {
   "JEE Advanced": "jee-advanced",
   "NEET":         "neet",
   "SSC CGL":      "ssc-cgl",
+  "CUET":         "cuet",
 };
 
 // SSC CGL subjects list (for subject selector buttons)
 const SSC_CGL_SUBJECTS = ["Quantitative Aptitude","General Intelligence and Reasoning","English Comprehension","General Awareness"];
+
+// CUET subjects list (for subject selector buttons) — 15 domain subjects
+const CUET_SUBJECTS = [
+  "Physics","Chemistry","Mathematics","Biology",
+  "Applied Mathematics","Computer Science","Accountancy","Business Studies",
+  "Economics","Geography","History","Political Science",
+  "Psychology","Sociology","Philosophy",
+];
 
 /**
  * Returns chapter name strings for exam+subject from EXAM_TAXONOMY.
@@ -628,6 +637,17 @@ function QuestionEditor({ q, onChange, onApplyBelow, chapters, topics, papers, i
                 border:`1px solid ${q.subject===s?C.purple:C.border}`,
                 background:q.subject===s?C.purple+"22":C.surface,
                 color:q.subject===s?C.purple:C.textMuted,
+              }}>{s}</button>
+            ))}
+          </div>
+        ) : q.exam_name==="CUET" ? (
+          <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:6}}>
+            {CUET_SUBJECTS.map(s=>(
+              <button key={s} onClick={()=>setInstant("subject")(s)} style={{
+                padding:"5px 12px",borderRadius:6,fontSize:11,fontWeight:600,cursor:"pointer",
+                border:`1px solid ${q.subject===s?C.amber:C.border}`,
+                background:q.subject===s?C.amber+"22":C.surface,
+                color:q.subject===s?C.amber:C.textMuted,
               }}>{s}</button>
             ))}
           </div>
@@ -1558,7 +1578,8 @@ function UploadScreen({ apiBase, adminKey, openaiKey, onOpenaiKeyChange,
 
         {/* Exam Type Selector — choose BEFORE upload so LLM uses correct taxonomy */}
         <div style={{
-          background:C.surface,border:`1px solid ${uploadExam==="SSC CGL"?C.purple+"66":C.border}`,
+          background:C.surface,
+          border:`1px solid ${uploadExam==="SSC CGL"?C.purple+"66":uploadExam==="CUET"?C.amber+"66":C.border}`,
           borderRadius:10,padding:"14px 16px",marginBottom:20,textAlign:"left",
         }}>
           <div style={{fontSize:12,fontWeight:700,color:C.textMuted,marginBottom:10,letterSpacing:0.5}}>
@@ -1591,6 +1612,16 @@ function UploadScreen({ apiBase, adminKey, openaiKey, onOpenaiKeyChange,
               ✓ <strong>SSC CGL mode:</strong> LLM will classify into{" "}
               <em>General Intelligence & Reasoning, General Awareness, Quantitative Aptitude, English Comprehension</em>{" "}
               with SSC CGL chapters &amp; topics. Subject/Chapter/Topic fields in each question card will show SSC CGL options.
+            </div>
+          )}
+          {uploadExam==="CUET"&&(
+            <div style={{marginTop:10,padding:"10px 12px",borderRadius:7,
+                        background:C.amber+"11",border:`1px solid ${C.amber}33`,
+                        fontSize:11,color:C.amber}}>
+              ✓ <strong>CUET mode:</strong> LLM will classify into one of 15 domain subjects{" "}
+              <em>(Physics, Chemistry, Mathematics, Biology, Applied Mathematics, Computer Science, Accountancy,
+              Business Studies, Economics, Geography, History, Political Science, Psychology, Sociology, Philosophy)</em>{" "}
+              with NCERT Class XII-based CUET chapters &amp; topics. Subject/Chapter/Topic fields in each question card will show CUET options.
             </div>
           )}
           {!uploadExam&&(
@@ -3134,4 +3165,4 @@ export default function AdminReview({ apiBase="http://localhost:8000", adminKey=
       </div>
     </MathJaxContext>
   );
-}
+                      }

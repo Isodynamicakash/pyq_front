@@ -8,7 +8,7 @@
  * Slugs are used as API filter keys (matched against DB chapters.slug / topics.slug).
  * Names are displayed in UI and indexed by search engines.
  * 
- * Stats: 328 chapters, 2755 topics
+ * Stats: 328 chapters, 2755 topics (JEE/NEET/SSC-CGL) + 196 chapters, 744 topics (CUET) = 524 chapters, 3499 topics
  * Source of truth: fresh_taxonomy_FINAL.sql
  */
 
@@ -13098,6 +13098,4253 @@ export const EXAM_TAXONOMY = {
         ]
       }
     ]
+  },
+  "cuet": {
+    "name": "CUET UG",
+    "subjects": [
+      {
+        "name": "Applied Mathematics",
+        "slug": "applied-mathematics",
+        "chapters": [
+          {
+            "name": "Numbers, Quantification and Numerical Applications",
+            "slug": "numbers-quantification-and-numerical-applications",
+            "topics": [
+              {
+                "name": "Modulo Arithmetic",
+                "slug": "modulo-arithmetic"
+              },
+              {
+                "name": "Congruence Modulo",
+                "slug": "congruence-modulo"
+              },
+              {
+                "name": "Divisibility Tests and Applications",
+                "slug": "divisibility-tests-and-applications"
+              },
+              {
+                "name": "Boats and Streams Problems",
+                "slug": "boats-and-streams-problems"
+              },
+              {
+                "name": "Pipes and Cisterns Problems",
+                "slug": "pipes-and-cisterns-problems"
+              },
+              {
+                "name": "Races and Games Problems",
+                "slug": "races-and-games-problems"
+              },
+              {
+                "name": "Partnership — Simple and Compound",
+                "slug": "partnership-simple-and-compound"
+              },
+              {
+                "name": "Numerical Problems on Time, Work and Distance (Advanced)",
+                "slug": "numerical-problems-on-time-work-and-distance-advanced"
+              }
+            ]
+          },
+          {
+            "name": "Algebra",
+            "slug": "algebra",
+            "topics": [
+              {
+                "name": "Matrices — Types and Operations",
+                "slug": "matrices-types-and-operations"
+              },
+              {
+                "name": "Determinants and Their Properties",
+                "slug": "determinants-and-their-properties"
+              },
+              {
+                "name": "Inverse of a Matrix and Applications",
+                "slug": "inverse-of-a-matrix-and-applications"
+              },
+              {
+                "name": "Solving System of Linear Equations using Matrices",
+                "slug": "solving-system-of-linear-equations-using-matrices"
+              }
+            ]
+          },
+          {
+            "name": "Calculus",
+            "slug": "calculus",
+            "topics": [
+              {
+                "name": "Limits and Continuity — Basics",
+                "slug": "limits-and-continuity-basics"
+              },
+              {
+                "name": "Derivative as a Rate Measurer",
+                "slug": "derivative-as-a-rate-measurer"
+              },
+              {
+                "name": "Increasing and Decreasing Functions",
+                "slug": "increasing-and-decreasing-functions"
+              },
+              {
+                "name": "Maxima and Minima — Applications",
+                "slug": "maxima-and-minima-applications"
+              },
+              {
+                "name": "Marginal Cost and Marginal Revenue using Derivatives",
+                "slug": "marginal-cost-and-marginal-revenue-using-derivatives"
+              },
+              {
+                "name": "Indefinite Integrals — Basic Rules",
+                "slug": "indefinite-integrals-basic-rules"
+              },
+              {
+                "name": "Definite Integrals and Applications",
+                "slug": "definite-integrals-and-applications"
+              },
+              {
+                "name": "Application of Integration — Area under Curve",
+                "slug": "application-of-integration-area-under-curve"
+              }
+            ]
+          },
+          {
+            "name": "Probability Distributions",
+            "slug": "probability-distributions",
+            "topics": [
+              {
+                "name": "Random Variables — Discrete and Continuous",
+                "slug": "random-variables-discrete-and-continuous"
+              },
+              {
+                "name": "Probability Distribution of a Random Variable",
+                "slug": "probability-distribution-of-a-random-variable"
+              },
+              {
+                "name": "Mathematical Expectation and Variance",
+                "slug": "mathematical-expectation-and-variance"
+              },
+              {
+                "name": "Binomial Distribution",
+                "slug": "binomial-distribution"
+              },
+              {
+                "name": "Poisson Distribution — Basics",
+                "slug": "poisson-distribution-basics"
+              },
+              {
+                "name": "Normal Distribution — Basics",
+                "slug": "normal-distribution-basics"
+              }
+            ]
+          },
+          {
+            "name": "Inferential Statistics",
+            "slug": "inferential-statistics",
+            "topics": [
+              {
+                "name": "Population and Sample",
+                "slug": "population-and-sample"
+              },
+              {
+                "name": "Parameter and Statistic",
+                "slug": "parameter-and-statistic"
+              },
+              {
+                "name": "Sampling Methods — Random, Stratified, Systematic",
+                "slug": "sampling-methods-random-stratified-systematic"
+              },
+              {
+                "name": "Standard Error and Confidence Interval",
+                "slug": "standard-error-and-confidence-interval"
+              },
+              {
+                "name": "Hypothesis Testing — Basics (z-test)",
+                "slug": "hypothesis-testing-basics-z-test"
+              }
+            ]
+          },
+          {
+            "name": "Index Numbers and Time-Based Data",
+            "slug": "index-numbers-and-time-based-data",
+            "topics": [
+              {
+                "name": "Index Numbers — Meaning and Uses",
+                "slug": "index-numbers-meaning-and-uses"
+              },
+              {
+                "name": "Construction of Index Numbers",
+                "slug": "construction-of-index-numbers"
+              },
+              {
+                "name": "Price Index and Quantity Index",
+                "slug": "price-index-and-quantity-index"
+              },
+              {
+                "name": "Test of Adequacy of Index Numbers",
+                "slug": "test-of-adequacy-of-index-numbers"
+              },
+              {
+                "name": "Time Series — Components",
+                "slug": "time-series-components"
+              },
+              {
+                "name": "Time Series — Trend Analysis (Moving Averages)",
+                "slug": "time-series-trend-analysis-moving-averages"
+              }
+            ]
+          },
+          {
+            "name": "Financial Mathematics",
+            "slug": "financial-mathematics",
+            "topics": [
+              {
+                "name": "Simple and Compound Interest — Applications",
+                "slug": "simple-and-compound-interest-applications"
+              },
+              {
+                "name": "Depreciation — Straight Line and Diminishing Balance",
+                "slug": "depreciation-straight-line-and-diminishing-balance"
+              },
+              {
+                "name": "EMI Calculation — Flat and Reducing Balance",
+                "slug": "emi-calculation-flat-and-reducing-balance"
+              },
+              {
+                "name": "Calculation of Returns and Nominal Rate of Return",
+                "slug": "calculation-of-returns-and-nominal-rate-of-return"
+              },
+              {
+                "name": "Compound Annual Growth Rate (CAGR)",
+                "slug": "compound-annual-growth-rate-cagr"
+              },
+              {
+                "name": "Linear Method of Depreciation",
+                "slug": "linear-method-of-depreciation"
+              },
+              {
+                "name": "Perpetuity, Sinking Funds and Valuation of Bonds",
+                "slug": "perpetuity-sinking-funds-and-valuation-of-bonds"
+              }
+            ]
+          },
+          {
+            "name": "Linear Programming",
+            "slug": "linear-programming",
+            "topics": [
+              {
+                "name": "Linear Programming — Introduction and Terminology",
+                "slug": "linear-programming-introduction-and-terminology"
+              },
+              {
+                "name": "Mathematical Formulation of LPP",
+                "slug": "mathematical-formulation-of-lpp"
+              },
+              {
+                "name": "Graphical Method of Solving LPP",
+                "slug": "graphical-method-of-solving-lpp"
+              },
+              {
+                "name": "Feasible and Infeasible Regions",
+                "slug": "feasible-and-infeasible-regions"
+              },
+              {
+                "name": "Optimal Solution — Corner Point Method",
+                "slug": "optimal-solution-corner-point-method"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Computer Science",
+        "slug": "computer-science",
+        "chapters": [
+          {
+            "name": "Revision of Python Basics",
+            "slug": "revision-of-python-basics",
+            "topics": [
+              {
+                "name": "Python Fundamentals — Tokens, Identifiers, Keywords",
+                "slug": "python-fundamentals-tokens-identifiers-keywords"
+              },
+              {
+                "name": "Data Types and Type Conversion",
+                "slug": "data-types-and-type-conversion"
+              },
+              {
+                "name": "Operators and Expressions",
+                "slug": "operators-and-expressions"
+              },
+              {
+                "name": "Control Statements — if, if-else, loops",
+                "slug": "control-statements-if-if-else-loops"
+              },
+              {
+                "name": "Strings and String Functions",
+                "slug": "strings-and-string-functions"
+              },
+              {
+                "name": "Lists, Tuples and Dictionaries — Basics",
+                "slug": "lists-tuples-and-dictionaries-basics"
+              }
+            ]
+          },
+          {
+            "name": "Functions in Python",
+            "slug": "functions-in-python",
+            "topics": [
+              {
+                "name": "Function Definition and Calling",
+                "slug": "function-definition-and-calling"
+              },
+              {
+                "name": "Parameter Passing — Positional, Keyword, Default",
+                "slug": "parameter-passing-positional-keyword-default"
+              },
+              {
+                "name": "Scope of Variables — Local and Global",
+                "slug": "scope-of-variables-local-and-global"
+              },
+              {
+                "name": "Flow of Execution and Function Composition",
+                "slug": "flow-of-execution-and-function-composition"
+              },
+              {
+                "name": "Recursion",
+                "slug": "recursion"
+              },
+              {
+                "name": "Modules — math, random, statistics",
+                "slug": "modules-math-random-statistics"
+              }
+            ]
+          },
+          {
+            "name": "Using Python Libraries — NumPy and Pandas",
+            "slug": "using-python-libraries-numpy-and-pandas",
+            "topics": [
+              {
+                "name": "NumPy Arrays — Creation and Operations",
+                "slug": "numpy-arrays-creation-and-operations"
+              },
+              {
+                "name": "Pandas Series and DataFrame — Basics",
+                "slug": "pandas-series-and-dataframe-basics"
+              },
+              {
+                "name": "Importing and Exporting Data (CSV)",
+                "slug": "importing-and-exporting-data-csv"
+              },
+              {
+                "name": "Plotting Graphs using Matplotlib — Basics",
+                "slug": "plotting-graphs-using-matplotlib-basics"
+              }
+            ]
+          },
+          {
+            "name": "File Handling in Python",
+            "slug": "file-handling-in-python",
+            "topics": [
+              {
+                "name": "Text File Operations — Open, Read, Write, Append",
+                "slug": "text-file-operations-open-read-write-append"
+              },
+              {
+                "name": "Binary File Operations",
+                "slug": "binary-file-operations"
+              },
+              {
+                "name": "CSV File Handling",
+                "slug": "csv-file-handling"
+              },
+              {
+                "name": "Relative and Absolute File Paths",
+                "slug": "relative-and-absolute-file-paths"
+              },
+              {
+                "name": "Standard I/O Devices and File Modes",
+                "slug": "standard-i-o-devices-and-file-modes"
+              }
+            ]
+          },
+          {
+            "name": "Data Structures — Stack and Queue",
+            "slug": "data-structures-stack-and-queue",
+            "topics": [
+              {
+                "name": "Stack — Concept and Operations (push, pop)",
+                "slug": "stack-concept-and-operations-push-pop"
+              },
+              {
+                "name": "Implementation of Stack using List",
+                "slug": "implementation-of-stack-using-list"
+              },
+              {
+                "name": "Queue — Concept and Operations",
+                "slug": "queue-concept-and-operations"
+              },
+              {
+                "name": "Applications of Stack — Expression Evaluation",
+                "slug": "applications-of-stack-expression-evaluation"
+              }
+            ]
+          },
+          {
+            "name": "Introduction to Database Concepts",
+            "slug": "introduction-to-database-concepts",
+            "topics": [
+              {
+                "name": "Database Concepts — Need for Database",
+                "slug": "database-concepts-need-for-database"
+              },
+              {
+                "name": "Relational Data Model — Relation, Tuple, Attribute",
+                "slug": "relational-data-model-relation-tuple-attribute"
+              },
+              {
+                "name": "Keys — Candidate, Primary, Foreign",
+                "slug": "keys-candidate-primary-foreign"
+              },
+              {
+                "name": "Constraints — Domain, Referential Integrity",
+                "slug": "constraints-domain-referential-integrity"
+              }
+            ]
+          },
+          {
+            "name": "Structured Query Language (SQL)",
+            "slug": "structured-query-language-sql",
+            "topics": [
+              {
+                "name": "DDL Commands — CREATE, ALTER, DROP",
+                "slug": "ddl-commands-create-alter-drop"
+              },
+              {
+                "name": "DML Commands — INSERT, UPDATE, DELETE",
+                "slug": "dml-commands-insert-update-delete"
+              },
+              {
+                "name": "SELECT Queries — WHERE, ORDER BY, GROUP BY",
+                "slug": "select-queries-where-order-by-group-by"
+              },
+              {
+                "name": "Aggregate Functions — SUM, AVG, COUNT, MAX, MIN",
+                "slug": "aggregate-functions-sum-avg-count-max-min"
+              },
+              {
+                "name": "Joins — Cartesian Product and Equi Join",
+                "slug": "joins-cartesian-product-and-equi-join"
+              },
+              {
+                "name": "MySQL–Python Connectivity",
+                "slug": "mysql-python-connectivity"
+              }
+            ]
+          },
+          {
+            "name": "Computer Networks",
+            "slug": "computer-networks",
+            "topics": [
+              {
+                "name": "Evolution of Networking — ARPANET, Internet",
+                "slug": "evolution-of-networking-arpanet-internet"
+              },
+              {
+                "name": "Network Devices — Modem, Hub, Switch, Router, Gateway",
+                "slug": "network-devices-modem-hub-switch-router-gateway"
+              },
+              {
+                "name": "Network Topologies — Bus, Star, Tree",
+                "slug": "network-topologies-bus-star-tree"
+              },
+              {
+                "name": "Types of Networks — PAN, LAN, MAN, WAN",
+                "slug": "types-of-networks-pan-lan-man-wan"
+              },
+              {
+                "name": "Network Protocols — TCP/IP, HTTP, HTTPS, FTP, PPP, SMTP, POP3",
+                "slug": "network-protocols-tcp-ip-http-https-ftp-ppp-smtp-pop3"
+              },
+              {
+                "name": "Wireless/Mobile Communication — GSM, CDMA, WLL, 3G/4G/5G",
+                "slug": "wireless-mobile-communication-gsm-cdma-wll-3g-4g-5g"
+              }
+            ]
+          },
+          {
+            "name": "Data Communication",
+            "slug": "data-communication",
+            "topics": [
+              {
+                "name": "Transmission Media — Wired and Wireless",
+                "slug": "transmission-media-wired-and-wireless"
+              },
+              {
+                "name": "Switching Techniques — Circuit and Packet Switching",
+                "slug": "switching-techniques-circuit-and-packet-switching"
+              },
+              {
+                "name": "Network Security Concepts — Firewall, Cookies",
+                "slug": "network-security-concepts-firewall-cookies"
+              },
+              {
+                "name": "Web Services — WWW, Web Browser, Web Server, URL, Domain Name",
+                "slug": "web-services-www-web-browser-web-server-url-domain-name"
+              }
+            ]
+          },
+          {
+            "name": "Societal Impacts of Technology",
+            "slug": "societal-impacts-of-technology",
+            "topics": [
+              {
+                "name": "Digital Footprints and Digital Society",
+                "slug": "digital-footprints-and-digital-society"
+              },
+              {
+                "name": "Net and Communication Etiquette",
+                "slug": "net-and-communication-etiquette"
+              },
+              {
+                "name": "Intellectual Property Rights — Copyright, Patent, Plagiarism",
+                "slug": "intellectual-property-rights-copyright-patent-plagiarism"
+              },
+              {
+                "name": "Cybercrime and Cyber Laws — IT Act",
+                "slug": "cybercrime-and-cyber-laws-it-act"
+              },
+              {
+                "name": "Indian Currency Denomination (E-waste, E-governance)",
+                "slug": "indian-currency-denomination-e-waste-e-governance"
+              },
+              {
+                "name": "Gender and Disability Issues while Teaching and Using Computers",
+                "slug": "gender-and-disability-issues-while-teaching-and-using-computers"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Accountancy",
+        "slug": "accountancy",
+        "chapters": [
+          {
+            "name": "Accounting for Partnership: Basic Concepts",
+            "slug": "accounting-for-partnership-basic-concepts",
+            "topics": [
+              {
+                "name": "Partnership Deed and Its Provisions",
+                "slug": "partnership-deed-and-its-provisions"
+              },
+              {
+                "name": "Profit and Loss Appropriation Account",
+                "slug": "profit-and-loss-appropriation-account"
+              },
+              {
+                "name": "Interest on Capital and Drawings",
+                "slug": "interest-on-capital-and-drawings"
+              },
+              {
+                "name": "Fixed vs Fluctuating Capital Accounts",
+                "slug": "fixed-vs-fluctuating-capital-accounts"
+              },
+              {
+                "name": "Guarantee of Profit to a Partner",
+                "slug": "guarantee-of-profit-to-a-partner"
+              },
+              {
+                "name": "Past Adjustments in Partnership Accounts",
+                "slug": "past-adjustments-in-partnership-accounts"
+              }
+            ]
+          },
+          {
+            "name": "Change in Profit Sharing Ratio Among Partners",
+            "slug": "change-in-profit-sharing-ratio-among-partners",
+            "topics": [
+              {
+                "name": "Sacrificing Ratio and Gaining Ratio",
+                "slug": "sacrificing-ratio-and-gaining-ratio"
+              },
+              {
+                "name": "Accounting Treatment of Goodwill",
+                "slug": "accounting-treatment-of-goodwill"
+              },
+              {
+                "name": "Revaluation of Assets and Reassessment of Liabilities",
+                "slug": "revaluation-of-assets-and-reassessment-of-liabilities"
+              },
+              {
+                "name": "Adjustment of Accumulated Profits and Losses",
+                "slug": "adjustment-of-accumulated-profits-and-losses"
+              }
+            ]
+          },
+          {
+            "name": "Admission of a Partner",
+            "slug": "admission-of-a-partner",
+            "topics": [
+              {
+                "name": "New Profit Sharing Ratio and Sacrificing Ratio",
+                "slug": "new-profit-sharing-ratio-and-sacrificing-ratio"
+              },
+              {
+                "name": "Valuation and Adjustment of Goodwill on Admission",
+                "slug": "valuation-and-adjustment-of-goodwill-on-admission"
+              },
+              {
+                "name": "Revaluation of Assets and Liabilities on Admission",
+                "slug": "revaluation-of-assets-and-liabilities-on-admission"
+              },
+              {
+                "name": "Adjustment of Capital Accounts on Admission",
+                "slug": "adjustment-of-capital-accounts-on-admission"
+              }
+            ]
+          },
+          {
+            "name": "Retirement and Death of a Partner",
+            "slug": "retirement-and-death-of-a-partner",
+            "topics": [
+              {
+                "name": "New Profit Sharing Ratio and Gaining Ratio",
+                "slug": "new-profit-sharing-ratio-and-gaining-ratio"
+              },
+              {
+                "name": "Treatment of Goodwill on Retirement/Death",
+                "slug": "treatment-of-goodwill-on-retirement-death"
+              },
+              {
+                "name": "Settlement of Retiring/Deceased Partner's Claim",
+                "slug": "settlement-of-retiring-deceased-partner-s-claim"
+              },
+              {
+                "name": "Preparation of Loan Account of Retiring Partner",
+                "slug": "preparation-of-loan-account-of-retiring-partner"
+              }
+            ]
+          },
+          {
+            "name": "Dissolution of Partnership Firm",
+            "slug": "dissolution-of-partnership-firm",
+            "topics": [
+              {
+                "name": "Modes of Dissolution",
+                "slug": "modes-of-dissolution"
+              },
+              {
+                "name": "Settlement of Accounts (Section 48)",
+                "slug": "settlement-of-accounts-section-48"
+              },
+              {
+                "name": "Preparation of Realisation Account",
+                "slug": "preparation-of-realisation-account"
+              },
+              {
+                "name": "Treatment of Unrecorded Assets and Liabilities",
+                "slug": "treatment-of-unrecorded-assets-and-liabilities"
+              }
+            ]
+          },
+          {
+            "name": "Accounting for Share Capital",
+            "slug": "accounting-for-share-capital",
+            "topics": [
+              {
+                "name": "Types of Shares — Equity and Preference",
+                "slug": "types-of-shares-equity-and-preference"
+              },
+              {
+                "name": "Issue of Shares at Par, Premium and Discount",
+                "slug": "issue-of-shares-at-par-premium-and-discount"
+              },
+              {
+                "name": "Forfeiture and Reissue of Shares",
+                "slug": "forfeiture-and-reissue-of-shares"
+              },
+              {
+                "name": "Disclosure of Share Capital in Balance Sheet",
+                "slug": "disclosure-of-share-capital-in-balance-sheet"
+              }
+            ]
+          },
+          {
+            "name": "Issue and Redemption of Debentures",
+            "slug": "issue-and-redemption-of-debentures",
+            "topics": [
+              {
+                "name": "Issue of Debentures — Terms of Issue",
+                "slug": "issue-of-debentures-terms-of-issue"
+              },
+              {
+                "name": "Issue of Debentures for Consideration Other Than Cash",
+                "slug": "issue-of-debentures-for-consideration-other-than-cash"
+              },
+              {
+                "name": "Writing Off Discount/Loss on Issue of Debentures",
+                "slug": "writing-off-discount-loss-on-issue-of-debentures"
+              },
+              {
+                "name": "Redemption of Debentures — Methods",
+                "slug": "redemption-of-debentures-methods"
+              }
+            ]
+          },
+          {
+            "name": "Financial Statements of a Company",
+            "slug": "financial-statements-of-a-company",
+            "topics": [
+              {
+                "name": "Balance Sheet of a Company — Schedule III Format",
+                "slug": "balance-sheet-of-a-company-schedule-iii-format"
+              },
+              {
+                "name": "Statement of Profit and Loss — Format",
+                "slug": "statement-of-profit-and-loss-format"
+              },
+              {
+                "name": "Major Heads and Sub-Heads of Balance Sheet Items",
+                "slug": "major-heads-and-sub-heads-of-balance-sheet-items"
+              }
+            ]
+          },
+          {
+            "name": "Analysis of Financial Statements",
+            "slug": "analysis-of-financial-statements",
+            "topics": [
+              {
+                "name": "Objectives and Limitations of Financial Analysis",
+                "slug": "objectives-and-limitations-of-financial-analysis"
+              },
+              {
+                "name": "Comparative Statements",
+                "slug": "comparative-statements"
+              },
+              {
+                "name": "Common Size Statements",
+                "slug": "common-size-statements"
+              },
+              {
+                "name": "Trend Analysis",
+                "slug": "trend-analysis"
+              }
+            ]
+          },
+          {
+            "name": "Accounting Ratios",
+            "slug": "accounting-ratios",
+            "topics": [
+              {
+                "name": "Liquidity Ratios — Current Ratio, Quick Ratio",
+                "slug": "liquidity-ratios-current-ratio-quick-ratio"
+              },
+              {
+                "name": "Solvency Ratios — Debt-Equity, Total Assets to Debt",
+                "slug": "solvency-ratios-debt-equity-total-assets-to-debt"
+              },
+              {
+                "name": "Activity/Turnover Ratios — Inventory, Debtors, Working Capital",
+                "slug": "activity-turnover-ratios-inventory-debtors-working-capital"
+              },
+              {
+                "name": "Profitability Ratios — Gross Profit, Net Profit, Return on Investment",
+                "slug": "profitability-ratios-gross-profit-net-profit-return-on-investment"
+              }
+            ]
+          },
+          {
+            "name": "Cash Flow Statement",
+            "slug": "cash-flow-statement",
+            "topics": [
+              {
+                "name": "Meaning and Objectives of Cash Flow Statement",
+                "slug": "meaning-and-objectives-of-cash-flow-statement"
+              },
+              {
+                "name": "Classification of Activities — Operating, Investing, Financing",
+                "slug": "classification-of-activities-operating-investing-financing"
+              },
+              {
+                "name": "Preparation of Cash Flow from Operating Activities",
+                "slug": "preparation-of-cash-flow-from-operating-activities"
+              },
+              {
+                "name": "Preparation of Cash Flow Statement (AS-3)",
+                "slug": "preparation-of-cash-flow-statement-as-3"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Business Studies",
+        "slug": "business-studies",
+        "chapters": [
+          {
+            "name": "Nature and Significance of Management",
+            "slug": "nature-and-significance-of-management",
+            "topics": [
+              {
+                "name": "Meaning and Characteristics of Management",
+                "slug": "meaning-and-characteristics-of-management"
+              },
+              {
+                "name": "Objectives and Importance of Management",
+                "slug": "objectives-and-importance-of-management"
+              },
+              {
+                "name": "Management as Science, Art and Profession",
+                "slug": "management-as-science-art-and-profession"
+              },
+              {
+                "name": "Levels of Management",
+                "slug": "levels-of-management"
+              },
+              {
+                "name": "Functions of Management — Overview",
+                "slug": "functions-of-management-overview"
+              },
+              {
+                "name": "Coordination — Nature and Importance",
+                "slug": "coordination-nature-and-importance"
+              }
+            ]
+          },
+          {
+            "name": "Principles of Management",
+            "slug": "principles-of-management",
+            "topics": [
+              {
+                "name": "Taylor's Scientific Management — Principles and Techniques",
+                "slug": "taylor-s-scientific-management-principles-and-techniques"
+              },
+              {
+                "name": "Fayol's 14 Principles of Management",
+                "slug": "fayol-s-14-principles-of-management"
+              },
+              {
+                "name": "Nature and Significance of Management Principles",
+                "slug": "nature-and-significance-of-management-principles"
+              }
+            ]
+          },
+          {
+            "name": "Business Environment",
+            "slug": "business-environment",
+            "topics": [
+              {
+                "name": "Meaning and Importance of Business Environment",
+                "slug": "meaning-and-importance-of-business-environment"
+              },
+              {
+                "name": "Dimensions — Economic, Social, Technological, Political, Legal",
+                "slug": "dimensions-economic-social-technological-political-legal"
+              },
+              {
+                "name": "Impact of Government Policy Changes on Business",
+                "slug": "impact-of-government-policy-changes-on-business"
+              },
+              {
+                "name": "Liberalisation, Privatisation and Globalisation — Impact",
+                "slug": "liberalisation-privatisation-and-globalisation-impact"
+              }
+            ]
+          },
+          {
+            "name": "Planning",
+            "slug": "planning",
+            "topics": [
+              {
+                "name": "Meaning, Features and Importance of Planning",
+                "slug": "meaning-features-and-importance-of-planning"
+              },
+              {
+                "name": "Limitations of Planning",
+                "slug": "limitations-of-planning"
+              },
+              {
+                "name": "Planning Process",
+                "slug": "planning-process"
+              },
+              {
+                "name": "Types of Plans — Objectives, Strategy, Policy, Procedure, Rule, Budget",
+                "slug": "types-of-plans-objectives-strategy-policy-procedure-rule-budget"
+              }
+            ]
+          },
+          {
+            "name": "Organising",
+            "slug": "organising",
+            "topics": [
+              {
+                "name": "Meaning and Importance of Organising",
+                "slug": "meaning-and-importance-of-organising"
+              },
+              {
+                "name": "Organisation Structure — Functional and Divisional",
+                "slug": "organisation-structure-functional-and-divisional"
+              },
+              {
+                "name": "Formal and Informal Organisation",
+                "slug": "formal-and-informal-organisation"
+              },
+              {
+                "name": "Delegation — Elements and Importance",
+                "slug": "delegation-elements-and-importance"
+              },
+              {
+                "name": "Decentralisation — Meaning and Importance",
+                "slug": "decentralisation-meaning-and-importance"
+              }
+            ]
+          },
+          {
+            "name": "Staffing",
+            "slug": "staffing",
+            "topics": [
+              {
+                "name": "Meaning and Importance of Staffing",
+                "slug": "meaning-and-importance-of-staffing"
+              },
+              {
+                "name": "Staffing as a Part of Human Resource Management",
+                "slug": "staffing-as-a-part-of-human-resource-management"
+              },
+              {
+                "name": "Recruitment — Sources",
+                "slug": "recruitment-sources"
+              },
+              {
+                "name": "Selection Process",
+                "slug": "selection-process"
+              },
+              {
+                "name": "Training and Development — Methods",
+                "slug": "training-and-development-methods"
+              }
+            ]
+          },
+          {
+            "name": "Directing",
+            "slug": "directing",
+            "topics": [
+              {
+                "name": "Meaning and Importance of Directing",
+                "slug": "meaning-and-importance-of-directing"
+              },
+              {
+                "name": "Elements of Directing — Supervision",
+                "slug": "elements-of-directing-supervision"
+              },
+              {
+                "name": "Motivation — Meaning and Maslow's Need Hierarchy Theory",
+                "slug": "motivation-meaning-and-maslow-s-need-hierarchy-theory"
+              },
+              {
+                "name": "Leadership — Meaning and Styles",
+                "slug": "leadership-meaning-and-styles"
+              },
+              {
+                "name": "Communication — Formal and Informal, Barriers",
+                "slug": "communication-formal-and-informal-barriers"
+              }
+            ]
+          },
+          {
+            "name": "Controlling",
+            "slug": "controlling",
+            "topics": [
+              {
+                "name": "Meaning and Importance of Controlling",
+                "slug": "meaning-and-importance-of-controlling"
+              },
+              {
+                "name": "Relationship Between Planning and Controlling",
+                "slug": "relationship-between-planning-and-controlling"
+              },
+              {
+                "name": "Steps in the Process of Controlling",
+                "slug": "steps-in-the-process-of-controlling"
+              },
+              {
+                "name": "Techniques of Managerial Control",
+                "slug": "techniques-of-managerial-control"
+              }
+            ]
+          },
+          {
+            "name": "Financial Management",
+            "slug": "financial-management",
+            "topics": [
+              {
+                "name": "Meaning, Role and Objectives of Financial Management",
+                "slug": "meaning-role-and-objectives-of-financial-management"
+              },
+              {
+                "name": "Financial Decisions — Investment, Financing, Dividend",
+                "slug": "financial-decisions-investment-financing-dividend"
+              },
+              {
+                "name": "Factors Affecting Financial Decisions",
+                "slug": "factors-affecting-financial-decisions"
+              },
+              {
+                "name": "Capital Structure — Meaning and Factors",
+                "slug": "capital-structure-meaning-and-factors"
+              },
+              {
+                "name": "Fixed and Working Capital — Factors Affecting",
+                "slug": "fixed-and-working-capital-factors-affecting"
+              }
+            ]
+          },
+          {
+            "name": "Financial Markets",
+            "slug": "financial-markets",
+            "topics": [
+              {
+                "name": "Money Market — Meaning and Instruments",
+                "slug": "money-market-meaning-and-instruments"
+              },
+              {
+                "name": "Capital Market — Meaning and Types (Primary, Secondary)",
+                "slug": "capital-market-meaning-and-types-primary-secondary"
+              },
+              {
+                "name": "Methods of Floatation in Primary Market",
+                "slug": "methods-of-floatation-in-primary-market"
+              },
+              {
+                "name": "Stock Exchange — Functions and Trading Procedure",
+                "slug": "stock-exchange-functions-and-trading-procedure"
+              },
+              {
+                "name": "SEBI — Objectives and Functions",
+                "slug": "sebi-objectives-and-functions"
+              }
+            ]
+          },
+          {
+            "name": "Marketing Management",
+            "slug": "marketing-management",
+            "topics": [
+              {
+                "name": "Marketing — Meaning and Functions",
+                "slug": "marketing-meaning-and-functions"
+              },
+              {
+                "name": "Marketing Mix — Product, Price, Place, Promotion",
+                "slug": "marketing-mix-product-price-place-promotion"
+              },
+              {
+                "name": "Product — Branding, Labelling, Packaging",
+                "slug": "product-branding-labelling-packaging"
+              },
+              {
+                "name": "Pricing — Factors Affecting Price Determination",
+                "slug": "pricing-factors-affecting-price-determination"
+              },
+              {
+                "name": "Physical Distribution — Channels of Distribution",
+                "slug": "physical-distribution-channels-of-distribution"
+              },
+              {
+                "name": "Promotion — Advertising, Personal Selling, Sales Promotion",
+                "slug": "promotion-advertising-personal-selling-sales-promotion"
+              }
+            ]
+          },
+          {
+            "name": "Consumer Protection",
+            "slug": "consumer-protection",
+            "topics": [
+              {
+                "name": "Importance of Consumer Protection",
+                "slug": "importance-of-consumer-protection"
+              },
+              {
+                "name": "Consumer Rights and Responsibilities",
+                "slug": "consumer-rights-and-responsibilities"
+              },
+              {
+                "name": "Ways and Means of Consumer Protection",
+                "slug": "ways-and-means-of-consumer-protection"
+              },
+              {
+                "name": "Consumer Protection Act — Redressal Agencies",
+                "slug": "consumer-protection-act-redressal-agencies"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Economics",
+        "slug": "economics",
+        "chapters": [
+          {
+            "name": "Introduction to Macroeconomics",
+            "slug": "introduction-to-macroeconomics",
+            "topics": [
+              {
+                "name": "Macroeconomics — Meaning and Scope",
+                "slug": "macroeconomics-meaning-and-scope"
+              },
+              {
+                "name": "Basic Concepts — Stock and Flow",
+                "slug": "basic-concepts-stock-and-flow"
+              },
+              {
+                "name": "Circular Flow of Income",
+                "slug": "circular-flow-of-income"
+              }
+            ]
+          },
+          {
+            "name": "National Income and Related Aggregates",
+            "slug": "national-income-and-related-aggregates",
+            "topics": [
+              {
+                "name": "Concepts — GDP, GNP, NDP, NNP",
+                "slug": "concepts-gdp-gnp-ndp-nnp"
+              },
+              {
+                "name": "National Income at Factor Cost and Market Price",
+                "slug": "national-income-at-factor-cost-and-market-price"
+              },
+              {
+                "name": "Methods of Calculating National Income — Product, Income, Expenditure",
+                "slug": "methods-of-calculating-national-income-product-income-expenditure"
+              },
+              {
+                "name": "Nominal and Real GDP, GDP Deflator",
+                "slug": "nominal-and-real-gdp-gdp-deflator"
+              },
+              {
+                "name": "GDP and Welfare",
+                "slug": "gdp-and-welfare"
+              }
+            ]
+          },
+          {
+            "name": "Money and Banking",
+            "slug": "money-and-banking",
+            "topics": [
+              {
+                "name": "Money — Meaning and Functions",
+                "slug": "money-meaning-and-functions"
+              },
+              {
+                "name": "Supply of Money — Currency and Deposits",
+                "slug": "supply-of-money-currency-and-deposits"
+              },
+              {
+                "name": "Central Bank — Functions of RBI",
+                "slug": "central-bank-functions-of-rbi"
+              },
+              {
+                "name": "Commercial Banks — Credit Creation",
+                "slug": "commercial-banks-credit-creation"
+              },
+              {
+                "name": "Monetary Policy — Instruments (CRR, SLR, Repo Rate)",
+                "slug": "monetary-policy-instruments-crr-slr-repo-rate"
+              }
+            ]
+          },
+          {
+            "name": "Determination of Income and Employment",
+            "slug": "determination-of-income-and-employment",
+            "topics": [
+              {
+                "name": "Aggregate Demand and Aggregate Supply",
+                "slug": "aggregate-demand-and-aggregate-supply"
+              },
+              {
+                "name": "Components of Aggregate Demand",
+                "slug": "components-of-aggregate-demand"
+              },
+              {
+                "name": "Propensity to Consume and Save",
+                "slug": "propensity-to-consume-and-save"
+              },
+              {
+                "name": "Investment Multiplier",
+                "slug": "investment-multiplier"
+              },
+              {
+                "name": "Equilibrium Level of Income and Output",
+                "slug": "equilibrium-level-of-income-and-output"
+              },
+              {
+                "name": "Excess Demand and Deficient Demand",
+                "slug": "excess-demand-and-deficient-demand"
+              },
+              {
+                "name": "Fiscal Policy Measures to Correct Demand Gaps",
+                "slug": "fiscal-policy-measures-to-correct-demand-gaps"
+              }
+            ]
+          },
+          {
+            "name": "Government Budget and the Economy",
+            "slug": "government-budget-and-the-economy",
+            "topics": [
+              {
+                "name": "Government Budget — Meaning and Objectives",
+                "slug": "government-budget-meaning-and-objectives"
+              },
+              {
+                "name": "Revenue and Capital Budget",
+                "slug": "revenue-and-capital-budget"
+              },
+              {
+                "name": "Revenue Receipts and Capital Receipts",
+                "slug": "revenue-receipts-and-capital-receipts"
+              },
+              {
+                "name": "Revenue and Capital Expenditure",
+                "slug": "revenue-and-capital-expenditure"
+              },
+              {
+                "name": "Budget Deficit — Fiscal, Revenue, Primary",
+                "slug": "budget-deficit-fiscal-revenue-primary"
+              }
+            ]
+          },
+          {
+            "name": "Balance of Payments",
+            "slug": "balance-of-payments",
+            "topics": [
+              {
+                "name": "Foreign Exchange Rate — Fixed and Flexible",
+                "slug": "foreign-exchange-rate-fixed-and-flexible"
+              },
+              {
+                "name": "Determination of Exchange Rate",
+                "slug": "determination-of-exchange-rate"
+              },
+              {
+                "name": "Balance of Payments — Meaning and Components",
+                "slug": "balance-of-payments-meaning-and-components"
+              },
+              {
+                "name": "Current Account and Capital Account",
+                "slug": "current-account-and-capital-account"
+              }
+            ]
+          },
+          {
+            "name": "Indian Economy on the Eve of Independence",
+            "slug": "indian-economy-on-the-eve-of-independence",
+            "topics": [
+              {
+                "name": "Low Level of Economic Development",
+                "slug": "low-level-of-economic-development"
+              },
+              {
+                "name": "Agricultural Sector — Stagnation",
+                "slug": "agricultural-sector-stagnation"
+              },
+              {
+                "name": "Industrial Sector — Deindustrialisation",
+                "slug": "industrial-sector-deindustrialisation"
+              },
+              {
+                "name": "Foreign Trade — Colonial Pattern",
+                "slug": "foreign-trade-colonial-pattern"
+              },
+              {
+                "name": "Demographic Condition",
+                "slug": "demographic-condition"
+              },
+              {
+                "name": "Occupational Structure and Infrastructure",
+                "slug": "occupational-structure-and-infrastructure"
+              }
+            ]
+          },
+          {
+            "name": "Indian Economy 1950–1990",
+            "slug": "indian-economy-1950-1990",
+            "topics": [
+              {
+                "name": "Goals of Five Year Plans",
+                "slug": "goals-of-five-year-plans"
+              },
+              {
+                "name": "Agriculture — Land Reforms and Green Revolution",
+                "slug": "agriculture-land-reforms-and-green-revolution"
+              },
+              {
+                "name": "Industry and Trade — Industrial Policy Resolution 1956",
+                "slug": "industry-and-trade-industrial-policy-resolution-1956"
+              },
+              {
+                "name": "Trade Policy — Import Substitution",
+                "slug": "trade-policy-import-substitution"
+              }
+            ]
+          },
+          {
+            "name": "Liberalisation, Privatisation and Globalisation",
+            "slug": "liberalisation-privatisation-and-globalisation",
+            "topics": [
+              {
+                "name": "Economic Reforms 1991 — Background and Need",
+                "slug": "economic-reforms-1991-background-and-need"
+              },
+              {
+                "name": "Liberalisation — Industrial, Financial, Tax, Foreign Exchange Reforms",
+                "slug": "liberalisation-industrial-financial-tax-foreign-exchange-reforms"
+              },
+              {
+                "name": "Privatisation and Disinvestment",
+                "slug": "privatisation-and-disinvestment"
+              },
+              {
+                "name": "Globalisation — Outsourcing and WTO",
+                "slug": "globalisation-outsourcing-and-wto"
+              },
+              {
+                "name": "Indian Economy During Reforms — An Assessment",
+                "slug": "indian-economy-during-reforms-an-assessment"
+              }
+            ]
+          },
+          {
+            "name": "Poverty",
+            "slug": "poverty",
+            "topics": [
+              {
+                "name": "Poverty — Absolute and Relative",
+                "slug": "poverty-absolute-and-relative"
+              },
+              {
+                "name": "Poverty Estimation and Poverty Line",
+                "slug": "poverty-estimation-and-poverty-line"
+              },
+              {
+                "name": "Causes of Poverty in India",
+                "slug": "causes-of-poverty-in-india"
+              },
+              {
+                "name": "Anti-Poverty Programmes",
+                "slug": "anti-poverty-programmes"
+              }
+            ]
+          },
+          {
+            "name": "Human Capital Formation in India",
+            "slug": "human-capital-formation-in-india",
+            "topics": [
+              {
+                "name": "Human Capital — Meaning and Sources",
+                "slug": "human-capital-meaning-and-sources"
+              },
+              {
+                "name": "Human Capital vs Physical Capital",
+                "slug": "human-capital-vs-physical-capital"
+              },
+              {
+                "name": "State of Education and Health in India",
+                "slug": "state-of-education-and-health-in-india"
+              },
+              {
+                "name": "Education Sector Initiatives in India",
+                "slug": "education-sector-initiatives-in-india"
+              }
+            ]
+          },
+          {
+            "name": "Rural Development",
+            "slug": "rural-development",
+            "topics": [
+              {
+                "name": "Rural Development — Key Issues (Credit, Marketing)",
+                "slug": "rural-development-key-issues-credit-marketing"
+              },
+              {
+                "name": "Agricultural Diversification",
+                "slug": "agricultural-diversification"
+              },
+              {
+                "name": "Sustainable Development and Organic Farming",
+                "slug": "sustainable-development-and-organic-farming"
+              }
+            ]
+          },
+          {
+            "name": "Employment — Growth, Informalisation and Related Issues",
+            "slug": "employment-growth-informalisation-and-related-issues",
+            "topics": [
+              {
+                "name": "Workers — Self-Employed, Regular, Casual",
+                "slug": "workers-self-employed-regular-casual"
+              },
+              {
+                "name": "Formal and Informal Sector Employment",
+                "slug": "formal-and-informal-sector-employment"
+              },
+              {
+                "name": "Growth and Changing Structure of Employment",
+                "slug": "growth-and-changing-structure-of-employment"
+              }
+            ]
+          },
+          {
+            "name": "Infrastructure",
+            "slug": "infrastructure",
+            "topics": [
+              {
+                "name": "Infrastructure — Meaning and Types",
+                "slug": "infrastructure-meaning-and-types"
+              },
+              {
+                "name": "Energy Sector — Growing Demand and Options",
+                "slug": "energy-sector-growing-demand-and-options"
+              },
+              {
+                "name": "Health Infrastructure — Indicators",
+                "slug": "health-infrastructure-indicators"
+              }
+            ]
+          },
+          {
+            "name": "Environment and Sustainable Development",
+            "slug": "environment-and-sustainable-development",
+            "topics": [
+              {
+                "name": "Environment — Functions and Threats",
+                "slug": "environment-functions-and-threats"
+              },
+              {
+                "name": "State of India's Environment",
+                "slug": "state-of-india-s-environment"
+              },
+              {
+                "name": "Sustainable Development — Strategies",
+                "slug": "sustainable-development-strategies"
+              }
+            ]
+          },
+          {
+            "name": "Comparative Development Experience of India and Its Neighbours",
+            "slug": "comparative-development-experience-of-india-and-its-neighbours",
+            "topics": [
+              {
+                "name": "Development Strategies — India, Pakistan, China",
+                "slug": "development-strategies-india-pakistan-china"
+              },
+              {
+                "name": "Demographic Indicators — Comparison",
+                "slug": "demographic-indicators-comparison"
+              },
+              {
+                "name": "Human Development Indicators — Comparison",
+                "slug": "human-development-indicators-comparison"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Geography",
+        "slug": "geography",
+        "chapters": [
+          {
+            "name": "Human Geography — Nature and Scope",
+            "slug": "human-geography-nature-and-scope",
+            "topics": [
+              {
+                "name": "Nature of Human Geography",
+                "slug": "nature-of-human-geography"
+              },
+              {
+                "name": "Fields and Approaches of Human Geography",
+                "slug": "fields-and-approaches-of-human-geography"
+              },
+              {
+                "name": "Human Geography Through a Fresh Lens",
+                "slug": "human-geography-through-a-fresh-lens"
+              }
+            ]
+          },
+          {
+            "name": "The World Population — Distribution, Density and Growth",
+            "slug": "the-world-population-distribution-density-and-growth",
+            "topics": [
+              {
+                "name": "Patterns of Population Distribution",
+                "slug": "patterns-of-population-distribution"
+              },
+              {
+                "name": "Population Density",
+                "slug": "population-density"
+              },
+              {
+                "name": "Population Growth and Its Determinants",
+                "slug": "population-growth-and-its-determinants"
+              },
+              {
+                "name": "Population Growth — Trends",
+                "slug": "population-growth-trends"
+              }
+            ]
+          },
+          {
+            "name": "Population Composition",
+            "slug": "population-composition",
+            "topics": [
+              {
+                "name": "Age-Sex Composition",
+                "slug": "age-sex-composition"
+              },
+              {
+                "name": "Rural-Urban Composition",
+                "slug": "rural-urban-composition"
+              },
+              {
+                "name": "Literacy and Occupational Structure",
+                "slug": "literacy-and-occupational-structure"
+              }
+            ]
+          },
+          {
+            "name": "Human Development",
+            "slug": "human-development",
+            "topics": [
+              {
+                "name": "Concept of Human Development",
+                "slug": "concept-of-human-development"
+              },
+              {
+                "name": "Indicators of Human Development",
+                "slug": "indicators-of-human-development"
+              },
+              {
+                "name": "Approaches and Components",
+                "slug": "approaches-and-components"
+              }
+            ]
+          },
+          {
+            "name": "Primary Activities",
+            "slug": "primary-activities",
+            "topics": [
+              {
+                "name": "Types of Primary Activities — Gathering, Hunting, Pastoralism",
+                "slug": "types-of-primary-activities-gathering-hunting-pastoralism"
+              },
+              {
+                "name": "Agriculture — Types (Subsistence and Commercial)",
+                "slug": "agriculture-types-subsistence-and-commercial"
+              },
+              {
+                "name": "Mining Activities",
+                "slug": "mining-activities"
+              }
+            ]
+          },
+          {
+            "name": "Secondary Activities",
+            "slug": "secondary-activities",
+            "topics": [
+              {
+                "name": "Manufacturing — Characteristics and Types",
+                "slug": "manufacturing-characteristics-and-types"
+              },
+              {
+                "name": "Industrial Location — Factors",
+                "slug": "industrial-location-factors"
+              },
+              {
+                "name": "Major Industrial Regions of the World",
+                "slug": "major-industrial-regions-of-the-world"
+              }
+            ]
+          },
+          {
+            "name": "Tertiary and Quaternary Activities",
+            "slug": "tertiary-and-quaternary-activities",
+            "topics": [
+              {
+                "name": "Tertiary Activities — Trade, Transport, Services",
+                "slug": "tertiary-activities-trade-transport-services"
+              },
+              {
+                "name": "Quaternary Activities — Knowledge-Based",
+                "slug": "quaternary-activities-knowledge-based"
+              },
+              {
+                "name": "Tourism as a Trade",
+                "slug": "tourism-as-a-trade"
+              }
+            ]
+          },
+          {
+            "name": "Transport and Communication (World)",
+            "slug": "transport-and-communication-world",
+            "topics": [
+              {
+                "name": "Land, Water and Air Transport",
+                "slug": "land-water-and-air-transport"
+              },
+              {
+                "name": "Trade Routes and Communication Networks",
+                "slug": "trade-routes-and-communication-networks"
+              },
+              {
+                "name": "Satellite Communication and Cyberspace",
+                "slug": "satellite-communication-and-cyberspace"
+              }
+            ]
+          },
+          {
+            "name": "International Trade (World)",
+            "slug": "international-trade-world",
+            "topics": [
+              {
+                "name": "Basis and Growth of International Trade",
+                "slug": "basis-and-growth-of-international-trade"
+              },
+              {
+                "name": "Case Study — WTO and International Trade",
+                "slug": "case-study-wto-and-international-trade"
+              },
+              {
+                "name": "Balance of Trade",
+                "slug": "balance-of-trade"
+              }
+            ]
+          },
+          {
+            "name": "Human Settlements",
+            "slug": "human-settlements",
+            "topics": [
+              {
+                "name": "Types of Settlements — Rural and Urban",
+                "slug": "types-of-settlements-rural-and-urban"
+              },
+              {
+                "name": "Classification of Urban Settlements",
+                "slug": "classification-of-urban-settlements"
+              },
+              {
+                "name": "Urbanisation — World Pattern",
+                "slug": "urbanisation-world-pattern"
+              }
+            ]
+          },
+          {
+            "name": "Population — India (Distribution, Density, Growth, Composition)",
+            "slug": "population-india-distribution-density-growth-composition",
+            "topics": [
+              {
+                "name": "Population Distribution and Density in India",
+                "slug": "population-distribution-and-density-in-india"
+              },
+              {
+                "name": "Growth of Population in India",
+                "slug": "growth-of-population-in-india"
+              },
+              {
+                "name": "Age-Sex Composition of Indian Population",
+                "slug": "age-sex-composition-of-indian-population"
+              },
+              {
+                "name": "Rural-Urban Composition of India",
+                "slug": "rural-urban-composition-of-india"
+              }
+            ]
+          },
+          {
+            "name": "Migration — Types, Causes and Consequences (India)",
+            "slug": "migration-types-causes-and-consequences-india",
+            "topics": [
+              {
+                "name": "Internal and International Migration in India",
+                "slug": "internal-and-international-migration-in-india"
+              },
+              {
+                "name": "Causes of Migration — Push and Pull Factors",
+                "slug": "causes-of-migration-push-and-pull-factors"
+              },
+              {
+                "name": "Consequences of Migration",
+                "slug": "consequences-of-migration"
+              }
+            ]
+          },
+          {
+            "name": "Human Development — India",
+            "slug": "human-development-india",
+            "topics": [
+              {
+                "name": "Human Development Indicators — Indian States",
+                "slug": "human-development-indicators-indian-states"
+              },
+              {
+                "name": "Regional Disparities in Human Development",
+                "slug": "regional-disparities-in-human-development"
+              }
+            ]
+          },
+          {
+            "name": "Human Settlements — India",
+            "slug": "human-settlements-india",
+            "topics": [
+              {
+                "name": "Rural Settlements — Types and Patterns in India",
+                "slug": "rural-settlements-types-and-patterns-in-india"
+              },
+              {
+                "name": "Urban Settlements — Classification in India",
+                "slug": "urban-settlements-classification-in-india"
+              },
+              {
+                "name": "Problems of Urbanisation in India",
+                "slug": "problems-of-urbanisation-in-india"
+              }
+            ]
+          },
+          {
+            "name": "Land Resources and Agriculture — India",
+            "slug": "land-resources-and-agriculture-india",
+            "topics": [
+              {
+                "name": "Land Use Categories in India",
+                "slug": "land-use-categories-in-india"
+              },
+              {
+                "name": "Land Degradation and Conservation",
+                "slug": "land-degradation-and-conservation"
+              },
+              {
+                "name": "Cropping Pattern and Cropping Seasons",
+                "slug": "cropping-pattern-and-cropping-seasons"
+              },
+              {
+                "name": "Major Crops — Rice, Wheat, Cotton, Sugarcane, Tea",
+                "slug": "major-crops-rice-wheat-cotton-sugarcane-tea"
+              },
+              {
+                "name": "Agricultural Development — Green Revolution and Beyond",
+                "slug": "agricultural-development-green-revolution-and-beyond"
+              }
+            ]
+          },
+          {
+            "name": "Water Resources — India",
+            "slug": "water-resources-india",
+            "topics": [
+              {
+                "name": "Water Resources — Availability and Utilisation",
+                "slug": "water-resources-availability-and-utilisation"
+              },
+              {
+                "name": "Multi-Purpose River Projects",
+                "slug": "multi-purpose-river-projects"
+              },
+              {
+                "name": "Rainwater Harvesting",
+                "slug": "rainwater-harvesting"
+              }
+            ]
+          },
+          {
+            "name": "Mineral and Energy Resources — India",
+            "slug": "mineral-and-energy-resources-india",
+            "topics": [
+              {
+                "name": "Types of Minerals — Ferrous and Non-Ferrous",
+                "slug": "types-of-minerals-ferrous-and-non-ferrous"
+              },
+              {
+                "name": "Conventional Energy Sources — Coal, Petroleum, Natural Gas",
+                "slug": "conventional-energy-sources-coal-petroleum-natural-gas"
+              },
+              {
+                "name": "Non-Conventional Energy Sources — Solar, Wind, Biogas",
+                "slug": "non-conventional-energy-sources-solar-wind-biogas"
+              }
+            ]
+          },
+          {
+            "name": "Manufacturing Industries — India",
+            "slug": "manufacturing-industries-india",
+            "topics": [
+              {
+                "name": "Industrial Location Factors in India",
+                "slug": "industrial-location-factors-in-india"
+              },
+              {
+                "name": "Iron and Steel Industry",
+                "slug": "iron-and-steel-industry"
+              },
+              {
+                "name": "Cotton Textile Industry",
+                "slug": "cotton-textile-industry"
+              },
+              {
+                "name": "Industrial Regions of India",
+                "slug": "industrial-regions-of-india"
+              }
+            ]
+          },
+          {
+            "name": "Planning and Sustainable Development in Indian Context",
+            "slug": "planning-and-sustainable-development-in-indian-context",
+            "topics": [
+              {
+                "name": "Types of Planning — Regional and Target Area",
+                "slug": "types-of-planning-regional-and-target-area"
+              },
+              {
+                "name": "Case Study — Indira Gandhi Canal Command Area",
+                "slug": "case-study-indira-gandhi-canal-command-area"
+              }
+            ]
+          },
+          {
+            "name": "Transport and Communication — India",
+            "slug": "transport-and-communication-india",
+            "topics": [
+              {
+                "name": "Road, Railway, Waterway, Airway Transport in India",
+                "slug": "road-railway-waterway-airway-transport-in-india"
+              },
+              {
+                "name": "Oil and Gas Pipelines",
+                "slug": "oil-and-gas-pipelines"
+              },
+              {
+                "name": "International Trade of India",
+                "slug": "international-trade-of-india"
+              }
+            ]
+          },
+          {
+            "name": "Geographical Perspective on Selected Issues and Problems",
+            "slug": "geographical-perspective-on-selected-issues-and-problems",
+            "topics": [
+              {
+                "name": "Environmental Pollution",
+                "slug": "environmental-pollution"
+              },
+              {
+                "name": "Urban Waste Disposal",
+                "slug": "urban-waste-disposal"
+              },
+              {
+                "name": "Land Degradation in India",
+                "slug": "land-degradation-in-india"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "History",
+        "slug": "history",
+        "chapters": [
+          {
+            "name": "Bricks, Beads and Bones — The Harappan Civilisation",
+            "slug": "bricks-beads-and-bones-the-harappan-civilisation",
+            "topics": [
+              {
+                "name": "Discovery and Chronology of Harappan Civilisation",
+                "slug": "discovery-and-chronology-of-harappan-civilisation"
+              },
+              {
+                "name": "Town Planning and Urban Layout",
+                "slug": "town-planning-and-urban-layout"
+              },
+              {
+                "name": "Craft Production and Trade",
+                "slug": "craft-production-and-trade"
+              },
+              {
+                "name": "Decline of the Harappan Civilisation",
+                "slug": "decline-of-the-harappan-civilisation"
+              }
+            ]
+          },
+          {
+            "name": "Kings, Farmers and Towns — Early States and Economies",
+            "slug": "kings-farmers-and-towns-early-states-and-economies",
+            "topics": [
+              {
+                "name": "Sources — Inscriptions, Coins and Prashastis",
+                "slug": "sources-inscriptions-coins-and-prashastis"
+              },
+              {
+                "name": "Mauryan Empire — Administration",
+                "slug": "mauryan-empire-administration"
+              },
+              {
+                "name": "Agrarian Economy and Trade (6th c. BCE to 6th c. CE)",
+                "slug": "agrarian-economy-and-trade-6th-c-bce-to-6th-c-ce"
+              },
+              {
+                "name": "Emergence of New Kingdoms",
+                "slug": "emergence-of-new-kingdoms"
+              }
+            ]
+          },
+          {
+            "name": "Kinship, Caste and Class — Early Societies",
+            "slug": "kinship-caste-and-class-early-societies",
+            "topics": [
+              {
+                "name": "The Mahabharata as a Source",
+                "slug": "the-mahabharata-as-a-source"
+              },
+              {
+                "name": "Varna and Kinship Systems",
+                "slug": "varna-and-kinship-systems"
+              },
+              {
+                "name": "Property, Marriage and Social Norms",
+                "slug": "property-marriage-and-social-norms"
+              }
+            ]
+          },
+          {
+            "name": "Thinkers, Beliefs and Buildings — Cultural Developments",
+            "slug": "thinkers-beliefs-and-buildings-cultural-developments",
+            "topics": [
+              {
+                "name": "Buddhism — Life of the Buddha and Sangha",
+                "slug": "buddhism-life-of-the-buddha-and-sangha"
+              },
+              {
+                "name": "Jainism — Philosophy and Spread",
+                "slug": "jainism-philosophy-and-spread"
+              },
+              {
+                "name": "Bhakti and Sufi Traditions — Early Forms",
+                "slug": "bhakti-and-sufi-traditions-early-forms"
+              },
+              {
+                "name": "Stupas — Sanchi",
+                "slug": "stupas-sanchi"
+              }
+            ]
+          },
+          {
+            "name": "Through the Eyes of Travellers",
+            "slug": "through-the-eyes-of-travellers",
+            "topics": [
+              {
+                "name": "Al-Biruni's Kitab-ul-Hind",
+                "slug": "al-biruni-s-kitab-ul-hind"
+              },
+              {
+                "name": "Ibn Battuta's Rihla",
+                "slug": "ibn-battuta-s-rihla"
+              },
+              {
+                "name": "Bernier's Account of Mughal India",
+                "slug": "bernier-s-account-of-mughal-india"
+              }
+            ]
+          },
+          {
+            "name": "Bhakti–Sufi Traditions",
+            "slug": "bhakti-sufi-traditions",
+            "topics": [
+              {
+                "name": "Religious Ferment and Debate",
+                "slug": "religious-ferment-and-debate"
+              },
+              {
+                "name": "Bhakti Movement — Nayanars, Alvars, Virashaivas",
+                "slug": "bhakti-movement-nayanars-alvars-virashaivas"
+              },
+              {
+                "name": "Sufi Traditions — Silsilas and Khanqahs",
+                "slug": "sufi-traditions-silsilas-and-khanqahs"
+              },
+              {
+                "name": "Growth of Popular Religious Movements",
+                "slug": "growth-of-popular-religious-movements"
+              }
+            ]
+          },
+          {
+            "name": "An Imperial Capital — Vijayanagara",
+            "slug": "an-imperial-capital-vijayanagara",
+            "topics": [
+              {
+                "name": "Discovery and Sources of Vijayanagara",
+                "slug": "discovery-and-sources-of-vijayanagara"
+              },
+              {
+                "name": "Kings and Traders of Vijayanagara",
+                "slug": "kings-and-traders-of-vijayanagara"
+              },
+              {
+                "name": "Religion in Vijayanagara",
+                "slug": "religion-in-vijayanagara"
+              },
+              {
+                "name": "The Growth of the City and Its Splendour",
+                "slug": "the-growth-of-the-city-and-its-splendour"
+              }
+            ]
+          },
+          {
+            "name": "Peasants, Zamindars and the State — Agrarian Society Mughal India",
+            "slug": "peasants-zamindars-and-the-state-agrarian-society-mughal-india",
+            "topics": [
+              {
+                "name": "Sources — Ain-i-Akbari",
+                "slug": "sources-ain-i-akbari"
+              },
+              {
+                "name": "Peasants and Agricultural Production",
+                "slug": "peasants-and-agricultural-production"
+              },
+              {
+                "name": "The Zamindars",
+                "slug": "the-zamindars"
+              },
+              {
+                "name": "Village Community Structure",
+                "slug": "village-community-structure"
+              }
+            ]
+          },
+          {
+            "name": "Kings and Chronicles — The Mughal Courts",
+            "slug": "kings-and-chronicles-the-mughal-courts",
+            "topics": [
+              {
+                "name": "Akbarnama and Padshahnama as Sources",
+                "slug": "akbarnama-and-padshahnama-as-sources"
+              },
+              {
+                "name": "The Making of Manuscripts",
+                "slug": "the-making-of-manuscripts"
+              },
+              {
+                "name": "Ideas of Empire and Kingship",
+                "slug": "ideas-of-empire-and-kingship"
+              }
+            ]
+          },
+          {
+            "name": "Colonialism and the Countryside",
+            "slug": "colonialism-and-the-countryside",
+            "topics": [
+              {
+                "name": "Bengal and the Zamindars — Permanent Settlement",
+                "slug": "bengal-and-the-zamindars-permanent-settlement"
+              },
+              {
+                "name": "The Mahalwari System",
+                "slug": "the-mahalwari-system"
+              },
+              {
+                "name": "Ryotwari Settlement in Madras and Bombay",
+                "slug": "ryotwari-settlement-in-madras-and-bombay"
+              },
+              {
+                "name": "Crisis of Peasant Agriculture under Colonial Rule",
+                "slug": "crisis-of-peasant-agriculture-under-colonial-rule"
+              }
+            ]
+          },
+          {
+            "name": "Rebels and the Raj — The Revolt of 1857",
+            "slug": "rebels-and-the-raj-the-revolt-of-1857",
+            "topics": [
+              {
+                "name": "Leaders and Followers of the Revolt",
+                "slug": "leaders-and-followers-of-the-revolt"
+              },
+              {
+                "name": "Rumours and Popular Beliefs",
+                "slug": "rumours-and-popular-beliefs"
+              },
+              {
+                "name": "Suppression of the Revolt",
+                "slug": "suppression-of-the-revolt"
+              }
+            ]
+          },
+          {
+            "name": "Colonial Cities — Urbanisation, Planning and Architecture",
+            "slug": "colonial-cities-urbanisation-planning-and-architecture",
+            "topics": [
+              {
+                "name": "Emergence of Bombay, Madras and Calcutta",
+                "slug": "emergence-of-bombay-madras-and-calcutta"
+              },
+              {
+                "name": "Town Planning under Colonial Rule",
+                "slug": "town-planning-under-colonial-rule"
+              },
+              {
+                "name": "Segregation, Segmentation and the Politics of Space",
+                "slug": "segregation-segmentation-and-the-politics-of-space"
+              }
+            ]
+          },
+          {
+            "name": "Mahatma Gandhi and the Nationalist Movement",
+            "slug": "mahatma-gandhi-and-the-nationalist-movement",
+            "topics": [
+              {
+                "name": "Champaran, Kheda and Ahmedabad Movements",
+                "slug": "champaran-kheda-and-ahmedabad-movements"
+              },
+              {
+                "name": "Non-Cooperation Movement",
+                "slug": "non-cooperation-movement"
+              },
+              {
+                "name": "Civil Disobedience Movement",
+                "slug": "civil-disobedience-movement"
+              },
+              {
+                "name": "Quit India Movement",
+                "slug": "quit-india-movement"
+              }
+            ]
+          },
+          {
+            "name": "Understanding Partition — Politics, Memories, Experiences",
+            "slug": "understanding-partition-politics-memories-experiences",
+            "topics": [
+              {
+                "name": "Causes and Course of Partition",
+                "slug": "causes-and-course-of-partition"
+              },
+              {
+                "name": "Communal Politics of the 1940s",
+                "slug": "communal-politics-of-the-1940s"
+              },
+              {
+                "name": "Experiences of Partition — Oral Sources",
+                "slug": "experiences-of-partition-oral-sources"
+              }
+            ]
+          },
+          {
+            "name": "Framing the Constitution — The Beginning of a New Era",
+            "slug": "framing-the-constitution-the-beginning-of-a-new-era",
+            "topics": [
+              {
+                "name": "Formation of the Constituent Assembly",
+                "slug": "formation-of-the-constituent-assembly"
+              },
+              {
+                "name": "Key Debates in the Constituent Assembly",
+                "slug": "key-debates-in-the-constituent-assembly"
+              },
+              {
+                "name": "Fundamental Rights and Directive Principles Debates",
+                "slug": "fundamental-rights-and-directive-principles-debates"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Political Science",
+        "slug": "political-science",
+        "chapters": [
+          {
+            "name": "The Cold War Era",
+            "slug": "the-cold-war-era",
+            "topics": [
+              {
+                "name": "Emergence of Two Power Blocs",
+                "slug": "emergence-of-two-power-blocs"
+              },
+              {
+                "name": "Arenas of the Cold War — Cuban Missile Crisis, Korean War",
+                "slug": "arenas-of-the-cold-war-cuban-missile-crisis-korean-war"
+              },
+              {
+                "name": "Non-Aligned Movement (NAM)",
+                "slug": "non-aligned-movement-nam"
+              }
+            ]
+          },
+          {
+            "name": "The End of Bipolarity",
+            "slug": "the-end-of-bipolarity",
+            "topics": [
+              {
+                "name": "Disintegration of the Soviet Union",
+                "slug": "disintegration-of-the-soviet-union"
+              },
+              {
+                "name": "Shock Therapy in Post-Communist Regimes",
+                "slug": "shock-therapy-in-post-communist-regimes"
+              },
+              {
+                "name": "India's Relationship with Russia and Central Asia",
+                "slug": "india-s-relationship-with-russia-and-central-asia"
+              }
+            ]
+          },
+          {
+            "name": "US Hegemony in World Politics",
+            "slug": "us-hegemony-in-world-politics",
+            "topics": [
+              {
+                "name": "Growth of American Power — Gulf War, War on Terror",
+                "slug": "growth-of-american-power-gulf-war-war-on-terror"
+              },
+              {
+                "name": "Iraq War and Its Aftermath",
+                "slug": "iraq-war-and-its-aftermath"
+              },
+              {
+                "name": "Constraints on and Challenges to US Hegemony",
+                "slug": "constraints-on-and-challenges-to-us-hegemony"
+              }
+            ]
+          },
+          {
+            "name": "Alternative Centres of Power",
+            "slug": "alternative-centres-of-power",
+            "topics": [
+              {
+                "name": "European Union — Formation and Institutions",
+                "slug": "european-union-formation-and-institutions"
+              },
+              {
+                "name": "ASEAN — Formation and Objectives",
+                "slug": "asean-formation-and-objectives"
+              },
+              {
+                "name": "Rise of China as an Economic Power",
+                "slug": "rise-of-china-as-an-economic-power"
+              }
+            ]
+          },
+          {
+            "name": "Contemporary South Asia",
+            "slug": "contemporary-south-asia",
+            "topics": [
+              {
+                "name": "Political Systems of South Asian Countries",
+                "slug": "political-systems-of-south-asian-countries"
+              },
+              {
+                "name": "Peace and Conflict in South Asia",
+                "slug": "peace-and-conflict-in-south-asia"
+              },
+              {
+                "name": "India's Role in South Asian Cooperation (SAARC)",
+                "slug": "india-s-role-in-south-asian-cooperation-saarc"
+              }
+            ]
+          },
+          {
+            "name": "International Organisations",
+            "slug": "international-organisations",
+            "topics": [
+              {
+                "name": "United Nations — Formation and Structure",
+                "slug": "united-nations-formation-and-structure"
+              },
+              {
+                "name": "UN Security Council and Reform Debates",
+                "slug": "un-security-council-and-reform-debates"
+              },
+              {
+                "name": "Rise of Human Rights and Humanitarian Intervention",
+                "slug": "rise-of-human-rights-and-humanitarian-intervention"
+              }
+            ]
+          },
+          {
+            "name": "Security in the Contemporary World",
+            "slug": "security-in-the-contemporary-world",
+            "topics": [
+              {
+                "name": "Traditional and Non-Traditional Notions of Security",
+                "slug": "traditional-and-non-traditional-notions-of-security"
+              },
+              {
+                "name": "Terrorism and Human Trafficking",
+                "slug": "terrorism-and-human-trafficking"
+              },
+              {
+                "name": "Cooperative Security — India's Approach",
+                "slug": "cooperative-security-india-s-approach"
+              }
+            ]
+          },
+          {
+            "name": "Environment and Natural Resources",
+            "slug": "environment-and-natural-resources",
+            "topics": [
+              {
+                "name": "Environmental Concerns in Global Politics",
+                "slug": "environmental-concerns-in-global-politics"
+              },
+              {
+                "name": "Global Commons — Antarctica, Space, Oceans",
+                "slug": "global-commons-antarctica-space-oceans"
+              },
+              {
+                "name": "India's Stand on Environmental Issues",
+                "slug": "india-s-stand-on-environmental-issues"
+              }
+            ]
+          },
+          {
+            "name": "Globalisation",
+            "slug": "globalisation",
+            "topics": [
+              {
+                "name": "Causes and Impact of Globalisation",
+                "slug": "causes-and-impact-of-globalisation"
+              },
+              {
+                "name": "Economic, Cultural and Political Impact",
+                "slug": "economic-cultural-and-political-impact"
+              },
+              {
+                "name": "India and Resistance to Globalisation",
+                "slug": "india-and-resistance-to-globalisation"
+              }
+            ]
+          },
+          {
+            "name": "Challenges of Nation Building (India)",
+            "slug": "challenges-of-nation-building-india",
+            "topics": [
+              {
+                "name": "Partition and Refugee Rehabilitation",
+                "slug": "partition-and-refugee-rehabilitation"
+              },
+              {
+                "name": "Integration of Princely States",
+                "slug": "integration-of-princely-states"
+              },
+              {
+                "name": "Reorganisation of States on Linguistic Lines",
+                "slug": "reorganisation-of-states-on-linguistic-lines"
+              }
+            ]
+          },
+          {
+            "name": "Era of One-Party Dominance",
+            "slug": "era-of-one-party-dominance",
+            "topics": [
+              {
+                "name": "First General Election of 1952",
+                "slug": "first-general-election-of-1952"
+              },
+              {
+                "name": "Nature of Congress Dominance",
+                "slug": "nature-of-congress-dominance"
+              },
+              {
+                "name": "Emergence of Opposition Parties",
+                "slug": "emergence-of-opposition-parties"
+              }
+            ]
+          },
+          {
+            "name": "Politics of Planned Development",
+            "slug": "politics-of-planned-development",
+            "topics": [
+              {
+                "name": "Ideas of Development in the 1950s",
+                "slug": "ideas-of-development-in-the-1950s"
+              },
+              {
+                "name": "Planning Commission and Five Year Plans",
+                "slug": "planning-commission-and-five-year-plans"
+              },
+              {
+                "name": "Green Revolution and Its Political Consequences",
+                "slug": "green-revolution-and-its-political-consequences"
+              }
+            ]
+          },
+          {
+            "name": "India's External Relations",
+            "slug": "india-s-external-relations",
+            "topics": [
+              {
+                "name": "Nehru's Foreign Policy — Non-Alignment",
+                "slug": "nehru-s-foreign-policy-non-alignment"
+              },
+              {
+                "name": "India-China Relations — 1962 War",
+                "slug": "india-china-relations-1962-war"
+              },
+              {
+                "name": "India-Pakistan Wars — 1965 and 1971",
+                "slug": "india-pakistan-wars-1965-and-1971"
+              }
+            ]
+          },
+          {
+            "name": "Challenges to and Restoration of the Congress System",
+            "slug": "challenges-to-and-restoration-of-the-congress-system",
+            "topics": [
+              {
+                "name": "Politics of Non-Congressism",
+                "slug": "politics-of-non-congressism"
+              },
+              {
+                "name": "Split in Congress Party (1969)",
+                "slug": "split-in-congress-party-1969"
+              },
+              {
+                "name": "Rise of Regional Parties",
+                "slug": "rise-of-regional-parties"
+              }
+            ]
+          },
+          {
+            "name": "Crisis of Democratic Order — The Emergency",
+            "slug": "crisis-of-democratic-order-the-emergency",
+            "topics": [
+              {
+                "name": "Political Crisis of 1975 and Declaration of Emergency",
+                "slug": "political-crisis-of-1975-and-declaration-of-emergency"
+              },
+              {
+                "name": "Effects of the Emergency",
+                "slug": "effects-of-the-emergency"
+              },
+              {
+                "name": "1977 Election and Restoration of Democracy",
+                "slug": "1977-election-and-restoration-of-democracy"
+              }
+            ]
+          },
+          {
+            "name": "Regional Aspirations",
+            "slug": "regional-aspirations",
+            "topics": [
+              {
+                "name": "Regional Movements — Punjab, Kashmir, Northeast",
+                "slug": "regional-movements-punjab-kashmir-northeast"
+              },
+              {
+                "name": "Regionalism and Demand for Autonomy",
+                "slug": "regionalism-and-demand-for-autonomy"
+              }
+            ]
+          },
+          {
+            "name": "Recent Developments in Indian Politics",
+            "slug": "recent-developments-in-indian-politics",
+            "topics": [
+              {
+                "name": "Rise of Coalition Governments",
+                "slug": "rise-of-coalition-governments"
+              },
+              {
+                "name": "Emergence of New Social Movements",
+                "slug": "emergence-of-new-social-movements"
+              },
+              {
+                "name": "Economic Reforms and Political Response",
+                "slug": "economic-reforms-and-political-response"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Psychology",
+        "slug": "psychology",
+        "chapters": [
+          {
+            "name": "Variations in Psychological Attributes",
+            "slug": "variations-in-psychological-attributes",
+            "topics": [
+              {
+                "name": "Intelligence — Theories (Spearman, Thurstone, Gardner, Sternberg)",
+                "slug": "intelligence-theories-spearman-thurstone-gardner-sternberg"
+              },
+              {
+                "name": "Assessment of Intelligence",
+                "slug": "assessment-of-intelligence"
+              },
+              {
+                "name": "Concept of Aptitude and Creativity",
+                "slug": "concept-of-aptitude-and-creativity"
+              },
+              {
+                "name": "Individual Differences and Their Assessment",
+                "slug": "individual-differences-and-their-assessment"
+              }
+            ]
+          },
+          {
+            "name": "Self and Personality",
+            "slug": "self-and-personality",
+            "topics": [
+              {
+                "name": "Concept of Self — Self-Esteem, Self-Efficacy",
+                "slug": "concept-of-self-self-esteem-self-efficacy"
+              },
+              {
+                "name": "Type and Trait Approaches to Personality",
+                "slug": "type-and-trait-approaches-to-personality"
+              },
+              {
+                "name": "Psychodynamic and Behavioural Approaches",
+                "slug": "psychodynamic-and-behavioural-approaches"
+              },
+              {
+                "name": "Assessment of Personality — Self-Report and Projective Techniques",
+                "slug": "assessment-of-personality-self-report-and-projective-techniques"
+              }
+            ]
+          },
+          {
+            "name": "Meeting Life Challenges",
+            "slug": "meeting-life-challenges",
+            "topics": [
+              {
+                "name": "Nature of Stress and Its Sources",
+                "slug": "nature-of-stress-and-its-sources"
+              },
+              {
+                "name": "Stress and Health — GAS Model",
+                "slug": "stress-and-health-gas-model"
+              },
+              {
+                "name": "Coping with Stress",
+                "slug": "coping-with-stress"
+              },
+              {
+                "name": "Promoting Positive Health and Well-being",
+                "slug": "promoting-positive-health-and-well-being"
+              }
+            ]
+          },
+          {
+            "name": "Psychological Disorders",
+            "slug": "psychological-disorders",
+            "topics": [
+              {
+                "name": "Concepts of Abnormality and Classification (DSM/ICD)",
+                "slug": "concepts-of-abnormality-and-classification-dsm-icd"
+              },
+              {
+                "name": "Anxiety, Mood and Somatoform Disorders",
+                "slug": "anxiety-mood-and-somatoform-disorders"
+              },
+              {
+                "name": "Schizophrenia and Other Psychotic Disorders",
+                "slug": "schizophrenia-and-other-psychotic-disorders"
+              },
+              {
+                "name": "Behavioural and Developmental Disorders",
+                "slug": "behavioural-and-developmental-disorders"
+              }
+            ]
+          },
+          {
+            "name": "Therapeutic Approaches",
+            "slug": "therapeutic-approaches",
+            "topics": [
+              {
+                "name": "Nature and Process of Psychotherapy",
+                "slug": "nature-and-process-of-psychotherapy"
+              },
+              {
+                "name": "Psychodynamic and Behaviour Therapy",
+                "slug": "psychodynamic-and-behaviour-therapy"
+              },
+              {
+                "name": "Cognitive and Humanistic Therapy",
+                "slug": "cognitive-and-humanistic-therapy"
+              },
+              {
+                "name": "Rehabilitation of the Mentally Ill",
+                "slug": "rehabilitation-of-the-mentally-ill"
+              }
+            ]
+          },
+          {
+            "name": "Attitude and Social Cognition",
+            "slug": "attitude-and-social-cognition",
+            "topics": [
+              {
+                "name": "Nature and Components of Attitude",
+                "slug": "nature-and-components-of-attitude"
+              },
+              {
+                "name": "Attitude Formation and Change",
+                "slug": "attitude-formation-and-change"
+              },
+              {
+                "name": "Impression Formation and Attribution",
+                "slug": "impression-formation-and-attribution"
+              },
+              {
+                "name": "Prejudice and Discrimination",
+                "slug": "prejudice-and-discrimination"
+              }
+            ]
+          },
+          {
+            "name": "Social Influence and Group Processes",
+            "slug": "social-influence-and-group-processes",
+            "topics": [
+              {
+                "name": "Nature and Formation of Groups",
+                "slug": "nature-and-formation-of-groups"
+              },
+              {
+                "name": "Conformity, Compliance and Obedience",
+                "slug": "conformity-compliance-and-obedience"
+              },
+              {
+                "name": "Cooperation and Competition",
+                "slug": "cooperation-and-competition"
+              },
+              {
+                "name": "Social Loafing and Group Polarisation",
+                "slug": "social-loafing-and-group-polarisation"
+              }
+            ]
+          },
+          {
+            "name": "Psychology and Life",
+            "slug": "psychology-and-life",
+            "topics": [
+              {
+                "name": "Human-Environment Relationship",
+                "slug": "human-environment-relationship"
+              },
+              {
+                "name": "Environmental Effects on Behaviour",
+                "slug": "environmental-effects-on-behaviour"
+              },
+              {
+                "name": "Psychology of Aggression and Violence",
+                "slug": "psychology-of-aggression-and-violence"
+              }
+            ]
+          },
+          {
+            "name": "Developing Psychological Skills",
+            "slug": "developing-psychological-skills",
+            "topics": [
+              {
+                "name": "Effective Communication Skills",
+                "slug": "effective-communication-skills"
+              },
+              {
+                "name": "Counselling Skills",
+                "slug": "counselling-skills"
+              },
+              {
+                "name": "Life Skills for Personal Growth",
+                "slug": "life-skills-for-personal-growth"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Sociology",
+        "slug": "sociology",
+        "chapters": [
+          {
+            "name": "Introducing Indian Society",
+            "slug": "introducing-indian-society",
+            "topics": [
+              {
+                "name": "Diversity and Unity in Indian Society",
+                "slug": "diversity-and-unity-in-indian-society"
+              },
+              {
+                "name": "Colonialism, Nationalism and Social Reform",
+                "slug": "colonialism-nationalism-and-social-reform"
+              },
+              {
+                "name": "Sociology and Sociology of India — Themes",
+                "slug": "sociology-and-sociology-of-india-themes"
+              }
+            ]
+          },
+          {
+            "name": "Demographic Structure of Indian Society",
+            "slug": "demographic-structure-of-indian-society",
+            "topics": [
+              {
+                "name": "Size and Growth of Population",
+                "slug": "size-and-growth-of-population"
+              },
+              {
+                "name": "Age Structure, Sex Ratio and Rural-Urban Composition",
+                "slug": "age-structure-sex-ratio-and-rural-urban-composition"
+              },
+              {
+                "name": "Migration Patterns",
+                "slug": "migration-patterns"
+              }
+            ]
+          },
+          {
+            "name": "Social Institutions — Continuity and Change",
+            "slug": "social-institutions-continuity-and-change",
+            "topics": [
+              {
+                "name": "Family, Kinship and Marriage",
+                "slug": "family-kinship-and-marriage"
+              },
+              {
+                "name": "Caste System — Continuity and Change",
+                "slug": "caste-system-continuity-and-change"
+              },
+              {
+                "name": "Tribal Society in India",
+                "slug": "tribal-society-in-india"
+              }
+            ]
+          },
+          {
+            "name": "The Market as a Social Institution",
+            "slug": "the-market-as-a-social-institution",
+            "topics": [
+              {
+                "name": "Sociological Perspective on Markets",
+                "slug": "sociological-perspective-on-markets"
+              },
+              {
+                "name": "Changing Nature of Indian Markets",
+                "slug": "changing-nature-of-indian-markets"
+              },
+              {
+                "name": "Institutions Behind Markets",
+                "slug": "institutions-behind-markets"
+              }
+            ]
+          },
+          {
+            "name": "Patterns of Social Inequality and Exclusion",
+            "slug": "patterns-of-social-inequality-and-exclusion",
+            "topics": [
+              {
+                "name": "Caste-Based Inequality and Exclusion",
+                "slug": "caste-based-inequality-and-exclusion"
+              },
+              {
+                "name": "Tribal Communities and Exclusion",
+                "slug": "tribal-communities-and-exclusion"
+              },
+              {
+                "name": "Patriarchy and Gender-Based Inequality",
+                "slug": "patriarchy-and-gender-based-inequality"
+              },
+              {
+                "name": "Disability and Its Social Dimensions",
+                "slug": "disability-and-its-social-dimensions"
+              }
+            ]
+          },
+          {
+            "name": "Challenges of Cultural Diversity",
+            "slug": "challenges-of-cultural-diversity",
+            "topics": [
+              {
+                "name": "Cultural Communities and Nation",
+                "slug": "cultural-communities-and-nation"
+              },
+              {
+                "name": "Communalism, Regionalism and Secularism",
+                "slug": "communalism-regionalism-and-secularism"
+              },
+              {
+                "name": "Nation, Democracy and Diversity",
+                "slug": "nation-democracy-and-diversity"
+              }
+            ]
+          },
+          {
+            "name": "Structural Change in Indian Society",
+            "slug": "structural-change-in-indian-society",
+            "topics": [
+              {
+                "name": "Colonialism's Impact on Social Structure",
+                "slug": "colonialism-s-impact-on-social-structure"
+              },
+              {
+                "name": "Land Reforms and Agrarian Relations",
+                "slug": "land-reforms-and-agrarian-relations"
+              },
+              {
+                "name": "Growth of Modern Industry",
+                "slug": "growth-of-modern-industry"
+              }
+            ]
+          },
+          {
+            "name": "Cultural Change in Indian Society",
+            "slug": "cultural-change-in-indian-society",
+            "topics": [
+              {
+                "name": "Sanskritisation and Modernisation",
+                "slug": "sanskritisation-and-modernisation"
+              },
+              {
+                "name": "Westernisation and Its Impact",
+                "slug": "westernisation-and-its-impact"
+              },
+              {
+                "name": "Impact of Media on Culture",
+                "slug": "impact-of-media-on-culture"
+              }
+            ]
+          },
+          {
+            "name": "The Story of Indian Democracy",
+            "slug": "the-story-of-indian-democracy",
+            "topics": [
+              {
+                "name": "Roots of Indian Democracy",
+                "slug": "roots-of-indian-democracy"
+              },
+              {
+                "name": "Panchayati Raj and Decentralisation of Power",
+                "slug": "panchayati-raj-and-decentralisation-of-power"
+              },
+              {
+                "name": "Political Parties and Pressure Groups",
+                "slug": "political-parties-and-pressure-groups"
+              }
+            ]
+          },
+          {
+            "name": "Change and Development in Rural Society",
+            "slug": "change-and-development-in-rural-society",
+            "topics": [
+              {
+                "name": "Land Reforms and Green Revolution — Social Impact",
+                "slug": "land-reforms-and-green-revolution-social-impact"
+              },
+              {
+                "name": "Agrarian Class Structure",
+                "slug": "agrarian-class-structure"
+              },
+              {
+                "name": "Transformations in Rural Society",
+                "slug": "transformations-in-rural-society"
+              }
+            ]
+          },
+          {
+            "name": "Change and Development in Industrial Society",
+            "slug": "change-and-development-in-industrial-society",
+            "topics": [
+              {
+                "name": "Industrialisation — Pre and Post Independence",
+                "slug": "industrialisation-pre-and-post-independence"
+              },
+              {
+                "name": "Growth of Urban Settlements",
+                "slug": "growth-of-urban-settlements"
+              },
+              {
+                "name": "Formal and Informal Labour",
+                "slug": "formal-and-informal-labour"
+              }
+            ]
+          },
+          {
+            "name": "Globalisation and Social Change",
+            "slug": "globalisation-and-social-change",
+            "topics": [
+              {
+                "name": "Meaning and Impact of Globalisation on Indian Society",
+                "slug": "meaning-and-impact-of-globalisation-on-indian-society"
+              },
+              {
+                "name": "Privatisation and Its Social Consequences",
+                "slug": "privatisation-and-its-social-consequences"
+              },
+              {
+                "name": "Globalisation, Consumption and Culture",
+                "slug": "globalisation-consumption-and-culture"
+              }
+            ]
+          },
+          {
+            "name": "Mass Media and Communication",
+            "slug": "mass-media-and-communication",
+            "topics": [
+              {
+                "name": "Types of Mass Media — Print, Electronic, Social Media",
+                "slug": "types-of-mass-media-print-electronic-social-media"
+              },
+              {
+                "name": "Media and Democratic Practices",
+                "slug": "media-and-democratic-practices"
+              },
+              {
+                "name": "Media and Social Change",
+                "slug": "media-and-social-change"
+              }
+            ]
+          },
+          {
+            "name": "Social Movements",
+            "slug": "social-movements",
+            "topics": [
+              {
+                "name": "Concept and Types of Social Movements",
+                "slug": "concept-and-types-of-social-movements"
+              },
+              {
+                "name": "Class-Based Movements — Peasant and Labour",
+                "slug": "class-based-movements-peasant-and-labour"
+              },
+              {
+                "name": "Caste-Based, Ethnic and Women's Movements",
+                "slug": "caste-based-ethnic-and-women-s-movements"
+              },
+              {
+                "name": "Environmental Movements",
+                "slug": "environmental-movements"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Philosophy",
+        "slug": "philosophy",
+        "chapters": [
+          {
+            "name": "Philosophy of Religion — Nature and Scope",
+            "slug": "philosophy-of-religion-nature-and-scope",
+            "topics": [
+              {
+                "name": "Meaning and Nature of Philosophy of Religion",
+                "slug": "meaning-and-nature-of-philosophy-of-religion"
+              },
+              {
+                "name": "Religious Experience — Nature and Characteristics",
+                "slug": "religious-experience-nature-and-characteristics"
+              }
+            ]
+          },
+          {
+            "name": "Philosophy of Religion — Concept of God",
+            "slug": "philosophy-of-religion-concept-of-god",
+            "topics": [
+              {
+                "name": "Cosmological Argument for the Existence of God",
+                "slug": "cosmological-argument-for-the-existence-of-god"
+              },
+              {
+                "name": "Teleological Argument for the Existence of God",
+                "slug": "teleological-argument-for-the-existence-of-god"
+              },
+              {
+                "name": "Ontological Argument for the Existence of God",
+                "slug": "ontological-argument-for-the-existence-of-god"
+              },
+              {
+                "name": "Problem of Evil",
+                "slug": "problem-of-evil"
+              }
+            ]
+          },
+          {
+            "name": "Philosophy of Religion — Immortality of Soul",
+            "slug": "philosophy-of-religion-immortality-of-soul",
+            "topics": [
+              {
+                "name": "Concept of Soul — Nature",
+                "slug": "concept-of-soul-nature"
+              },
+              {
+                "name": "Arguments for Immortality of Soul",
+                "slug": "arguments-for-immortality-of-soul"
+              },
+              {
+                "name": "Karma and Rebirth — Indian Philosophical Views",
+                "slug": "karma-and-rebirth-indian-philosophical-views"
+              }
+            ]
+          },
+          {
+            "name": "Applied Ethics — Nature and Scope",
+            "slug": "applied-ethics-nature-and-scope",
+            "topics": [
+              {
+                "name": "Nature and Subject Matter of Applied Ethics",
+                "slug": "nature-and-subject-matter-of-applied-ethics"
+              },
+              {
+                "name": "Normative Theories and Applied Ethics",
+                "slug": "normative-theories-and-applied-ethics"
+              }
+            ]
+          },
+          {
+            "name": "Applied Ethics — Bio-Medical Issues",
+            "slug": "applied-ethics-bio-medical-issues",
+            "topics": [
+              {
+                "name": "Euthanasia — Arguments For and Against",
+                "slug": "euthanasia-arguments-for-and-against"
+              },
+              {
+                "name": "Organ Transplantation — Ethical Issues",
+                "slug": "organ-transplantation-ethical-issues"
+              },
+              {
+                "name": "Surrogacy and Genetic Engineering — Ethical Issues",
+                "slug": "surrogacy-and-genetic-engineering-ethical-issues"
+              }
+            ]
+          },
+          {
+            "name": "Applied Ethics — Environmental Issues",
+            "slug": "applied-ethics-environmental-issues",
+            "topics": [
+              {
+                "name": "Anthropocentrism vs Ecocentrism",
+                "slug": "anthropocentrism-vs-ecocentrism"
+              },
+              {
+                "name": "Sustainable Development — Ethical Dimensions",
+                "slug": "sustainable-development-ethical-dimensions"
+              },
+              {
+                "name": "Deep Ecology",
+                "slug": "deep-ecology"
+              }
+            ]
+          },
+          {
+            "name": "Introduction to Logic",
+            "slug": "introduction-to-logic",
+            "topics": [
+              {
+                "name": "Nature and Subject Matter of Logic",
+                "slug": "nature-and-subject-matter-of-logic"
+              },
+              {
+                "name": "Terms — Denotation and Connotation",
+                "slug": "terms-denotation-and-connotation"
+              },
+              {
+                "name": "Distinction Between Truth and Validity",
+                "slug": "distinction-between-truth-and-validity"
+              }
+            ]
+          },
+          {
+            "name": "Categorical Propositions",
+            "slug": "categorical-propositions",
+            "topics": [
+              {
+                "name": "Definition and Structure of Categorical Proposition",
+                "slug": "definition-and-structure-of-categorical-proposition"
+              },
+              {
+                "name": "Classification — A, E, I, O Propositions",
+                "slug": "classification-a-e-i-o-propositions"
+              },
+              {
+                "name": "Distribution of Terms",
+                "slug": "distribution-of-terms"
+              }
+            ]
+          },
+          {
+            "name": "Deductive and Inductive Reasoning",
+            "slug": "deductive-and-inductive-reasoning",
+            "topics": [
+              {
+                "name": "Nature of Deductive Reasoning",
+                "slug": "nature-of-deductive-reasoning"
+              },
+              {
+                "name": "Nature of Inductive Reasoning",
+                "slug": "nature-of-inductive-reasoning"
+              },
+              {
+                "name": "Difference Between Deduction and Induction",
+                "slug": "difference-between-deduction-and-induction"
+              }
+            ]
+          },
+          {
+            "name": "Immediate Inference — Opposition and Eduction",
+            "slug": "immediate-inference-opposition-and-eduction",
+            "topics": [
+              {
+                "name": "Square of Opposition",
+                "slug": "square-of-opposition"
+              },
+              {
+                "name": "Conversion",
+                "slug": "conversion"
+              },
+              {
+                "name": "Obversion",
+                "slug": "obversion"
+              }
+            ]
+          },
+          {
+            "name": "Categorical Syllogism",
+            "slug": "categorical-syllogism",
+            "topics": [
+              {
+                "name": "Structure of Categorical Syllogism",
+                "slug": "structure-of-categorical-syllogism"
+              },
+              {
+                "name": "Rules of Categorical Syllogism",
+                "slug": "rules-of-categorical-syllogism"
+              },
+              {
+                "name": "Figures and Moods of Syllogism",
+                "slug": "figures-and-moods-of-syllogism"
+              }
+            ]
+          },
+          {
+            "name": "Fallacies",
+            "slug": "fallacies",
+            "topics": [
+              {
+                "name": "Formal Fallacies",
+                "slug": "formal-fallacies"
+              },
+              {
+                "name": "Informal Fallacies",
+                "slug": "informal-fallacies"
+              },
+              {
+                "name": "Fallacies of Relevance and Ambiguity",
+                "slug": "fallacies-of-relevance-and-ambiguity"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Physics",
+        "slug": "physics",
+        "chapters": [
+          {
+            "name": "Electric Charges and Fields",
+            "slug": "electric-charges-and-fields",
+            "topics": [
+              {
+                "name": "Electric Charge — Properties and Conservation",
+                "slug": "electric-charge-properties-and-conservation"
+              },
+              {
+                "name": "Coulomb's Law and Superposition Principle",
+                "slug": "coulomb-s-law-and-superposition-principle"
+              },
+              {
+                "name": "Electric Field and Field Lines",
+                "slug": "electric-field-and-field-lines"
+              },
+              {
+                "name": "Electric Dipole and Dipole Moment",
+                "slug": "electric-dipole-and-dipole-moment"
+              },
+              {
+                "name": "Gauss's Law and Applications",
+                "slug": "gauss-s-law-and-applications"
+              }
+            ]
+          },
+          {
+            "name": "Electrostatic Potential and Capacitance",
+            "slug": "electrostatic-potential-and-capacitance",
+            "topics": [
+              {
+                "name": "Electric Potential and Potential Difference",
+                "slug": "electric-potential-and-potential-difference"
+              },
+              {
+                "name": "Potential due to Point Charge and Dipole",
+                "slug": "potential-due-to-point-charge-and-dipole"
+              },
+              {
+                "name": "Equipotential Surfaces",
+                "slug": "equipotential-surfaces"
+              },
+              {
+                "name": "Capacitance and Capacitors",
+                "slug": "capacitance-and-capacitors"
+              },
+              {
+                "name": "Combination of Capacitors — Series and Parallel",
+                "slug": "combination-of-capacitors-series-and-parallel"
+              },
+              {
+                "name": "Energy Stored in a Capacitor",
+                "slug": "energy-stored-in-a-capacitor"
+              }
+            ]
+          },
+          {
+            "name": "Current Electricity",
+            "slug": "current-electricity",
+            "topics": [
+              {
+                "name": "Electric Current and Drift Velocity",
+                "slug": "electric-current-and-drift-velocity"
+              },
+              {
+                "name": "Ohm's Law and Resistance",
+                "slug": "ohm-s-law-and-resistance"
+              },
+              {
+                "name": "Resistivity and Its Temperature Dependence",
+                "slug": "resistivity-and-its-temperature-dependence"
+              },
+              {
+                "name": "Combination of Resistors — Series and Parallel",
+                "slug": "combination-of-resistors-series-and-parallel"
+              },
+              {
+                "name": "Kirchhoff's Laws",
+                "slug": "kirchhoff-s-laws"
+              },
+              {
+                "name": "Wheatstone Bridge and Meter Bridge",
+                "slug": "wheatstone-bridge-and-meter-bridge"
+              },
+              {
+                "name": "Potentiometer — Principle and Applications",
+                "slug": "potentiometer-principle-and-applications"
+              }
+            ]
+          },
+          {
+            "name": "Moving Charges and Magnetism",
+            "slug": "moving-charges-and-magnetism",
+            "topics": [
+              {
+                "name": "Magnetic Force on a Moving Charge",
+                "slug": "magnetic-force-on-a-moving-charge"
+              },
+              {
+                "name": "Biot-Savart Law",
+                "slug": "biot-savart-law"
+              },
+              {
+                "name": "Ampere's Circuital Law",
+                "slug": "ampere-s-circuital-law"
+              },
+              {
+                "name": "Force Between Two Parallel Current Carrying Conductors",
+                "slug": "force-between-two-parallel-current-carrying-conductors"
+              },
+              {
+                "name": "Moving Coil Galvanometer",
+                "slug": "moving-coil-galvanometer"
+              }
+            ]
+          },
+          {
+            "name": "Magnetism and Matter",
+            "slug": "magnetism-and-matter",
+            "topics": [
+              {
+                "name": "Bar Magnet and Magnetic Field Lines",
+                "slug": "bar-magnet-and-magnetic-field-lines"
+              },
+              {
+                "name": "Earth's Magnetism",
+                "slug": "earth-s-magnetism"
+              },
+              {
+                "name": "Magnetic Properties of Materials — Dia, Para, Ferro",
+                "slug": "magnetic-properties-of-materials-dia-para-ferro"
+              }
+            ]
+          },
+          {
+            "name": "Electromagnetic Induction",
+            "slug": "electromagnetic-induction",
+            "topics": [
+              {
+                "name": "Faraday's Laws of Electromagnetic Induction",
+                "slug": "faraday-s-laws-of-electromagnetic-induction"
+              },
+              {
+                "name": "Lenz's Law and Conservation of Energy",
+                "slug": "lenz-s-law-and-conservation-of-energy"
+              },
+              {
+                "name": "Motional EMF",
+                "slug": "motional-emf"
+              },
+              {
+                "name": "Self and Mutual Inductance",
+                "slug": "self-and-mutual-inductance"
+              }
+            ]
+          },
+          {
+            "name": "Alternating Current",
+            "slug": "alternating-current",
+            "topics": [
+              {
+                "name": "AC Voltage Applied to Resistor, Inductor and Capacitor",
+                "slug": "ac-voltage-applied-to-resistor-inductor-and-capacitor"
+              },
+              {
+                "name": "LCR Circuit and Resonance",
+                "slug": "lcr-circuit-and-resonance"
+              },
+              {
+                "name": "Power in AC Circuit",
+                "slug": "power-in-ac-circuit"
+              },
+              {
+                "name": "Transformers",
+                "slug": "transformers"
+              }
+            ]
+          },
+          {
+            "name": "Electromagnetic Waves",
+            "slug": "electromagnetic-waves",
+            "topics": [
+              {
+                "name": "Displacement Current",
+                "slug": "displacement-current"
+              },
+              {
+                "name": "Electromagnetic Spectrum and Its Uses",
+                "slug": "electromagnetic-spectrum-and-its-uses"
+              }
+            ]
+          },
+          {
+            "name": "Ray Optics and Optical Instruments",
+            "slug": "ray-optics-and-optical-instruments",
+            "topics": [
+              {
+                "name": "Reflection and Refraction at Spherical Surfaces",
+                "slug": "reflection-and-refraction-at-spherical-surfaces"
+              },
+              {
+                "name": "Refraction through a Prism",
+                "slug": "refraction-through-a-prism"
+              },
+              {
+                "name": "Lens Maker's Formula and Lens Combination",
+                "slug": "lens-maker-s-formula-and-lens-combination"
+              },
+              {
+                "name": "Microscope and Telescope",
+                "slug": "microscope-and-telescope"
+              }
+            ]
+          },
+          {
+            "name": "Wave Optics",
+            "slug": "wave-optics",
+            "topics": [
+              {
+                "name": "Huygens' Principle",
+                "slug": "huygens-principle"
+              },
+              {
+                "name": "Young's Double Slit Experiment",
+                "slug": "young-s-double-slit-experiment"
+              },
+              {
+                "name": "Diffraction and Polarisation of Light",
+                "slug": "diffraction-and-polarisation-of-light"
+              }
+            ]
+          },
+          {
+            "name": "Dual Nature of Radiation and Matter",
+            "slug": "dual-nature-of-radiation-and-matter",
+            "topics": [
+              {
+                "name": "Photoelectric Effect and Einstein's Equation",
+                "slug": "photoelectric-effect-and-einstein-s-equation"
+              },
+              {
+                "name": "Matter Waves — de Broglie Relation",
+                "slug": "matter-waves-de-broglie-relation"
+              }
+            ]
+          },
+          {
+            "name": "Atoms",
+            "slug": "atoms",
+            "topics": [
+              {
+                "name": "Rutherford's Model of Atom",
+                "slug": "rutherford-s-model-of-atom"
+              },
+              {
+                "name": "Bohr Model of Hydrogen Atom",
+                "slug": "bohr-model-of-hydrogen-atom"
+              },
+              {
+                "name": "Atomic Spectra",
+                "slug": "atomic-spectra"
+              }
+            ]
+          },
+          {
+            "name": "Nuclei",
+            "slug": "nuclei",
+            "topics": [
+              {
+                "name": "Composition and Size of Nucleus",
+                "slug": "composition-and-size-of-nucleus"
+              },
+              {
+                "name": "Mass-Energy Relation and Binding Energy",
+                "slug": "mass-energy-relation-and-binding-energy"
+              },
+              {
+                "name": "Radioactivity — Alpha, Beta, Gamma Decay",
+                "slug": "radioactivity-alpha-beta-gamma-decay"
+              },
+              {
+                "name": "Nuclear Fission and Fusion",
+                "slug": "nuclear-fission-and-fusion"
+              }
+            ]
+          },
+          {
+            "name": "Semiconductor Electronics",
+            "slug": "semiconductor-electronics",
+            "topics": [
+              {
+                "name": "Energy Bands in Solids",
+                "slug": "energy-bands-in-solids"
+              },
+              {
+                "name": "Intrinsic and Extrinsic Semiconductors",
+                "slug": "intrinsic-and-extrinsic-semiconductors"
+              },
+              {
+                "name": "p-n Junction Diode and Rectifier",
+                "slug": "p-n-junction-diode-and-rectifier"
+              },
+              {
+                "name": "Transistor — Working and Characteristics",
+                "slug": "transistor-working-and-characteristics"
+              },
+              {
+                "name": "Logic Gates",
+                "slug": "logic-gates"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Chemistry",
+        "slug": "chemistry",
+        "chapters": [
+          {
+            "name": "Solutions",
+            "slug": "solutions",
+            "topics": [
+              {
+                "name": "Types of Solutions and Concentration Terms",
+                "slug": "types-of-solutions-and-concentration-terms"
+              },
+              {
+                "name": "Raoult's Law and Ideal-Non-Ideal Solutions",
+                "slug": "raoult-s-law-and-ideal-non-ideal-solutions"
+              },
+              {
+                "name": "Colligative Properties",
+                "slug": "colligative-properties"
+              },
+              {
+                "name": "Abnormal Molar Mass and van't Hoff Factor",
+                "slug": "abnormal-molar-mass-and-van-t-hoff-factor"
+              }
+            ]
+          },
+          {
+            "name": "Electrochemistry",
+            "slug": "electrochemistry",
+            "topics": [
+              {
+                "name": "Electrochemical Cells and EMF",
+                "slug": "electrochemical-cells-and-emf"
+              },
+              {
+                "name": "Nernst Equation",
+                "slug": "nernst-equation"
+              },
+              {
+                "name": "Conductance and Kohlrausch's Law",
+                "slug": "conductance-and-kohlrausch-s-law"
+              },
+              {
+                "name": "Electrolysis and Faraday's Laws",
+                "slug": "electrolysis-and-faraday-s-laws"
+              },
+              {
+                "name": "Batteries and Fuel Cells",
+                "slug": "batteries-and-fuel-cells"
+              }
+            ]
+          },
+          {
+            "name": "Chemical Kinetics",
+            "slug": "chemical-kinetics",
+            "topics": [
+              {
+                "name": "Rate of Reaction and Factors Affecting It",
+                "slug": "rate-of-reaction-and-factors-affecting-it"
+              },
+              {
+                "name": "Order and Molecularity of Reaction",
+                "slug": "order-and-molecularity-of-reaction"
+              },
+              {
+                "name": "Integrated Rate Equations — Zero and First Order",
+                "slug": "integrated-rate-equations-zero-and-first-order"
+              },
+              {
+                "name": "Arrhenius Equation and Activation Energy",
+                "slug": "arrhenius-equation-and-activation-energy"
+              }
+            ]
+          },
+          {
+            "name": "d- and f-Block Elements",
+            "slug": "d-and-f-block-elements",
+            "topics": [
+              {
+                "name": "Electronic Configuration of Transition Elements",
+                "slug": "electronic-configuration-of-transition-elements"
+              },
+              {
+                "name": "General Trends — Oxidation States, Magnetic Properties",
+                "slug": "general-trends-oxidation-states-magnetic-properties"
+              },
+              {
+                "name": "Lanthanoids and Actinoids",
+                "slug": "lanthanoids-and-actinoids"
+              }
+            ]
+          },
+          {
+            "name": "Coordination Compounds",
+            "slug": "coordination-compounds",
+            "topics": [
+              {
+                "name": "Werner's Theory and Nomenclature",
+                "slug": "werner-s-theory-and-nomenclature"
+              },
+              {
+                "name": "Types of Ligands and Coordination Number",
+                "slug": "types-of-ligands-and-coordination-number"
+              },
+              {
+                "name": "Isomerism in Coordination Compounds",
+                "slug": "isomerism-in-coordination-compounds"
+              },
+              {
+                "name": "Bonding — Valence Bond and Crystal Field Theory",
+                "slug": "bonding-valence-bond-and-crystal-field-theory"
+              }
+            ]
+          },
+          {
+            "name": "Haloalkanes and Haloarenes",
+            "slug": "haloalkanes-and-haloarenes",
+            "topics": [
+              {
+                "name": "Nomenclature and Nature of C–X Bond",
+                "slug": "nomenclature-and-nature-of-c-x-bond"
+              },
+              {
+                "name": "Preparation of Haloalkanes",
+                "slug": "preparation-of-haloalkanes"
+              },
+              {
+                "name": "Reactions — Substitution (SN1, SN2)",
+                "slug": "reactions-substitution-sn1-sn2"
+              },
+              {
+                "name": "Haloarenes — Preparation and Properties",
+                "slug": "haloarenes-preparation-and-properties"
+              }
+            ]
+          },
+          {
+            "name": "Alcohols, Phenols and Ethers",
+            "slug": "alcohols-phenols-and-ethers",
+            "topics": [
+              {
+                "name": "Nomenclature and Preparation of Alcohols",
+                "slug": "nomenclature-and-preparation-of-alcohols"
+              },
+              {
+                "name": "Chemical Reactions of Alcohols",
+                "slug": "chemical-reactions-of-alcohols"
+              },
+              {
+                "name": "Preparation and Properties of Phenols",
+                "slug": "preparation-and-properties-of-phenols"
+              },
+              {
+                "name": "Preparation and Properties of Ethers",
+                "slug": "preparation-and-properties-of-ethers"
+              }
+            ]
+          },
+          {
+            "name": "Aldehydes, Ketones and Carboxylic Acids",
+            "slug": "aldehydes-ketones-and-carboxylic-acids",
+            "topics": [
+              {
+                "name": "Nomenclature and Preparation of Aldehydes and Ketones",
+                "slug": "nomenclature-and-preparation-of-aldehydes-and-ketones"
+              },
+              {
+                "name": "Nucleophilic Addition Reactions",
+                "slug": "nucleophilic-addition-reactions"
+              },
+              {
+                "name": "Preparation and Properties of Carboxylic Acids",
+                "slug": "preparation-and-properties-of-carboxylic-acids"
+              }
+            ]
+          },
+          {
+            "name": "Amines",
+            "slug": "amines",
+            "topics": [
+              {
+                "name": "Classification and Nomenclature of Amines",
+                "slug": "classification-and-nomenclature-of-amines"
+              },
+              {
+                "name": "Preparation of Amines",
+                "slug": "preparation-of-amines"
+              },
+              {
+                "name": "Chemical Reactions of Amines",
+                "slug": "chemical-reactions-of-amines"
+              },
+              {
+                "name": "Diazonium Salts",
+                "slug": "diazonium-salts"
+              }
+            ]
+          },
+          {
+            "name": "Biomolecules",
+            "slug": "biomolecules",
+            "topics": [
+              {
+                "name": "Carbohydrates — Classification and Structure",
+                "slug": "carbohydrates-classification-and-structure"
+              },
+              {
+                "name": "Proteins — Amino Acids and Structure",
+                "slug": "proteins-amino-acids-and-structure"
+              },
+              {
+                "name": "Enzymes",
+                "slug": "enzymes"
+              },
+              {
+                "name": "Vitamins and Nucleic Acids",
+                "slug": "vitamins-and-nucleic-acids"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Mathematics",
+        "slug": "mathematics",
+        "chapters": [
+          {
+            "name": "Relations and Functions",
+            "slug": "relations-and-functions",
+            "topics": [
+              {
+                "name": "Types of Relations — Reflexive, Symmetric, Transitive",
+                "slug": "types-of-relations-reflexive-symmetric-transitive"
+              },
+              {
+                "name": "Equivalence Relations",
+                "slug": "equivalence-relations"
+              },
+              {
+                "name": "Types of Functions — One-One, Onto, Bijective",
+                "slug": "types-of-functions-one-one-onto-bijective"
+              },
+              {
+                "name": "Composition of Functions and Invertible Functions",
+                "slug": "composition-of-functions-and-invertible-functions"
+              }
+            ]
+          },
+          {
+            "name": "Inverse Trigonometric Functions",
+            "slug": "inverse-trigonometric-functions",
+            "topics": [
+              {
+                "name": "Domain and Range of Inverse Trigonometric Functions",
+                "slug": "domain-and-range-of-inverse-trigonometric-functions"
+              },
+              {
+                "name": "Properties of Inverse Trigonometric Functions",
+                "slug": "properties-of-inverse-trigonometric-functions"
+              }
+            ]
+          },
+          {
+            "name": "Matrices",
+            "slug": "matrices",
+            "topics": [
+              {
+                "name": "Types of Matrices and Operations",
+                "slug": "types-of-matrices-and-operations"
+              },
+              {
+                "name": "Transpose, Symmetric and Skew-Symmetric Matrices",
+                "slug": "transpose-symmetric-and-skew-symmetric-matrices"
+              },
+              {
+                "name": "Elementary Row/Column Operations",
+                "slug": "elementary-row-column-operations"
+              },
+              {
+                "name": "Invertible Matrices",
+                "slug": "invertible-matrices"
+              }
+            ]
+          },
+          {
+            "name": "Determinants",
+            "slug": "determinants",
+            "topics": [
+              {
+                "name": "Determinant — Definition and Properties",
+                "slug": "determinant-definition-and-properties"
+              },
+              {
+                "name": "Area of Triangle using Determinants",
+                "slug": "area-of-triangle-using-determinants"
+              },
+              {
+                "name": "Adjoint and Inverse of a Matrix",
+                "slug": "adjoint-and-inverse-of-a-matrix"
+              },
+              {
+                "name": "Applications — Solving System of Linear Equations",
+                "slug": "applications-solving-system-of-linear-equations"
+              }
+            ]
+          },
+          {
+            "name": "Continuity and Differentiability",
+            "slug": "continuity-and-differentiability",
+            "topics": [
+              {
+                "name": "Continuity of a Function",
+                "slug": "continuity-of-a-function"
+              },
+              {
+                "name": "Differentiability and Chain Rule",
+                "slug": "differentiability-and-chain-rule"
+              },
+              {
+                "name": "Derivatives of Implicit and Inverse Trigonometric Functions",
+                "slug": "derivatives-of-implicit-and-inverse-trigonometric-functions"
+              },
+              {
+                "name": "Logarithmic Differentiation",
+                "slug": "logarithmic-differentiation"
+              },
+              {
+                "name": "Second Order Derivatives",
+                "slug": "second-order-derivatives"
+              },
+              {
+                "name": "Mean Value Theorem",
+                "slug": "mean-value-theorem"
+              }
+            ]
+          },
+          {
+            "name": "Applications of Derivatives",
+            "slug": "applications-of-derivatives",
+            "topics": [
+              {
+                "name": "Rate of Change of Quantities",
+                "slug": "rate-of-change-of-quantities"
+              },
+              {
+                "name": "Increasing and Decreasing Functions",
+                "slug": "increasing-and-decreasing-functions"
+              },
+              {
+                "name": "Tangents and Normals",
+                "slug": "tangents-and-normals"
+              },
+              {
+                "name": "Maxima and Minima",
+                "slug": "maxima-and-minima"
+              }
+            ]
+          },
+          {
+            "name": "Integrals",
+            "slug": "integrals",
+            "topics": [
+              {
+                "name": "Integration as Inverse of Differentiation",
+                "slug": "integration-as-inverse-of-differentiation"
+              },
+              {
+                "name": "Methods of Integration — Substitution, Partial Fractions, By Parts",
+                "slug": "methods-of-integration-substitution-partial-fractions-by-parts"
+              },
+              {
+                "name": "Definite Integrals and Their Properties",
+                "slug": "definite-integrals-and-their-properties"
+              }
+            ]
+          },
+          {
+            "name": "Applications of Integrals",
+            "slug": "applications-of-integrals",
+            "topics": [
+              {
+                "name": "Area under Simple Curves",
+                "slug": "area-under-simple-curves"
+              },
+              {
+                "name": "Area between Two Curves",
+                "slug": "area-between-two-curves"
+              }
+            ]
+          },
+          {
+            "name": "Differential Equations",
+            "slug": "differential-equations",
+            "topics": [
+              {
+                "name": "Order and Degree of Differential Equations",
+                "slug": "order-and-degree-of-differential-equations"
+              },
+              {
+                "name": "General and Particular Solutions",
+                "slug": "general-and-particular-solutions"
+              },
+              {
+                "name": "Method of Separation of Variables",
+                "slug": "method-of-separation-of-variables"
+              },
+              {
+                "name": "Homogeneous Differential Equations",
+                "slug": "homogeneous-differential-equations"
+              },
+              {
+                "name": "Linear Differential Equations",
+                "slug": "linear-differential-equations"
+              }
+            ]
+          },
+          {
+            "name": "Vector Algebra",
+            "slug": "vector-algebra",
+            "topics": [
+              {
+                "name": "Vectors — Types and Basic Concepts",
+                "slug": "vectors-types-and-basic-concepts"
+              },
+              {
+                "name": "Addition and Scalar Multiplication of Vectors",
+                "slug": "addition-and-scalar-multiplication-of-vectors"
+              },
+              {
+                "name": "Dot Product and Cross Product",
+                "slug": "dot-product-and-cross-product"
+              },
+              {
+                "name": "Scalar Triple Product",
+                "slug": "scalar-triple-product"
+              }
+            ]
+          },
+          {
+            "name": "Three Dimensional Geometry",
+            "slug": "three-dimensional-geometry",
+            "topics": [
+              {
+                "name": "Direction Cosines and Direction Ratios",
+                "slug": "direction-cosines-and-direction-ratios"
+              },
+              {
+                "name": "Equation of a Line in Space",
+                "slug": "equation-of-a-line-in-space"
+              },
+              {
+                "name": "Equation of a Plane",
+                "slug": "equation-of-a-plane"
+              },
+              {
+                "name": "Angle Between Two Lines/Planes and Shortest Distance",
+                "slug": "angle-between-two-lines-planes-and-shortest-distance"
+              }
+            ]
+          },
+          {
+            "name": "Linear Programming",
+            "slug": "linear-programming",
+            "topics": [
+              {
+                "name": "Mathematical Formulation of LPP",
+                "slug": "mathematical-formulation-of-lpp"
+              },
+              {
+                "name": "Graphical Method of Solving LPP",
+                "slug": "graphical-method-of-solving-lpp"
+              },
+              {
+                "name": "Feasible Region and Optimal Solution",
+                "slug": "feasible-region-and-optimal-solution"
+              }
+            ]
+          },
+          {
+            "name": "Probability",
+            "slug": "probability",
+            "topics": [
+              {
+                "name": "Conditional Probability",
+                "slug": "conditional-probability"
+              },
+              {
+                "name": "Multiplication Theorem and Independent Events",
+                "slug": "multiplication-theorem-and-independent-events"
+              },
+              {
+                "name": "Bayes' Theorem",
+                "slug": "bayes-theorem"
+              },
+              {
+                "name": "Random Variables and Probability Distributions",
+                "slug": "random-variables-and-probability-distributions"
+              },
+              {
+                "name": "Bernoulli Trials and Binomial Distribution",
+                "slug": "bernoulli-trials-and-binomial-distribution"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Biology",
+        "slug": "biology",
+        "chapters": [
+          {
+            "name": "Reproduction in Organisms",
+            "slug": "reproduction-in-organisms",
+            "topics": [
+              {
+                "name": "Modes of Reproduction — Asexual and Sexual",
+                "slug": "modes-of-reproduction-asexual-and-sexual"
+              },
+              {
+                "name": "Life Span and Life Cycle Events",
+                "slug": "life-span-and-life-cycle-events"
+              }
+            ]
+          },
+          {
+            "name": "Sexual Reproduction in Flowering Plants",
+            "slug": "sexual-reproduction-in-flowering-plants",
+            "topics": [
+              {
+                "name": "Flower Structure and Pollination",
+                "slug": "flower-structure-and-pollination"
+              },
+              {
+                "name": "Double Fertilisation",
+                "slug": "double-fertilisation"
+              },
+              {
+                "name": "Post-Fertilisation Events — Seed and Fruit Formation",
+                "slug": "post-fertilisation-events-seed-and-fruit-formation"
+              }
+            ]
+          },
+          {
+            "name": "Human Reproduction",
+            "slug": "human-reproduction",
+            "topics": [
+              {
+                "name": "Male and Female Reproductive System",
+                "slug": "male-and-female-reproductive-system"
+              },
+              {
+                "name": "Gametogenesis",
+                "slug": "gametogenesis"
+              },
+              {
+                "name": "Menstrual Cycle",
+                "slug": "menstrual-cycle"
+              },
+              {
+                "name": "Fertilisation, Embryonic Development and Parturition",
+                "slug": "fertilisation-embryonic-development-and-parturition"
+              }
+            ]
+          },
+          {
+            "name": "Reproductive Health",
+            "slug": "reproductive-health",
+            "topics": [
+              {
+                "name": "Reproductive Health Problems and Strategies",
+                "slug": "reproductive-health-problems-and-strategies"
+              },
+              {
+                "name": "Birth Control Methods",
+                "slug": "birth-control-methods"
+              },
+              {
+                "name": "Infertility and Assisted Reproductive Technologies",
+                "slug": "infertility-and-assisted-reproductive-technologies"
+              }
+            ]
+          },
+          {
+            "name": "Principles of Inheritance and Variation",
+            "slug": "principles-of-inheritance-and-variation",
+            "topics": [
+              {
+                "name": "Mendel's Laws of Inheritance",
+                "slug": "mendel-s-laws-of-inheritance"
+              },
+              {
+                "name": "Chromosomal Theory of Inheritance",
+                "slug": "chromosomal-theory-of-inheritance"
+              },
+              {
+                "name": "Sex Determination in Humans",
+                "slug": "sex-determination-in-humans"
+              },
+              {
+                "name": "Linkage and Recombination",
+                "slug": "linkage-and-recombination"
+              },
+              {
+                "name": "Pedigree Analysis and Genetic Disorders",
+                "slug": "pedigree-analysis-and-genetic-disorders"
+              }
+            ]
+          },
+          {
+            "name": "Molecular Basis of Inheritance",
+            "slug": "molecular-basis-of-inheritance",
+            "topics": [
+              {
+                "name": "DNA Structure and Packaging",
+                "slug": "dna-structure-and-packaging"
+              },
+              {
+                "name": "DNA Replication",
+                "slug": "dna-replication"
+              },
+              {
+                "name": "Transcription and Genetic Code",
+                "slug": "transcription-and-genetic-code"
+              },
+              {
+                "name": "Translation and Gene Expression Regulation",
+                "slug": "translation-and-gene-expression-regulation"
+              },
+              {
+                "name": "Human Genome Project",
+                "slug": "human-genome-project"
+              }
+            ]
+          },
+          {
+            "name": "Evolution",
+            "slug": "evolution",
+            "topics": [
+              {
+                "name": "Origin of Life",
+                "slug": "origin-of-life"
+              },
+              {
+                "name": "Evidence for Evolution",
+                "slug": "evidence-for-evolution"
+              },
+              {
+                "name": "Darwinism and Modern Synthetic Theory",
+                "slug": "darwinism-and-modern-synthetic-theory"
+              },
+              {
+                "name": "Hardy-Weinberg Principle",
+                "slug": "hardy-weinberg-principle"
+              }
+            ]
+          },
+          {
+            "name": "Human Health and Disease",
+            "slug": "human-health-and-disease",
+            "topics": [
+              {
+                "name": "Common Diseases — Bacterial, Viral, Protozoan",
+                "slug": "common-diseases-bacterial-viral-protozoan"
+              },
+              {
+                "name": "Immunity — Innate and Acquired",
+                "slug": "immunity-innate-and-acquired"
+              },
+              {
+                "name": "AIDS and Cancer",
+                "slug": "aids-and-cancer"
+              },
+              {
+                "name": "Drugs and Alcohol Abuse",
+                "slug": "drugs-and-alcohol-abuse"
+              }
+            ]
+          },
+          {
+            "name": "Microbes in Human Welfare",
+            "slug": "microbes-in-human-welfare",
+            "topics": [
+              {
+                "name": "Microbes in Household Products and Industrial Products",
+                "slug": "microbes-in-household-products-and-industrial-products"
+              },
+              {
+                "name": "Microbes in Sewage Treatment and Biogas Production",
+                "slug": "microbes-in-sewage-treatment-and-biogas-production"
+              },
+              {
+                "name": "Microbes as Biocontrol Agents and Biofertilisers",
+                "slug": "microbes-as-biocontrol-agents-and-biofertilisers"
+              }
+            ]
+          },
+          {
+            "name": "Biotechnology — Principles and Processes",
+            "slug": "biotechnology-principles-and-processes",
+            "topics": [
+              {
+                "name": "Genetic Engineering — Tools (Restriction Enzymes, Vectors)",
+                "slug": "genetic-engineering-tools-restriction-enzymes-vectors"
+              },
+              {
+                "name": "Recombinant DNA Technology Process",
+                "slug": "recombinant-dna-technology-process"
+              }
+            ]
+          },
+          {
+            "name": "Biotechnology and Its Applications",
+            "slug": "biotechnology-and-its-applications",
+            "topics": [
+              {
+                "name": "Biotechnology in Agriculture — Bt Crops",
+                "slug": "biotechnology-in-agriculture-bt-crops"
+              },
+              {
+                "name": "Biotechnology in Medicine — Insulin, Gene Therapy",
+                "slug": "biotechnology-in-medicine-insulin-gene-therapy"
+              },
+              {
+                "name": "Genetically Modified Organisms and Biosafety",
+                "slug": "genetically-modified-organisms-and-biosafety"
+              }
+            ]
+          },
+          {
+            "name": "Organisms and Populations",
+            "slug": "organisms-and-populations",
+            "topics": [
+              {
+                "name": "Organism and Its Environment",
+                "slug": "organism-and-its-environment"
+              },
+              {
+                "name": "Population Attributes and Growth Models",
+                "slug": "population-attributes-and-growth-models"
+              },
+              {
+                "name": "Population Interactions",
+                "slug": "population-interactions"
+              }
+            ]
+          },
+          {
+            "name": "Ecosystem",
+            "slug": "ecosystem",
+            "topics": [
+              {
+                "name": "Ecosystem Structure and Function",
+                "slug": "ecosystem-structure-and-function"
+              },
+              {
+                "name": "Energy Flow and Food Chains",
+                "slug": "energy-flow-and-food-chains"
+              },
+              {
+                "name": "Ecological Pyramids",
+                "slug": "ecological-pyramids"
+              },
+              {
+                "name": "Nutrient Cycling — Carbon and Phosphorus",
+                "slug": "nutrient-cycling-carbon-and-phosphorus"
+              }
+            ]
+          },
+          {
+            "name": "Biodiversity and Conservation",
+            "slug": "biodiversity-and-conservation",
+            "topics": [
+              {
+                "name": "Levels and Patterns of Biodiversity",
+                "slug": "levels-and-patterns-of-biodiversity"
+              },
+              {
+                "name": "Loss of Biodiversity",
+                "slug": "loss-of-biodiversity"
+              },
+              {
+                "name": "Biodiversity Conservation Strategies",
+                "slug": "biodiversity-conservation-strategies"
+              }
+            ]
+          }
+        ]
+      }
+    ]
   }
 };
 
@@ -13105,5 +17352,6 @@ export const EXAM_LABEL = {
   "jee-main": "JEE Main",
   "jee-advanced": "JEE Advanced",
   "neet": "NEET",
-  "ssc-cgl": "SSC CGL"
+  "ssc-cgl": "SSC CGL",
+  "cuet": "CUET"
 };

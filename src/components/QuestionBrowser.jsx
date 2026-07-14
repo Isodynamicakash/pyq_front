@@ -472,6 +472,7 @@ const EXAM_SLUG_TO_ID = {
   "jee-advanced": 2,
   "neet":         3,
   "ssc-cgl":      6,
+  "cuet":         19,
 };
 
 // ── Main Component ─────────────────────────────────────────────────────────────
@@ -689,4 +690,4 @@ export default function QuestionBrowser({apiBase,onBack,isDark:isDarkProp,onTogg
       </div>
     </MathJaxContext>
   );
-}
+                          }

@@ -193,7 +193,7 @@ function Hero({ onJeeMains, T, isDark }) {
         letterSpacing: .5,
       }}>
         <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#22c55e", animation: "pulse 2s ease infinite", flexShrink: 0 }} />
-        JEE Mains · JEE Advanced · NEET · SSC CGL — Live Now
+        JEE Mains · JEE Advanced · NEET · SSC CGL · CUET — Live Now
         <style>{`@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.5)}}`}</style>
       </div>
 
@@ -231,7 +231,7 @@ function Hero({ onJeeMains, T, isDark }) {
         lineHeight: 1.75, margin: "0 0 40px",
         fontWeight: 400,
       }}>
-        Free previous year questions for JEE, NEET and SSC —
+        Free previous year questions for JEE, NEET, SSC and CUET —
         fully searchable with complete solutions.
       </p>
 
@@ -242,6 +242,7 @@ function Hero({ onJeeMains, T, isDark }) {
           { label: "JEE Advanced", id: "jee-adv",   bg: "#7c3aed", shadow: "rgba(124,58,237,.35)", hover: "#6d28d9" },
           { label: "NEET",         id: "neet",       bg: "#16a34a", shadow: "rgba(22,163,74,.35)",  hover: "#15803d" },
           { label: "SSC CGL",      id: "ssc-cgl",   bg: "#d97706", shadow: "rgba(217,119,6,.35)",   hover: "#b45309" },
+          { label: "CUET",         id: "cuet",      bg: "#db2777", shadow: "rgba(219,39,119,.35)",  hover: "#be185d" },
         ].map(btn => (
           <button key={btn.id} onClick={() => onJeeMains(btn.id)} style={{
             padding: "12px 28px", borderRadius: 10, fontSize: 14, fontWeight: 700,
@@ -272,7 +273,7 @@ function Hero({ onJeeMains, T, isDark }) {
           { num: "50,000+", label: "PYQs" },
           { num: "10+",    label: "Years Covered" },
           { num: "100%",   label: "Free to Use" },
-          { num: "4",      label: "Exam Categories" },
+          { num: "5",      label: "Exam Categories" },
         ].map((s, i) => (
           <div key={s.label} style={{
             textAlign: "center",
@@ -324,6 +325,7 @@ function Features({ onJeeMains, T, isDark }) {
     { icon: "🏆", title: "JEE Advanced PYQs", desc: "Complete JEE Advanced previous year papers. Filter by subject, chapter, topic and year.",                onClick: () => onJeeMains("jee-adv") },
     { icon: "🩺", title: "NEET PYQs",         desc: "Complete NEET previous year papers with detailed solutions. Filter by subject, chapter, topic and year.", onClick: () => onJeeMains("neet") },
     { icon: "📋", title: "SSC CGL PYQs",      desc: "SSC CGL Tier I previous year papers across all 4 subjects. Filter by shift, chapter and more.",          onClick: () => onJeeMains("ssc-cgl") },
+    { icon: "🎓", title: "CUET PYQs",         desc: "CUET UG previous year papers across all 15 domain subjects, NCERT Class XII syllabus. Filter by subject, chapter and topic.", onClick: () => onJeeMains("cuet") },
   ];
 
   return (
@@ -399,7 +401,7 @@ function Footer({ T }) {
         color: T.accent, letterSpacing: -.3,
       }}>ExamsCalendar.PYQ</div>
       <div style={{ fontSize: 13, color: T.textMuted }}>
-        Free PYQs for JEE · JEE Advanced · NEET · SSC CGL
+        Free PYQs for JEE · JEE Advanced · NEET · SSC CGL · CUET
       </div>
     </footer>
   );
@@ -523,4 +525,4 @@ export default function LandingPage({ onJeeMains, isDark, onToggleTheme }) {
       <Footer T={T} />
     </div>
   );
-}
+      }

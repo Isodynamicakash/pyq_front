@@ -144,7 +144,26 @@ function fixCrammedEquations(text) {
 }
 function fixLatex(text) {
   if (!text) return text;
-  return fixCrammedEquations(fixLineBreaks(fixInlineEnvs(fixAligned(fixTabular(text)))));
+  return fixBoldMarkup(fixCrammedEquations(fixLineBreaks(fixInlineEnvs(fixAligned(fixTabular(text))))));
+}
+
+// ─── Bold markup: \textbf{...} and **...** → <b>...</b> ──────────────────────
+// MathPix marks highlighted words in the source PDF with LaTeX \textbf{}
+// or Markdown-style **...**. Neither renders visibly by default when
+// injected via dangerouslySetInnerHTML — MathJax only processes content
+// inside $..$, and raw \textbf outside math falls back to literal text.
+// We normalize both forms to <b>...</b> (or leave existing <b> tags from
+// the parser alone) so highlighted content shows up bold in the admin UI.
+// Applied only outside math delimiters to avoid disturbing MathJax input.
+function fixBoldMarkup(text) {
+  if (!text || (text.indexOf("\\textbf") < 0 && text.indexOf("**") < 0)) return text;
+  const parts = text.split(/(\$\$[\s\S]*?\$\$|\$[^$\n]*\$)/g);
+  return parts.map((seg, i) => {
+    if (i % 2 === 1) return seg; // math segment — leave for MathJax
+    return seg
+      .replace(/\\textbf\{([^}]*)\}/g, "<b>$1</b>")
+      .replace(/\*\*([^*\n]+)\*\*/g,   "<b>$1</b>");
+  }).join("");
 }
 
 // ─── Global fixLatex cache — same string → instant return ────────────────────
@@ -1096,6 +1115,12 @@ function ImagesTab({ q, onChange, jobId, apiBase, adminKey }) {
 // ─── MathJax preview block — isolated component so typesetting is scoped ─────
 // PERF: only re-renders when `content` string changes (React.memo)
 //       calls MathJax.typesetPromise on its own ref, never the whole page
+// LINE BREAKS: `whiteSpace: 'pre-wrap'` preserves real "\n" characters coming
+//              from the parser so multi-line solutions render as multi-line
+//              (default HTML would collapse them into one paragraph). Runs of
+//              spaces still collapse, and MathJax typesetting is unaffected
+//              because pre-wrap only alters whitespace handling, not layout of
+//              rendered math nodes.
 const MathPreview = memo(function MathPreview({ content, style }) {
   const ref = useRef(null);
 
@@ -1109,7 +1134,7 @@ const MathPreview = memo(function MathPreview({ content, style }) {
   },[content]);
 
   return (
-    <div ref={ref} style={style}
+    <div ref={ref} style={{whiteSpace:"pre-wrap", ...style}}
       dangerouslySetInnerHTML={{__html: content}}
     />
   );
@@ -3215,4 +3240,4 @@ export default function AdminReview({ apiBase="http://localhost:8000", adminKey=
       </div>
     </MathJaxContext>
   );
-          }
+      }

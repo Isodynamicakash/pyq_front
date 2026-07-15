@@ -1481,6 +1481,22 @@ function UploadScreen({ apiBase, adminKey, openaiKey, onOpenaiKeyChange,
   const [imgFiles,  setImgFiles]  = useState([]);
   const [showKey,   setShowKey]   = useState(false);
   const [uploadExam, setUploadExam] = useState(""); // exam type chosen before upload
+  // Parser format flavor — tells the backend parser which rules to apply.
+  // "" = auto-detect (default, works for most papers).
+  // "cuet" = CUET SelfStudys layout (\section*{QuestionN} + "Options:" redirect block).
+  // Auto-suggested to "cuet" when exam type = CUET, but admin can override.
+  const [uploadPaperType, setUploadPaperType] = useState("");
+  // Tracks whether the admin has manually touched the paper-format selector.
+  // Once they have, we stop auto-suggesting based on exam type.
+  const [paperTypeTouched, setPaperTypeTouched] = useState(false);
+
+  // Auto-suggest a paper format when exam type changes, unless the admin
+  // already made an explicit choice.
+  useEffect(()=>{
+    if(paperTypeTouched) return;
+    if(uploadExam==="CUET") setUploadPaperType("cuet");
+    else                     setUploadPaperType("");
+  },[uploadExam,paperTypeTouched]);
   const inputRef    = useRef();
   const texInputRef = useRef();
   const imgInputRef = useRef();
@@ -1501,7 +1517,7 @@ function UploadScreen({ apiBase, adminKey, openaiKey, onOpenaiKeyChange,
     imgFiles.forEach(f=>form.append("images",f));
     try{
       const res=await fetch(`${apiBase}/api/admin/upload-tex-images`,{
-        method:"POST",headers:{"x-admin-key":adminKey,"x-openai-key":openaiKey,"x-exam-type":uploadExam},body:form,
+        method:"POST",headers:{"x-admin-key":adminKey,"x-openai-key":openaiKey,"x-exam-type":uploadExam,"x-paper-type":uploadPaperType},body:form,
       });
       if(!res.ok){const b=await res.json().catch(()=>({}));throw new Error(b.detail||res.statusText);}
       const {job_id}=await res.json();
@@ -1520,7 +1536,7 @@ function UploadScreen({ apiBase, adminKey, openaiKey, onOpenaiKeyChange,
     if(mode==="pdf") setPdfStatus("Sending to MathPix…");
     try{
       const res=await fetch(`${apiBase}/api/admin/${endpoint}`,{
-        method:"POST",headers:{"x-admin-key":adminKey,"x-openai-key":openaiKey,"x-exam-type":uploadExam},body:form,
+        method:"POST",headers:{"x-admin-key":adminKey,"x-openai-key":openaiKey,"x-exam-type":uploadExam,"x-paper-type":uploadPaperType},body:form,
       });
       if(!res.ok){const b=await res.json().catch(()=>({}));throw new Error(b.detail||res.statusText);}
       const {job_id}=await res.json();
@@ -1629,6 +1645,40 @@ function UploadScreen({ apiBase, adminKey, openaiKey, onOpenaiKeyChange,
               ℹ No exam selected — LLM will default to JEE taxonomy.
             </div>
           )}
+        </div>
+
+        {/* Paper Format Selector — tells the parser which layout rules to apply.
+            Independent of exam type: e.g. some CUET papers ship in the SelfStudys
+            layout (\section*{QuestionN} + "Options:" redirect block); others don't. */}
+        <div style={{
+          background:C.surface,
+          border:`1px solid ${uploadPaperType==="cuet"?C.amber+"66":C.border}`,
+          borderRadius:10,padding:"14px 16px",marginBottom:20,textAlign:"left",
+        }}>
+          <div style={{fontSize:12,fontWeight:700,color:C.textMuted,marginBottom:10,letterSpacing:0.5}}>
+            🧩 PAPER FORMAT <span style={{fontWeight:400,color:C.textDim}}>(tells the parser which layout rules to apply)</span>
+          </div>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+            {[
+              {value:"",     label:"🤖 Auto-detect", color:C.textMuted, desc:"Default. Works for JEE / NEET / SSC and most exports."},
+              {value:"cuet", label:"🎓 CUET (SelfStudys)", color:C.amber, desc:"CUET PDFs with QuestionN headers + 'Options:' redirect block."},
+            ].map(({value,label,color})=>(
+              <button key={value||"auto"}
+                onClick={()=>{setUploadPaperType(value);setPaperTypeTouched(true);}}
+                style={{
+                  padding:"7px 16px",borderRadius:8,fontSize:12,fontWeight:600,cursor:"pointer",
+                  border:`2px solid ${uploadPaperType===value?color:C.border}`,
+                  background:uploadPaperType===value?color+"22":C.bg,
+                  color:uploadPaperType===value?color:C.textMuted,
+                  transition:"all .15s",
+                }}>{label}</button>
+            ))}
+          </div>
+          <div style={{marginTop:8,fontSize:11,color:C.textDim}}>
+            {uploadPaperType==="cuet"
+              ? "✓ Parser will force CUET rules: options come from the stem's numbered list; the follow-up \"Options: A. 1 / B. 2 / …\" redirect block is discarded."
+              : "ℹ Parser will auto-detect the layout. Pick a specific format only if auto-detect misparses your file."}
+          </div>
         </div>
 
         {/* Mode selector */}
@@ -3165,4 +3215,4 @@ export default function AdminReview({ apiBase="http://localhost:8000", adminKey=
       </div>
     </MathJaxContext>
   );
-                      }
+}
